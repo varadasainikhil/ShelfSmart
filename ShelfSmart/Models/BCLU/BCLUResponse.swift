@@ -7,6 +7,6 @@
 
 import Foundation
 
-struct Response : Codable{
-    let products : [Product]
+struct BCLUResponse : Codable{
+    let products : [BCLUProduct]
 }

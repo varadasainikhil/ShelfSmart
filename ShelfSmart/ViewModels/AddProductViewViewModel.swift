@@ -28,7 +28,7 @@ class AddProductViewViewModel {
         // Reset any previous error messages
         errorMessage = nil
         let newItem = Item(barcode: barcode, name: name, productDescription: productDescription, expirationDate: expirationDate, productImage: productImageLink)
-
+        
         print("Created a new Item")
         
         // Find the userId of the user
@@ -85,7 +85,7 @@ class AddProductViewViewModel {
         return apiKey
     }
     
-    func searchBarCode(barCode: String) async throws {
+    func BCLUSearchBarCode(barCode: String) async throws {
         
         // Reset state
         await MainActor.run {
@@ -140,7 +140,7 @@ class AddProductViewViewModel {
             print("📦 Received data size: \(data.count) bytes")
             
             let decoder = JSONDecoder()
-            let apiResponse = try decoder.decode(Response.self, from: data)
+            let apiResponse = try decoder.decode(BCLUResponse.self, from: data)
             
             print("✅ Successfully decoded response")
             print("📊 Number of products found: \(apiResponse.products.count)")
@@ -154,9 +154,99 @@ class AddProductViewViewModel {
                     self.isLoading = false
                     self.searchSuccess = true
                     self.errorMessage = nil
-                
                 }
                 
+            } else {
+                print("⚠️ No products found in response")
+                await MainActor.run {
+                    self.isLoading = false
+                    self.errorMessage = "No products found for this barcode"
+                }
+            }
+            
+        } catch let decodingError as DecodingError {
+            print("❌ JSON Decoding Error: \(decodingError)")
+            print("❌ Decoding Error Details: \(decodingError.localizedDescription)")
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = "Failed to parse product data"
+            }
+        } catch let urlError as URLError {
+            print("❌ Network Error: \(urlError)")
+            print("❌ Network Error Code: \(urlError.code.rawValue)")
+            print("❌ Network Error Description: \(urlError.localizedDescription)")
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = "Network error: \(urlError.localizedDescription)"
+            }
+        } catch {
+            print("❌ Unknown Error: \(error)")
+            print("❌ Error Type: \(type(of: error))")
+            print("❌ Error Description: \(error.localizedDescription)")
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = "Unexpected error: \(error.localizedDescription)"
+            }
+        }
+    }
+    
+    func OFFASearchBarCode(barCode: String) async throws {
+        
+        // Reset state
+        await MainActor.run {
+            isLoading = true
+            errorMessage = nil
+            searchSuccess = false
+        }
+        
+        print("Searching for barcode: \(barCode)")
+        
+        guard var urlComponents = URLComponents(string: "https://world.openfoodfacts.org/api/v2/product/\(barCode)") else {
+            print("❌ Error: Failed to create URL components")
+            throw URLError(.badURL)
+        }
+        
+        let queryItems : [URLQueryItem] = [
+            URLQueryItem(name: "fields", value: "product_name,brands,nutriments,nutrition_grades,ingredients_text,image_url")
+        ]
+        
+        urlComponents.queryItems = queryItems
+        
+        guard let url = urlComponents.url else {
+            print("❌ Error: Failed to create final URL")
+            throw URLError(.badURL)
+        }
+        
+        print("🌐 Making request to: \(url.absoluteString)")
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            
+            // Log response details
+            if let httpResponse = response as? HTTPURLResponse {
+                print("📡 Response status code: \(httpResponse.statusCode)")
+            }
+            
+            print("📦 Received data size: \(data.count) bytes")
+            
+            let decoder = JSONDecoder()
+            let apiResponse = try decoder.decode(OFFAResponse.self, from: data)
+            
+            print("✅ Successfully decoded response")
+            
+            if apiResponse.status == 1 {
+                let product = apiResponse.product
+                print("🏷️ First product name: \(product.productName)")
+                await MainActor.run {
+                    self.name = product.brands.capitalized + "" + product.productName.capitalized
+                    self.productDescription = ""
+                    self.productImageLink = product.imageURL
+                    self.isLoading = false
+                    self.searchSuccess = true
+                    self.errorMessage = nil
+                    
+                    
+                }
             } else {
                 print("⚠️ No products found in response")
                 await MainActor.run {

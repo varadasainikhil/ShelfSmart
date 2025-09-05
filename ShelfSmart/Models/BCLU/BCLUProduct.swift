@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Product : Codable{
+struct BCLUProduct : Codable{
     let barcodeNumber : String
     let model : String
     let title : String

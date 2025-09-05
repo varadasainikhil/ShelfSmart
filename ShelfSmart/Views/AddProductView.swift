@@ -22,7 +22,7 @@ struct AddProductView: View {
                     Button {
                         // search for the product
                         Task{
-                            try await viewModel.searchBarCode(barCode: viewModel.barcode)
+                            try await viewModel.OFFASearchBarCode(barCode: viewModel.barcode)
                         }
                         
                     } label: {
