@@ -33,35 +33,43 @@ struct HomeView: View {
                     .padding(.top)
                 
                 ZStack{
-                    ScrollViewReader{ proxy in
-                        ScrollView{
-                            LazyVStack{
-                                ForEach(groups){group in
-                                    HStack{
-                                        Text(group.daysTillExpiry().message)
-                                        Spacer()
-                                    }
-                                    
-                                    ForEach(group.products ?? []){ product in
-                                        NavigationLink(destination: DetailProductView(item: product)) {
-                                            if group.products?.last == product {
-                                                CardView(product: product)
-                                                    .padding(.bottom)
-                                                
-                                            }
-                                            else {
-                                                CardView(product: product)
-                                            }
-                                            
+                    
+                    if groups.isEmpty{
+                        Text("Start by adding your first product.")
+                            .foregroundStyle(.gray)
+                    }
+                    
+                    else {
+                        ScrollViewReader{ proxy in
+                            ScrollView{
+                                LazyVStack{
+                                    ForEach(groups){group in
+                                        HStack{
+                                            Text(group.daysTillExpiry().message)
+                                            Spacer()
                                         }
                                         
-                                        
+                                        ForEach(group.products ?? []){ product in
+                                            NavigationLink(destination: DetailProductView(item: product)) {
+                                                if group.products?.last == product {
+                                                    CardView(product: product)
+                                                        .padding(.bottom)
+                                                    
+                                                }
+                                                else {
+                                                    CardView(product: product)
+                                                }
+                                                
+                                            }
+                                            
+                                            
+                                        }
                                     }
                                 }
+                                
                             }
-                            
+                            .scrollContentBackground(.hidden)
                         }
-                        .scrollContentBackground(.hidden)
                     }
                     
                     VStack{
@@ -79,13 +87,11 @@ struct HomeView: View {
                             }
                         }
                     }
-                    
                 }
                 .padding()
                 .sheet(isPresented: $showingAddProduct) {
                     AddProductView()
                 }
-                
             }
         }
         .onAppear {
@@ -96,10 +102,7 @@ struct HomeView: View {
             // This will trigger a view update when userId changes
             print("User ID changed from \(oldValue) to \(newValue)")
         }
-        
-        
     }
-    
 }
 
 
