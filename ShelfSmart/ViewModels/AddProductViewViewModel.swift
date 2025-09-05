@@ -5,6 +5,7 @@
 //  Created by Sai Nikhil Varada on 8/26/25.
 //
 
+import FirebaseAuth
 import Foundation
 import SwiftData
 
@@ -32,26 +33,36 @@ class AddProductViewViewModel {
 
         print("Created a new Item")
         
+        // Find the userId of the user
+        guard let userId = Auth.auth().currentUser?.uid else {
+            errorMessage = "Could not find the userID of the user"
+            print("Could not find the userID of the user")
+            return
+        }
+        
         do {
             // Use normalized date for comparison
             let normalizedDate = Calendar.current.startOfDay(for: newItem.expirationDate)
             
             // Use SwiftData predicate for more efficient querying
             let predicate = #Predicate<GroupedProducts> { group in
-                group.expirationDate == normalizedDate
+                group.expirationDate == normalizedDate &&
+                group.userId == userId
             }
             
             let descriptor = FetchDescriptor<GroupedProducts>(predicate: predicate)
             let existingGroups = try modelContext.fetch(descriptor)
             
-            // Check if we found any existing groups for this date
+            // Check if we found any existing groups for this date and the userID
             if let existingGroup = existingGroups.first {
                 // Add to existing group
                 existingGroup.products?.append(newItem)
                 print("Found existing group for date, adding item to it")
             } else {
+                
                 // Create new group
-                let newGroupedProducts = GroupedProducts(expirationDate: normalizedDate, products: [newItem])
+                let newGroupedProducts = GroupedProducts(expirationDate: normalizedDate, products: [newItem], userId : userId)
+                
                 modelContext.insert(newGroupedProducts)
                 print("Created new group for date")
             }

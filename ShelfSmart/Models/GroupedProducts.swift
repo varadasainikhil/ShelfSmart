@@ -11,13 +11,15 @@ import SwiftUI
 
 @Model
 class GroupedProducts{
+    var userId : String = ""
     var id : String = UUID().uuidString
     var expirationDate : Date = Date.now
     @Relationship(deleteRule: .cascade) 
     var products : [Item]? = [Item]()
     
-    init(expirationDate: Date, products: [Item]) {
+    init(expirationDate: Date, products: [Item], userId : String) {
         // Normalize the expiration date to start of day for consistent comparison
+        self.userId = userId
         self.expirationDate = Calendar.current.startOfDay(for: expirationDate)
         self.products = products
     }
