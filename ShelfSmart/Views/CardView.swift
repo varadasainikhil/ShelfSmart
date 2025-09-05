@@ -46,12 +46,11 @@ struct CardView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     
-                    
-                    
                     Spacer()
                     
                     VStack(alignment: .leading){
                         Text(product.name)
+                            .foregroundStyle(.black)
                             .font(.title3.bold())
                             .lineLimit(2)
                         

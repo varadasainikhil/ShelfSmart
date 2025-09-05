@@ -169,16 +169,5 @@ final class SignUpViewViewModel{
         }
     }
     
-    // Signing Out
-    func signOut(){
-        do{
-            try Auth.auth().signOut()
-            print("User signed out successfully.")
-        }
-        catch{
-            print(error.localizedDescription)
-        }
-        
-    }
     
 }

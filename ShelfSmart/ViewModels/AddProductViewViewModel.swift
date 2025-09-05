@@ -23,8 +23,6 @@ class AddProductViewViewModel {
         return barcode.isEmpty || isLoading
     }
     
-    // Usage
-    
     
     func createItem(modelContext : ModelContext){
         // Reset any previous error messages

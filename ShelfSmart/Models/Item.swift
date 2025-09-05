@@ -19,8 +19,8 @@ class Item{
     var expirationDate : Date = Date.now
     var productImage : String?
     var isUsed : Bool = false
-    
-    @Relationship(inverse: \GroupedProducts.products) 
+    var isLiked : Bool = false
+    @Relationship(inverse: \GroupedProducts.products)
     var groupedProduct: GroupedProducts?
     
     var isExpired : Bool{
@@ -29,6 +29,10 @@ class Item{
             return false
         }
         return true
+    }
+    
+    func LikeItem(){
+        self.isLiked.toggle()
     }
     
     var borderColor : Color {

@@ -17,7 +17,7 @@ struct AuthenticatedView: View {
             }
             
             Tab("Profile", systemImage: "person.fill") {
-                ProfileView(authManager: authManager)
+                ProfileView()
             }
         }
     }

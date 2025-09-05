@@ -11,77 +11,92 @@ import FirebaseAuth
 struct HomeView: View {
     @Environment(\.modelContext) var modelContext
     @State var showingAddProduct : Bool = false
-    @Query var groups : [GroupedProducts]
-        
-    init() {
-        // Filter groups by current user ID and sort by expiration date
-        let currentUserId = Auth.auth().currentUser?.uid ?? ""
-        self._groups = Query(
-            filter: #Predicate<GroupedProducts> { group in
-                group.userId == currentUserId
-            },
-            sort: \GroupedProducts.expirationDate
-        )
+    @State var showingDetailProductView : Bool = false
+    @State private var currentUserId: String = Auth.auth().currentUser?.uid ?? ""
+    
+    // Get all groups and filter in the view - this will be reactive to changes
+    @Query(sort: \GroupedProducts.expirationDate) private var allGroups: [GroupedProducts]
+    
+    // Computed property that filters groups by current user
+    var groups: [GroupedProducts] {
+        return allGroups.filter { group in
+            group.userId == currentUserId
+        }
     }
     
-
-    
     var body: some View {
-        VStack(alignment:.leading){
-            Text("Your Products")
-                .font(.title.bold())
-                .padding(.leading)
-                .padding(.top)
-            
-            ZStack{
-                ScrollViewReader{ proxy in
-                    ScrollView{
-                        LazyVStack{
-                            ForEach(groups){group in
-                                HStack{
-                                    Text(group.daysTillExpiry().message)
-                                    Spacer()
-                                }
-                                
-                                ForEach(group.products ?? []){ product in
-                                    if group.products?.last == product {
-                                        CardView(product: product)
-                                            .padding(.bottom)
+        NavigationStack{
+            VStack(alignment:.leading){
+                Text("Your Products")
+                    .font(.title.bold())
+                    .padding(.leading)
+                    .padding(.top)
+                
+                ZStack{
+                    ScrollViewReader{ proxy in
+                        ScrollView{
+                            LazyVStack{
+                                ForEach(groups){group in
+                                    HStack{
+                                        Text(group.daysTillExpiry().message)
+                                        Spacer()
                                     }
-                                    else {
-                                        CardView(product: product)
+                                    
+                                    ForEach(group.products ?? []){ product in
+                                        NavigationLink(destination: DetailProductView(item: product)) {
+                                            if group.products?.last == product {
+                                                CardView(product: product)
+                                                    .padding(.bottom)
+                                                
+                                            }
+                                            else {
+                                                CardView(product: product)
+                                            }
+                                            
+                                        }
+                                        
+                                        
                                     }
                                 }
                             }
+                            
                         }
-                        
+                        .scrollContentBackground(.hidden)
                     }
-                    .scrollContentBackground(.hidden)
-                }
-                
-                VStack{
-                    Spacer()
-                    HStack{
+                    
+                    VStack{
                         Spacer()
-                        Button {
-                            // Show the sheet for the addProductView
-                            showingAddProduct = true
-                        } label: {
-                            Image(systemName: "plus.circle.fill")
-                                .resizable()
-                                .frame(width: 50, height: 50)
-                                .glassEffect()
+                        HStack{
+                            Spacer()
+                            Button {
+                                // Show the sheet for the addProductView
+                                showingAddProduct = true
+                            } label: {
+                                Image(systemName: "plus.circle.fill")
+                                    .resizable()
+                                    .frame(width: 50, height: 50)
+                                    .glassEffect()
+                            }
                         }
                     }
+                    
+                }
+                .padding()
+                .sheet(isPresented: $showingAddProduct) {
+                    AddProductView()
                 }
                 
             }
-            .padding()
-            .sheet(isPresented: $showingAddProduct) {
-                AddProductView()
-            }
-            
         }
+        .onAppear {
+            // Update userId when view appears
+            currentUserId = Auth.auth().currentUser?.uid ?? ""
+        }
+        .onChange(of: currentUserId) { oldValue, newValue in
+            // This will trigger a view update when userId changes
+            print("User ID changed from \(oldValue) to \(newValue)")
+        }
+        
         
     }
     
