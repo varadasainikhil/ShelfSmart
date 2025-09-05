@@ -1,6 +1,6 @@
 //
 //  LoginView.swift
-//  FreshAlert
+//  ShelfSmart
 //
 //  Created by Sai Nikhil Varada on 8/21/25.
 //
@@ -9,6 +9,7 @@ import SwiftUI
 import AuthenticationServices
 
 struct LoginView: View {
+    @Environment(\.colorScheme) var colorScheme
     @State var viewModel = LoginViewViewModel()
     var body: some View {
         NavigationStack{
@@ -53,7 +54,6 @@ struct LoginView: View {
                 }
                 .padding(.vertical, 20)
                 
-            
                 
                 SignInWithAppleButton(.signIn) { request in
                     request.requestedScopes = [.email, .fullName]
@@ -70,8 +70,7 @@ struct LoginView: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: 50)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
-                
-            
+                .signInWithAppleButtonStyle(colorScheme == .dark ? .whiteOutline : .black)
                 Spacer()
                 
             }

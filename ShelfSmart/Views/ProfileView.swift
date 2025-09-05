@@ -1,6 +1,6 @@
 //
 //  ProfileView.swift
-//  FreshAlert
+//  ShelfSmart
 //
 //  Created by Sai Nikhil Varada on 8/25/25.
 //

@@ -1,6 +1,6 @@
 //
-//  File.swift
-//  FreshAlert
+//  AddProductViewViewModel.swift
+//  ShelfSmart
 //
 //  Created by Sai Nikhil Varada on 8/26/25.
 //

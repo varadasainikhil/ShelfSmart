@@ -1,6 +1,6 @@
 //
 //  GroupedProducts.swift
-//  FreshAlert
+//  ShelfSmart
 //
 //  Created by Sai Nikhil Varada on 9/2/25.
 //
