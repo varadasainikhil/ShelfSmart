@@ -48,9 +48,9 @@ struct LoginView: View {
                     Divider()
                     Text("or")
                         .frame(width: 30)
-                        .background(.white)
                         .foregroundStyle(.gray)
                         .font(.footnote)
+                        
                 }
                 .padding(.vertical, 20)
                 
