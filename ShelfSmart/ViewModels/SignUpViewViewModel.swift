@@ -7,11 +7,13 @@
 
 import Foundation
 import FirebaseAuth
+import FirebaseFirestore
 import CryptoKit
 import AuthenticationServices
 
 @Observable
 final class SignUpViewViewModel{
+    var fullName : String = ""
     var emailAddress : String = "" {
         // Validating the email after a change is made to the email
         didSet {
@@ -45,6 +47,7 @@ final class SignUpViewViewModel{
     var isButtonActive : Bool = false
     var showingError : Bool = false
     var errorMessage : String = ""
+    
     
     func checkCriteriaMet(){
         if passwordsMatching  && passwordLengthOk && isEmailValidated {
@@ -163,11 +166,28 @@ final class SignUpViewViewModel{
     func createAccount() async{
         print("Sign Up button is pressed.")
         if isEmailValidated && passwordsMatching && passwordLengthOk{
-            Auth.auth().createUser(withEmail: emailAddress, password: password){ result, error in
-                print(error?.localizedDescription ?? "User signed in succesfully")
+            do {
+                // Create user with Firebase Auth using async/await
+                let authResult = try await Auth.auth().createUser(withEmail: emailAddress, password: password)
+                print("User signed in successfully with ID: \(authResult.user.uid)")
+                
+                // Get the user ID from the auth result
+                let userId = authResult.user.uid
+                
+                // Create a new user document in Firestore
+                let db = Firestore.firestore()
+                let user = User(name: fullName, email: emailAddress)
+                
+                try await db.collection("users").document(userId).setData(from: user)
+                print("User with user id: \(userId) updated to Firebase")
+                
+            } catch {
+                print("Error creating account: \(error.localizedDescription)")
+                await MainActor.run {
+                    self.errorMessage = error.localizedDescription
+                    self.showingError = true
+                }
             }
         }
     }
-    
-    
 }

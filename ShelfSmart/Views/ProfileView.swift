@@ -26,6 +26,8 @@ struct ProfileView: View {
     
     var body: some View {
         VStack {
+            Text("Hello, \(viewModel.userName)")
+                .font(.title)
             Button {
                 // Delete all the items in the modelContext with your userID
                 viewModel.deleteGroups(groups: groups, modelContext: modelContext)
@@ -63,6 +65,9 @@ struct ProfileView: View {
         .padding()
         .onAppear {
             currentUserId = Auth.auth().currentUser?.uid ?? ""
+            Task{
+                await viewModel.getUserName()
+            }
         }
     }
 }

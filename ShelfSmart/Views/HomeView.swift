@@ -118,7 +118,8 @@ struct HomeView: View {
         let fiveDaysFromNow = Calendar.current.startOfDay(for: Calendar.current.date(byAdding: .day, value: 5, to: today) ?? today)
         let twoDaysAgo = Calendar.current.startOfDay(for: Calendar.current.date(byAdding: .day, value: -2, to: today) ?? today)
         
-        let sampleUserId = "preview-user-id"
+        // Use empty string to match what HomeView uses when no user is authenticated
+        let sampleUserId = ""
         let sampleGroups = [
             GroupedProducts(expirationDate: threeDaysFromNow, products: [
                 Item(barcode: "123456789", name: "Milk", productDescription: "Organic whole milk", expirationDate: threeDaysFromNow),
@@ -139,7 +140,6 @@ struct HomeView: View {
         for group in sampleGroups {
             context.insert(group)
         }
-        
         
         return HomeView()
             .modelContainer(container)

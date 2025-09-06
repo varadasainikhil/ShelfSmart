@@ -22,6 +22,19 @@ class Item{
     var isLiked : Bool = false
     @Relationship(inverse: \GroupedProducts.products)
     var groupedProduct: GroupedProducts?
+    var nutritionGrade : String?
+    var nutritionScore : Int?
+    
+    var nutritionColor : Color{
+        switch nutritionGrade {
+        case "a" : Color.green
+        case "b" : Color.cyan
+        case "c" : Color.yellow
+        case "d" : Color.orange
+        case "e" : Color.red
+        default : Color.white
+        }
+    }
     
     var isExpired : Bool{
         let daysTillExpiry = daysTillExpiry().count

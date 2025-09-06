@@ -19,15 +19,70 @@ class AddProductViewViewModel {
     var isLoading : Bool = false
     var errorMessage : String?
     var searchSuccess : Bool = false
+    var nutritionGrade : String?
+    var nutritionScore : Int?
     var isSearchButtonDisabled : Bool {
         return barcode.isEmpty || isLoading
     }
     
     
-    func createItem(modelContext : ModelContext){
+    func createItemFromBCLU(modelContext : ModelContext){
         // Reset any previous error messages
         errorMessage = nil
         let newItem = Item(barcode: barcode, name: name, productDescription: productDescription, expirationDate: expirationDate, productImage: productImageLink)
+        
+        print("Created a new Item")
+        
+        // Find the userId of the user
+        guard let userId = Auth.auth().currentUser?.uid else {
+            errorMessage = "Could not find the userID of the user"
+            print("Could not find the userID of the user")
+            return
+        }
+        
+        do {
+            // Use normalized date for comparison
+            let normalizedDate = Calendar.current.startOfDay(for: newItem.expirationDate)
+            
+            // Use SwiftData predicate for more efficient querying
+            let predicate = #Predicate<GroupedProducts> { group in
+                group.expirationDate == normalizedDate &&
+                group.userId == userId
+            }
+            
+            let descriptor = FetchDescriptor<GroupedProducts>(predicate: predicate)
+            let existingGroups = try modelContext.fetch(descriptor)
+            
+            // Check if we found any existing groups for this date and the userID
+            if let existingGroup = existingGroups.first {
+                // Add to existing group
+                existingGroup.products?.append(newItem)
+                print("Found existing group for date, adding item to it")
+            } else {
+                
+                // Create new group
+                let newGroupedProducts = GroupedProducts(expirationDate: normalizedDate, products: [newItem], userId : userId)
+                
+                modelContext.insert(newGroupedProducts)
+                print("Created new group for date")
+            }
+            
+            // Single save operation
+            try modelContext.save()
+            print("Successfully saved item to database")
+            
+        } catch {
+            print("Error creating item: \(error.localizedDescription)")
+            errorMessage = "Failed to save product. Please try again."
+        }
+    }
+    
+    func createItemFromOFFA(modelContext : ModelContext){
+        // Reset any previous error messages
+        errorMessage = nil
+        let newItem = Item(barcode: barcode, name: name, productDescription: productDescription, expirationDate: expirationDate, productImage: productImageLink)
+        newItem.nutritionGrade = nutritionGrade
+        newItem.nutritionScore = nutritionScore
         
         print("Created a new Item")
         
@@ -244,7 +299,8 @@ class AddProductViewViewModel {
                     self.isLoading = false
                     self.searchSuccess = true
                     self.errorMessage = nil
-                    
+                    self.nutritionGrade = product.nutritionGrade
+                    self.nutritionScore = product.nutriments.nutritionScore
                     
                 }
             } else {

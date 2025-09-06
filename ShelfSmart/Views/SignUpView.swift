@@ -16,6 +16,8 @@ struct SignUpView: View {
                 
                 Spacer()
                 
+                CustomTextField(textToShow: "Enter your Full Name", variableToBind: $viewModel.fullName)
+                
                 CustomTextField(textToShow: "Enter your Email", variableToBind: $viewModel.emailAddress)
                 
                 CustomSecureField(textToShow: "Enter Your Password", variableToBind: $viewModel.password)

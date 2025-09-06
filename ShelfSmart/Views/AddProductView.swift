@@ -18,6 +18,7 @@ struct AddProductView: View {
             Form{
                 Section{
                     CustomTextFieldWithHeading(heading: "BarCode", textToShow: "Enter the product Barcode", variabletoBind: $viewModel.barcode)
+                        .keyboardType(.decimalPad)
                     
                     Button {
                         // search for the product
@@ -78,7 +79,7 @@ struct AddProductView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         // save the product and dismiss the sheet
-                        viewModel.createItem(modelContext: modelContext)
+                        viewModel.createItemFromOFFA(modelContext: modelContext)
                         // Only dismiss if no error occurred
                         if viewModel.errorMessage == nil {
                             dismiss()
