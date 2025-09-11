@@ -293,7 +293,7 @@ class AddProductViewViewModel {
                 let product = apiResponse.product
                 print("🏷️ First product name: \(product.productName)")
                 await MainActor.run {
-                    self.name = product.brands.capitalized + "" + product.productName.capitalized
+                    self.name = product.brands.capitalized + " " + product.productName.capitalized
                     self.productDescription = ""
                     self.productImageLink = product.imageURL
                     self.isLoading = false

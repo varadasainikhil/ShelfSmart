@@ -8,4 +8,3 @@
 // TODO: Add feature to update details of the products
 // TODO: Try to show nutritional score
 // TODO: Add a white background to the signInWithApple button - done, but doesnt work
-

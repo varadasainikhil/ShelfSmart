@@ -16,8 +16,13 @@ struct CardView: View {
         
         ZStack{
             RoundedRectangle(cornerRadius: 12)
-                .foregroundStyle(product.borderColor)
-                .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
+                .fill(product.borderColor.opacity(0.15))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(product.borderColor, lineWidth: 2)
+                )
+            
+            
             
             VStack{
                 HStack{
@@ -103,23 +108,20 @@ struct CardView: View {
                                 .foregroundStyle(product.isUsed ? .green : .black)
                         }
                     }
-                    
-                    
-                    
                 }
                 .padding(.horizontal)
-                
-                
             }
         }
         .frame(height: 100)
-        
+        .padding(.horizontal, 8)
         
     }
 }
 
 #Preview {
-    let newItem = Item(barcode: "8410128750145", name: "Milk", productDescription: "Organic whole milk from the cows in the swiss", expirationDate: Calendar.current.date(byAdding: .day, value: -3, to: Date()) ?? Date())
-    newItem.nutritionGrade = "a"
-    return CardView(product: newItem)
+    let newOFFAProduct = OFFAProduct(productName: "Milk", brands: "Pascual", imageURL: "https://images.openfoodfacts.org/images/products/841/012/875/0145/front_es.25.400.jpg", ingredientsText: "", nutriments: OFFANutriments(nutritionScore: 90), nutritionGrade: "a")
+    
+    let newItem = Item(barcode: "8410128750145", name: newOFFAProduct.productName, productDescription: "", expirationDate: Date.now.addingTimeInterval(86400), productImage: newOFFAProduct.imageURL)
+    
+    CardView(product: newItem)
 }

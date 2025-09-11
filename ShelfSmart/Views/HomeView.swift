@@ -46,6 +46,7 @@ struct HomeView: View {
                                     ForEach(groups){group in
                                         HStack{
                                             Text(group.daysTillExpiry().message)
+                                                .padding(.horizontal, 8)
                                             Spacer()
                                         }
                                         
@@ -61,8 +62,6 @@ struct HomeView: View {
                                                 }
                                                 
                                             }
-                                            
-                                            
                                         }
                                     }
                                 }
@@ -88,7 +87,8 @@ struct HomeView: View {
                         }
                     }
                 }
-                .padding()
+                .padding(.top)
+                .padding(.horizontal, 5)
                 .sheet(isPresented: $showingAddProduct) {
                     AddProductView()
                 }
