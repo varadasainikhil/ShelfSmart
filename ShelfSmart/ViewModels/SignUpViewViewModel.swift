@@ -125,7 +125,7 @@ final class SignUpViewViewModel{
     }
     
     
-    func loginWithFirebase(_ authorization : ASAuthorization){
+    func loginWithFirebase(_ authorization : ASAuthorization) async{
         if let appleIDCredential = authorization.credential as? ASAuthorizationAppleIDCredential {
             guard let nonce  else {
                 errorMessage = "Cannot Process your request"
@@ -144,21 +144,72 @@ final class SignUpViewViewModel{
                 print("Unable to serialize token string from data: \(appleIDToken.debugDescription)")
                 return
             }
+            
             // Initialize a Firebase credential, including the user's full name.
             let credential = OAuthProvider.appleCredential(withIDToken: idTokenString, rawNonce: nonce, fullName: appleIDCredential.fullName)
-            // Sign in with Firebase.
-            Auth.auth().signIn(with: credential) { (authResult, error) in
-                if (error != nil) {
-                    // Error. If error.code == .MissingOrInvalidNonce, make sure
-                    // you're sending the SHA256-hashed nonce as a hex string with
-                    // your request to Apple.
-                    print(error!.localizedDescription)
-                    return
-                }
-                // User is signed in to Firebase with Apple.
-                // ...
-            }
             
+            do {
+                // Sign in with Firebase using async/await
+                let authResult = try await Auth.auth().signIn(with: credential)
+                print("User signed in successfully with Apple ID: \(authResult.user.uid)")
+                
+                // Get user information
+                let userId = authResult.user.uid
+                let userEmail = authResult.user.email ?? appleIDCredential.email ?? ""
+                
+                // For the name, try to get it from Apple ID credential first (only available on first sign-in)
+                // If not available, use display name from Firebase user or fallback to email prefix
+                var userName = ""
+                if let fullName = appleIDCredential.fullName {
+                    // Construct full name from available parts
+                    var nameComponents: [String] = []
+                    
+                    if let givenName = fullName.givenName, !givenName.isEmpty {
+                        nameComponents.append(givenName)
+                    }
+                    
+                    if let familyName = fullName.familyName, !familyName.isEmpty {
+                        nameComponents.append(familyName)
+                    }
+                    
+                    if !nameComponents.isEmpty {
+                        userName = nameComponents.joined(separator: " ")
+                    }
+                }
+                
+                // Fallback strategies if no name from Apple ID credential
+                if userName.isEmpty {
+                    if let displayName = authResult.user.displayName,
+                       !displayName.isEmpty {
+                        userName = displayName
+                    } else if !userEmail.isEmpty {
+                        // Use email prefix as fallback name
+                        userName = String(userEmail.split(separator: "@").first ?? "User")
+                    } else {
+                        userName = "Apple User"
+                    }
+                }
+                
+                print("Processing user: \(userName), email: \(userEmail), uid: \(userId)")
+                
+                // Check if user document already exists
+                let db = Firestore.firestore()
+            
+                do{
+                    let user = User(name: userName, email: userEmail)
+                    
+                    try db.collection("users").document(userId).setData(from: user)
+                    print("User with user id: \(userId) updated to Firebase")
+                }
+                
+            } catch {
+                print("Error signing in with Apple: \(error.localizedDescription)")
+                await MainActor.run {
+                    self.errorMessage = error.localizedDescription
+                    self.showingError = true
+                }
+                
+            }
         }
     }
     
@@ -178,7 +229,7 @@ final class SignUpViewViewModel{
                 let db = Firestore.firestore()
                 let user = User(name: fullName, email: emailAddress)
                 
-                try await db.collection("users").document(userId).setData(from: user)
+                try db.collection("users").document(userId).setData(from: user)
                 print("User with user id: \(userId) updated to Firebase")
                 
             } catch {
