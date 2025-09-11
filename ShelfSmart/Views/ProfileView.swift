@@ -27,7 +27,7 @@ struct ProfileView: View {
     var body: some View {
         VStack {
             Text("Hello, \(viewModel.userName)")
-                .font(.title)
+                .font(.title.bold())
             Button {
                 // Delete all the items in the modelContext with your userID
                 viewModel.deleteGroups(groups: groups, modelContext: modelContext)
@@ -43,7 +43,6 @@ struct ProfileView: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: 50)
-            
             
             Button{
                 Task{
@@ -63,12 +62,6 @@ struct ProfileView: View {
             .frame(height: 50)
         }
         .padding()
-        .onAppear {
-            currentUserId = Auth.auth().currentUser?.uid ?? ""
-            Task{
-                await viewModel.getUserName()
-            }
-        }
     }
 }
 
