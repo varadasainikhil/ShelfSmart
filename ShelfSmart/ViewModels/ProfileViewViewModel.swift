@@ -6,11 +6,32 @@
 //
 
 import FirebaseAuth
+import FirebaseFirestore
 import Foundation
 import SwiftData
 
 @Observable
 class ProfileViewViewModel{
+    
+    var userName : String = ""
+    
+    func getUserName() async{
+        guard let userId = Auth.auth().currentUser?.uid else{
+            print("Could not get userId")
+            return
+        }
+        
+        let db = Firestore.firestore()
+        do{
+            let user = try await db.collection("users").document(userId).getDocument(as: User.self)
+            userName = user.name
+        }
+        catch{
+            print(error.localizedDescription)
+        }
+        
+        
+    }
     
     func deleteGroups(groups : [GroupedProducts], modelContext : ModelContext){
         for group in groups{

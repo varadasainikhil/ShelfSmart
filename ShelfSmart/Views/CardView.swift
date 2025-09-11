@@ -16,35 +16,59 @@ struct CardView: View {
         
         ZStack{
             RoundedRectangle(cornerRadius: 12)
-                .foregroundStyle(product.borderColor)
-                .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
+                .fill(product.borderColor.opacity(0.15))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(product.borderColor, lineWidth: 2)
+                )
+            
+            
             
             VStack{
                 HStack{
-                    if product.productImage != nil  {
-                        AsyncImage(url: URL(string: product.productImage ?? "no image")){phase in
-                        if let image = phase.image{
-                            image
+                    
+                    ZStack{
+                        if product.productImage != nil  {
+                            AsyncImage(url: URL(string: product.productImage ?? "no image")){phase in
+                                if let image = phase.image{
+                                    image
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 75, height: 75)
+                                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                                }
+                                else if phase.error != nil{
+                                    Text("There was an error in loading the image")
+                                }
+                                else {
+                                    ProgressView()
+                                }
+                            }
+                        }
+                        else {
+                            Image("placeholder")
                                 .resizable()
                                 .scaledToFill()
                                 .frame(width: 75, height: 75)
                                 .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
-                        else if phase.error != nil{
-                            Text("There was an error in loading the image")
+                        VStack{
+                            Spacer()
+                            HStack{
+                                Spacer()
+                                if product.nutritionGrade != nil {
+                                    Image(systemName: "\(product.nutritionGrade!.lowercased()).square.fill")
+                                        .foregroundStyle(product.nutritionColor)
+                                        .font(.title2)
+                                }
+                            }
                         }
-                        else {
-                            ProgressView()
-                        }
+                        
+                        
                     }
-                }
-                    else {
-                        Image("placeholder")
-                            .resizable()
-                            .scaledToFill()
-                            .frame(width: 75, height: 75)
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
+                    .frame(width: 75, height: 75)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    
                     
                     Spacer()
                     
@@ -84,21 +108,20 @@ struct CardView: View {
                                 .foregroundStyle(product.isUsed ? .green : .black)
                         }
                     }
-                    
-                    
-                    
                 }
                 .padding(.horizontal)
-                
-                
             }
         }
         .frame(height: 100)
-        
+        .padding(.horizontal, 8)
         
     }
 }
 
 #Preview {
-    CardView(product: Item(barcode: "8410128750145", name: "Milk", productDescription: "Organic whole milk from the cows in the swiss", expirationDate: Calendar.current.date(byAdding: .day, value: -3, to: Date()) ?? Date()))
+    let newOFFAProduct = OFFAProduct(productName: "Milk", brands: "Pascual", imageURL: "https://images.openfoodfacts.org/images/products/841/012/875/0145/front_es.25.400.jpg", ingredientsText: "", nutriments: OFFANutriments(nutritionScore: 90), nutritionGrade: "a")
+    
+    let newItem = Item(barcode: "8410128750145", name: newOFFAProduct.productName, productDescription: "", expirationDate: Date.now.addingTimeInterval(86400), productImage: newOFFAProduct.imageURL)
+    
+    CardView(product: newItem)
 }

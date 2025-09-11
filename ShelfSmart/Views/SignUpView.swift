@@ -16,6 +16,8 @@ struct SignUpView: View {
                 
                 Spacer()
                 
+                CustomTextField(textToShow: "Enter your Full Name", variableToBind: $viewModel.fullName)
+                
                 CustomTextField(textToShow: "Enter your Email", variableToBind: $viewModel.emailAddress)
                 
                 CustomSecureField(textToShow: "Enter Your Password", variableToBind: $viewModel.password)
@@ -85,7 +87,10 @@ struct SignUpView: View {
                 } onCompletion: { result in
                     switch result {
                     case .success(let authorization):
-                        viewModel.loginWithFirebase(authorization)
+                        Task{
+                            await
+                            viewModel.loginWithFirebase(authorization)
+                        }
                     case .failure(_):
                         break
                     }
