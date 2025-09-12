@@ -10,31 +10,32 @@ import SwiftData
 import SwiftUI
 
 @Model
-class Item{
-    var id : String = UUID().uuidString
+class Product{
+    var id : Int?
     var barcode : String = ""
-    var name : String = ""
-    var productDescription : String = ""
+    var title : String = ""
+    var brand : String?
+    var badges : [String]?
+    var importantBadges : [String]?
+    var spoonacularScore: Double?
+    var productDescription : String?
+    var imageLink : String?
+    var moreImageLinks : [String]?
+    var generatedText : String?
+    var ingredientCount : Int?
+    
     var dateAdded : Date = Date.now
     var expirationDate : Date = Date.now
-    var productImage : String?
     var isUsed : Bool = false
     var isLiked : Bool = false
-    @Relationship(inverse: \GroupedProducts.products)
-    var groupedProduct: GroupedProducts?
-    var nutritionGrade : String?
-    var nutritionScore : Int?
     
-    var nutritionColor : Color{
-        switch nutritionGrade {
-        case "a" : Color.green
-        case "b" : Color.cyan
-        case "c" : Color.yellow
-        case "d" : Color.orange
-        case "e" : Color.red
-        default : Color.white
-        }
-    }
+    // Relationships
+    @Relationship(deleteRule: .cascade)
+    var credits: Credit?
+    
+    @Relationship(inverse: \GroupedProducts.products)
+    var groupedProducts: GroupedProducts?
+
     
     var isExpired : Bool{
         let daysTillExpiry = daysTillExpiry().count
@@ -44,7 +45,7 @@ class Item{
         return true
     }
     
-    func LikeItem(){
+    func LikeProduct(){
         self.isLiked.toggle()
     }
     
@@ -61,16 +62,28 @@ class Item{
         }
     }
     
-    init(barcode: String , name: String, productDescription: String, expirationDate: Date, productImage: String? = nil) {
+    init(id: Int, barcode: String, title: String, brand: String, badges: [String]? = nil, importantBadges: [String]? = nil, spoonacularScore: Double? = nil, productDescription: String? = nil, imageLink: String? = nil, moreImageLinks: [String]? = nil, generatedText: String? = nil, ingredientCount: Int? = nil, credits: Credit? = nil, expirationDate: Date) {
+        self.id = id
         self.barcode = barcode
-        self.name = name
+        self.title = title
+        self.brand = brand
+        self.badges = badges
+        self.importantBadges = importantBadges
+        self.spoonacularScore = spoonacularScore
         self.productDescription = productDescription
+        self.imageLink = imageLink
+        self.moreImageLinks = moreImageLinks
+        self.generatedText = generatedText
+        self.ingredientCount = ingredientCount
+        self.credits = credits
         self.dateAdded = .now
-        self.expirationDate = Calendar.current.startOfDay(for: expirationDate)
-        self.productImage = productImage
+        self.expirationDate = expirationDate
+        self.isUsed = false
+        self.isLiked = false
+        
     }
     
-    
+
     func markUsed() {
         withAnimation {
             self.isUsed = true

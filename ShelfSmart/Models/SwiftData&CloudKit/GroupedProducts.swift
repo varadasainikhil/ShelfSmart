@@ -14,10 +14,12 @@ class GroupedProducts{
     var userId : String = ""
     var id : String = UUID().uuidString
     var expirationDate : Date = Date.now
-    @Relationship(deleteRule: .cascade) 
-    var products : [Item]? = [Item]()
+
+    // Relationship: One GroupedProducts has many Products
+    @Relationship(deleteRule: .cascade)
+    var products : [Product]? = [Product]()
     
-    init(expirationDate: Date, products: [Item], userId : String) {
+    init(expirationDate: Date, products: [Product], userId : String) {
         // Normalize the expiration date to start of day for consistent comparison
         self.userId = userId
         self.expirationDate = Calendar.current.startOfDay(for: expirationDate)
@@ -65,5 +67,4 @@ class GroupedProducts{
         return (message : textToShow, count: daysTillExpiration)
     }
 
-    
 }

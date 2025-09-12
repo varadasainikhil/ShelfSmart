@@ -11,7 +11,7 @@ import SwiftUI
 struct CardView: View {
     @Environment(\.modelContext) var modelContext
     @State private var viewModel = CardViewViewModel()
-    var product : Item
+    var product : Product
     var body: some View {
         
         ZStack{
@@ -22,23 +22,18 @@ struct CardView: View {
                         .stroke(product.borderColor, lineWidth: 2)
                 )
             
-            
-            
             VStack{
                 HStack{
-                    
-                    ZStack{
-                        if product.productImage != nil  {
-                            AsyncImage(url: URL(string: product.productImage ?? "no image")){phase in
+                    VStack{
+                        if let imageLink = product.imageLink, !imageLink.isEmpty{
+                            AsyncImage(url: URL(string: imageLink)){phase in
                                 if let image = phase.image{
                                     image
                                         .resizable()
                                         .scaledToFill()
-                                        .frame(width: 75, height: 75)
-                                        .clipShape(RoundedRectangle(cornerRadius: 12))
                                 }
-                                else if phase.error != nil{
-                                    Text("There was an error in loading the image")
+                                else  if phase.error != nil {
+                                    Text("There was an error loading the image")
                                 }
                                 else {
                                     ProgressView()
@@ -49,22 +44,7 @@ struct CardView: View {
                             Image("placeholder")
                                 .resizable()
                                 .scaledToFill()
-                                .frame(width: 75, height: 75)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
-                        VStack{
-                            Spacer()
-                            HStack{
-                                Spacer()
-                                if product.nutritionGrade != nil {
-                                    Image(systemName: "\(product.nutritionGrade!.lowercased()).square.fill")
-                                        .foregroundStyle(product.nutritionColor)
-                                        .font(.title2)
-                                }
-                            }
-                        }
-                        
-                        
                     }
                     .frame(width: 75, height: 75)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -73,17 +53,34 @@ struct CardView: View {
                     Spacer()
                     
                     VStack(alignment: .leading){
-                        Text(product.name)
+                        Spacer()
+                        Text(product.title)
                             .foregroundStyle(.black)
                             .font(.title3.bold())
                             .lineLimit(2)
                         
-                        Text(!product.productDescription.isEmpty ? product.productDescription : "")
-                            .font(.subheadline)
-                            .lineLimit(1)
+                        
+                        if product.productDescription != nil{
+                            Text(product.productDescription!)
+                                .font(.subheadline)
+                                .lineLimit(1)
+                        }
+                        else if product.generatedText != nil{
+                            Text(product.generatedText!)
+                                .font(.subheadline)
+                                .lineLimit(1)
+                        }
+                        
+                        Spacer()
+                        
+                        if product.productDescription == nil && ((product.productDescription?.isEmpty) != nil) && product.generatedText == nil && ((product.generatedText?.isEmpty) != nil) {
+                            Spacer()
+                        }
+                        
+                        
                     }
+                    .padding(.horizontal)
                     
-                    Spacer()
                     Spacer()
                     
                     if product.isExpired{
@@ -108,20 +105,49 @@ struct CardView: View {
                                 .foregroundStyle(product.isUsed ? .green : .black)
                         }
                     }
+                    
+                    Spacer()
                 }
-                .padding(.horizontal)
             }
+            .frame(height: 100)
+            .padding(.horizontal, 8)
         }
         .frame(height: 100)
         .padding(.horizontal, 8)
-        
     }
 }
-
 #Preview {
-    let newOFFAProduct = OFFAProduct(productName: "Milk", brands: "Pascual", imageURL: "https://images.openfoodfacts.org/images/products/841/012/875/0145/front_es.25.400.jpg", ingredientsText: "", nutriments: OFFANutriments(nutritionScore: 90), nutritionGrade: "a")
+    let spoonacularCredit = SpoonacularCredit(text: "openfoodfacts.org under (ODbL) v1.0", link: "https://opendatacommons.org/licenses/odbl/1-0/", image: "openfoodfacts.org under CC BY-SA 3.0 DEED", imageLink:  "https://creativecommons.org/licenses/by-sa/3.0/deed.en")
+    let groceryProduct = GroceryProduct(id: 9348958, title: "LECHE SIN LACTOSA", badges: [
+        "egg_free",
+        "peanut_free",
+        "primal",
+        "sulfite_free",
+        "nut_free",
+        "vegan",
+        "no_preservatives",
+        "soy_free",
+        "msg_free",
+        "no_artificial_colors",
+        "sugar_free",
+        "no_artificial_flavors",
+        "vegetarian",
+        "no_artificial_ingredients",
+        "no_additives",
+        "corn_free",
+        "dairy_free",
+        "paleo",
+        "gluten_free"
+    ], importantBadges:  [
+        "gluten_free"
+    ], spoonacularScore: 100.0, imageLink: "https://img.spoonacular.com/products/9348958-312x231.jpg", moreImageLinks: [
+        "https://img.spoonacular.com/products/9348958-90x90.jpg",
+        "https://img.spoonacular.com/products/9348958-312x231.jpg",
+        "https://img.spoonacular.com/products/9348958-636x393.jpg"
+    ], generatedText:  "LECHE SIN LACTOSA: This product is a tremendous fit if you like to buy products that are free of preservatives, vegetarian, vegan, and gluten-free. According to our research, this product contains no ingredients that you should avoid. This product has 2 ingredients (in our experience: the fewer ingredients, the better!)", description: nil, upc: "8410128750145", brand: nil, ingredientCount: 2, credits: spoonacularCredit)
     
-    let newItem = Item(barcode: "8410128750145", name: newOFFAProduct.productName, productDescription: "", expirationDate: Date.now.addingTimeInterval(86400), productImage: newOFFAProduct.imageURL)
+    let newCredit = Credit(text: spoonacularCredit.text, link: spoonacularCredit.link,  image: spoonacularCredit.image, imageLink: spoonacularCredit.imageLink,)
     
+    let newItem = Product(id: groceryProduct.id, barcode: groceryProduct.upc, title: groceryProduct.title, brand: groceryProduct.brand ?? "", importantBadges: groceryProduct.importantBadges, spoonacularScore: groceryProduct.spoonacularScore, productDescription: groceryProduct.description, imageLink: groceryProduct.imageLink, moreImageLinks: groceryProduct.moreImageLinks, generatedText: groceryProduct.generatedText, ingredientCount: groceryProduct.ingredientCount, credits: newCredit, expirationDate: Date.now.addingTimeInterval(86400*3))
     CardView(product: newItem)
 }

@@ -11,7 +11,7 @@ import SwiftData
 @Observable
 class CardViewViewModel{
     
-    func deleteProduct(modelContext : ModelContext, product : Item){
+    func deleteProduct(modelContext : ModelContext, product : Product){
         // Use normalized date for consistent comparison with GroupedProducts
         let targetDate = Calendar.current.startOfDay(for: product.expirationDate)
         let fetchDescriptor = FetchDescriptor<GroupedProducts>(predicate: #Predicate<GroupedProducts> { group in

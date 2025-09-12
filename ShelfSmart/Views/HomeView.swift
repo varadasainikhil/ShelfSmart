@@ -44,28 +44,9 @@ struct HomeView: View {
                             ScrollView{
                                 LazyVStack{
                                     ForEach(groups){group in
-                                        HStack{
-                                            Text(group.daysTillExpiry().message)
-                                                .padding(.horizontal, 8)
-                                            Spacer()
-                                        }
-                                        
-                                        ForEach(group.products ?? []){ product in
-                                            NavigationLink(destination: DetailProductView(item: product)) {
-                                                if group.products?.last == product {
-                                                    CardView(product: product)
-                                                        .padding(.bottom)
-                                                    
-                                                }
-                                                else {
-                                                    CardView(product: product)
-                                                }
-                                                
-                                            }
-                                        }
+                                        GroupView(group: group)
                                     }
                                 }
-                                
                             }
                             .scrollContentBackground(.hidden)
                         }
@@ -109,33 +90,30 @@ struct HomeView: View {
 #Preview {
     do {
         let config = ModelConfiguration(isStoredInMemoryOnly: true)
-        let container = try ModelContainer(for: GroupedProducts.self, configurations: config)
+        let container = try ModelContainer(for: GroupedProducts.self, Product.self, configurations: config)
         let context = container.mainContext
         
         // Add sample products
-        let today = Calendar.current.startOfDay(for: Date())
-        let threeDaysFromNow = Calendar.current.startOfDay(for: Calendar.current.date(byAdding: .day, value: 3, to: today) ?? today)
-        let fiveDaysFromNow = Calendar.current.startOfDay(for: Calendar.current.date(byAdding: .day, value: 5, to: today) ?? today)
-        let twoDaysAgo = Calendar.current.startOfDay(for: Calendar.current.date(byAdding: .day, value: -2, to: today) ?? today)
+        let threeDaysFromNow = Calendar.current.startOfDay(for: Calendar.current.date(byAdding: .day, value: 3, to: .now) ?? Date.now)
+        let fiveDaysFromNow = Calendar.current.startOfDay(for: Calendar.current.date(byAdding: .day, value: 5, to: .now) ?? Date.now)
+        let twoDaysAgo = Calendar.current.startOfDay(for: Calendar.current.date(byAdding: .day, value: -2, to: .now) ?? Date.now)
         
         // Use empty string to match what HomeView uses when no user is authenticated
         let sampleUserId = ""
         let sampleGroups = [
             GroupedProducts(expirationDate: threeDaysFromNow, products: [
-                Item(barcode: "123456789", name: "Milk", productDescription: "Organic whole milk", expirationDate: threeDaysFromNow),
-                Item(barcode: "987654321", name: "Bread", productDescription: "Whole wheat bread", expirationDate: threeDaysFromNow)
+                Product(id: 123456789, barcode: "123456789", title: "Milk", brand: "Organic Milk", expirationDate: threeDaysFromNow),
+                Product(id: 12345679, barcode: "12345679", title: "Bread", brand: "Whole Wheat Bread", expirationDate: threeDaysFromNow)
             ], userId: sampleUserId),
             GroupedProducts(expirationDate: fiveDaysFromNow, products: [
-                Item(barcode: "456789123", name: "Eggs", productDescription: "Free-range eggs", expirationDate: fiveDaysFromNow),
-                Item(barcode: "789123456", name: "Yogurt", productDescription: "Greek yogurt", expirationDate: fiveDaysFromNow)
+                Product(id: 12345689, barcode: "12345689", title: "Eggs", brand: "Free-range eggs", expirationDate: fiveDaysFromNow),
+                Product(id: 1234589, barcode: "1234589", title: "Yogurt", brand: "Greek Yogurt", expirationDate: fiveDaysFromNow)
             ], userId: sampleUserId),
             GroupedProducts(expirationDate: twoDaysAgo, products: [
-                Item(barcode: "987654322", name: "Bread", productDescription: "Whole wheat bread", expirationDate: twoDaysAgo),
-                Item(barcode: "456789124", name: "Eggs", productDescription: "Free-range eggs", expirationDate: twoDaysAgo),
-                Item(barcode: "789123457", name: "Yogurt", productDescription: "Greek yogurt", expirationDate: twoDaysAgo)
+                Product(id: 345689, barcode: "345689", title: "Honey", brand: "Organic Honey", expirationDate: twoDaysAgo),
+                Product(id: 45689, barcode: "45689", title: "Tortilla", brand: "Corn Tortilla", expirationDate: twoDaysAgo)
             ], userId: sampleUserId)
         ]
-        
         
         for group in sampleGroups {
             context.insert(group)
@@ -144,6 +122,6 @@ struct HomeView: View {
         return HomeView()
             .modelContainer(container)
     } catch {
-        return Text("Failed to create preview")
+        return Text("Preview Error: \(error.localizedDescription)")
     }
 }

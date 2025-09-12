@@ -23,7 +23,7 @@ struct AddProductView: View {
                     Button {
                         // search for the product
                         Task{
-                            try await viewModel.OFFASearchBarCode(barCode: viewModel.barcode)
+                            try await viewModel.searchProduct(modelContext: modelContext)
                         }
                         
                     } label: {
@@ -52,7 +52,6 @@ struct AddProductView: View {
                             .foregroundColor(.green)
                             .font(.caption)
                     }
-
                 }
                 
                 Section{
@@ -79,7 +78,7 @@ struct AddProductView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
                         // save the product and dismiss the sheet
-                        viewModel.createItemFromOFFA(modelContext: modelContext)
+                        
                         // Only dismiss if no error occurred
                         if viewModel.errorMessage == nil {
                             dismiss()

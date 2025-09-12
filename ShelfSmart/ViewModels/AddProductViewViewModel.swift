@@ -15,119 +15,12 @@ class AddProductViewViewModel {
     var name : String = ""
     var productDescription : String = ""
     var expirationDate : Date = Date.now.addingTimeInterval(86400)
-    var productImageLink : String?
     var isLoading : Bool = false
     var errorMessage : String?
     var searchSuccess : Bool = false
-    var nutritionGrade : String?
-    var nutritionScore : Int?
+    
     var isSearchButtonDisabled : Bool {
         return barcode.isEmpty || isLoading
-    }
-    
-    
-    func createItemFromBCLU(modelContext : ModelContext){
-        // Reset any previous error messages
-        errorMessage = nil
-        let newItem = Item(barcode: barcode, name: name, productDescription: productDescription, expirationDate: expirationDate, productImage: productImageLink)
-        
-        print("Created a new Item")
-        
-        // Find the userId of the user
-        guard let userId = Auth.auth().currentUser?.uid else {
-            errorMessage = "Could not find the userID of the user"
-            print("Could not find the userID of the user")
-            return
-        }
-        
-        do {
-            // Use normalized date for comparison
-            let normalizedDate = Calendar.current.startOfDay(for: newItem.expirationDate)
-            
-            // Use SwiftData predicate for more efficient querying
-            let predicate = #Predicate<GroupedProducts> { group in
-                group.expirationDate == normalizedDate &&
-                group.userId == userId
-            }
-            
-            let descriptor = FetchDescriptor<GroupedProducts>(predicate: predicate)
-            let existingGroups = try modelContext.fetch(descriptor)
-            
-            // Check if we found any existing groups for this date and the userID
-            if let existingGroup = existingGroups.first {
-                // Add to existing group
-                existingGroup.products?.append(newItem)
-                print("Found existing group for date, adding item to it")
-            } else {
-                
-                // Create new group
-                let newGroupedProducts = GroupedProducts(expirationDate: normalizedDate, products: [newItem], userId : userId)
-                
-                modelContext.insert(newGroupedProducts)
-                print("Created new group for date")
-            }
-            
-            // Single save operation
-            try modelContext.save()
-            print("Successfully saved item to database")
-            
-        } catch {
-            print("Error creating item: \(error.localizedDescription)")
-            errorMessage = "Failed to save product. Please try again."
-        }
-    }
-    
-    func createItemFromOFFA(modelContext : ModelContext){
-        // Reset any previous error messages
-        errorMessage = nil
-        let newItem = Item(barcode: barcode, name: name, productDescription: productDescription, expirationDate: expirationDate, productImage: productImageLink)
-        newItem.nutritionGrade = nutritionGrade
-        newItem.nutritionScore = nutritionScore
-        
-        print("Created a new Item")
-        
-        // Find the userId of the user
-        guard let userId = Auth.auth().currentUser?.uid else {
-            errorMessage = "Could not find the userID of the user"
-            print("Could not find the userID of the user")
-            return
-        }
-        
-        do {
-            // Use normalized date for comparison
-            let normalizedDate = Calendar.current.startOfDay(for: newItem.expirationDate)
-            
-            // Use SwiftData predicate for more efficient querying
-            let predicate = #Predicate<GroupedProducts> { group in
-                group.expirationDate == normalizedDate &&
-                group.userId == userId
-            }
-            
-            let descriptor = FetchDescriptor<GroupedProducts>(predicate: predicate)
-            let existingGroups = try modelContext.fetch(descriptor)
-            
-            // Check if we found any existing groups for this date and the userID
-            if let existingGroup = existingGroups.first {
-                // Add to existing group
-                existingGroup.products?.append(newItem)
-                print("Found existing group for date, adding item to it")
-            } else {
-                
-                // Create new group
-                let newGroupedProducts = GroupedProducts(expirationDate: normalizedDate, products: [newItem], userId : userId)
-                
-                modelContext.insert(newGroupedProducts)
-                print("Created new group for date")
-            }
-            
-            // Single save operation
-            try modelContext.save()
-            print("Successfully saved item to database")
-            
-        } catch {
-            print("Error creating item: \(error.localizedDescription)")
-            errorMessage = "Failed to save product. Please try again."
-        }
     }
     
     func getAPIKey() -> String? {
@@ -140,8 +33,7 @@ class AddProductViewViewModel {
         return apiKey
     }
     
-    func BCLUSearchBarCode(barCode: String) async throws {
-        
+    func searchProduct(modelContext: ModelContext) async throws {
         // Reset state
         await MainActor.run {
             isLoading = true
@@ -149,7 +41,7 @@ class AddProductViewViewModel {
             searchSuccess = false
         }
         
-        print("Searching for barcode: \(barCode)")
+        print("Searching for barcode: \(barcode)")
         let apiKey = getAPIKey()
         
         // Validate API key
@@ -164,15 +56,13 @@ class AddProductViewViewModel {
         
         print("✅ API key retrieved successfully")
         
-        guard var urlComponents = URLComponents(string: "https://api.barcodelookup.com/v3/products") else {
+        guard var urlComponents = URLComponents(string:"https://api.spoonacular.com/food/products/upc/\(barcode)") else {
             print("❌ Error: Failed to create URL components")
             throw URLError(.badURL)
         }
         
-        let queryItems : [URLQueryItem] = [
-            URLQueryItem(name: "barcode", value: barCode),
-            URLQueryItem(name: "formatted", value: "y"),
-            URLQueryItem(name: "key", value: validApiKey)
+        let queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "apiKey", value: apiKey)
         ]
         
         urlComponents.queryItems = queryItems
@@ -195,20 +85,24 @@ class AddProductViewViewModel {
             print("📦 Received data size: \(data.count) bytes")
             
             let decoder = JSONDecoder()
-            let apiResponse = try decoder.decode(BCLUResponse.self, from: data)
+            let apiResponse = try decoder.decode(GroceryProduct.self, from: data)
             
             print("✅ Successfully decoded response")
-            print("📊 Number of products found: \(apiResponse.products.count)")
+            print("🖼️ API Response imageLink: \(String(describing: apiResponse.imageLink))")
+            print("🖼️ API Response moreImageLinks: \(String(describing: apiResponse.moreImageLinks))")
             
-            if let firstProduct = apiResponse.products.first {
-                print("🏷️ First product title: \(firstProduct.title)")
+            if apiResponse.upc == barcode {
+                // Update UI with found product data
                 await MainActor.run {
-                    self.name = firstProduct.title
-                    self.productDescription = firstProduct.description
-                    self.productImageLink = firstProduct.images.first
-                    self.isLoading = false
+                    self.name = apiResponse.title
+                    self.productDescription = apiResponse.description ?? ""
                     self.searchSuccess = true
-                    self.errorMessage = nil
+                    self.isLoading = false
+                }
+                
+                // Create and save the product
+                await MainActor.run {
+                    self.createProductFromAPIResponse(apiResponse: apiResponse, modelContext: modelContext)
                 }
                 
             } else {
@@ -245,96 +139,60 @@ class AddProductViewViewModel {
         }
     }
     
-    func OFFASearchBarCode(barCode: String) async throws {
+    func createProductFromAPIResponse(apiResponse : GroceryProduct, modelContext : ModelContext ){
+        // Reset any previous error messages
+        errorMessage = nil
         
-        // Reset state
-        await MainActor.run {
-            isLoading = true
-            errorMessage = nil
-            searchSuccess = false
+        let credit = Credit(text: apiResponse.credits.text, link: apiResponse.credits.link ,image: apiResponse.credits.image, imageLink: apiResponse.credits.imageLink)
+        
+        let product = Product(id: apiResponse.id, barcode : apiResponse.upc, title: apiResponse.title, brand: apiResponse.brand ?? "", badges: apiResponse.badges, importantBadges: apiResponse.importantBadges, spoonacularScore: apiResponse.spoonacularScore, productDescription: apiResponse.description, imageLink: apiResponse.imageLink, moreImageLinks: apiResponse.moreImageLinks, generatedText: apiResponse.generatedText, ingredientCount: apiResponse.ingredientCount, credits: credit,  expirationDate: expirationDate)
+        
+        print("Created a new Item")
+        print("🖼️ Product imageLink set to: \(String(describing: product.imageLink))")
+        
+        // Find the userId of the user
+        guard let userId = Auth.auth().currentUser?.uid else {
+            errorMessage = "Could not find the userID of the user"
+            print("Could not find the userID of the user")
+            return
         }
-        
-        print("Searching for barcode: \(barCode)")
-        
-        guard var urlComponents = URLComponents(string: "https://world.openfoodfacts.org/api/v2/product/\(barCode)") else {
-            print("❌ Error: Failed to create URL components")
-            throw URLError(.badURL)
-        }
-        
-        let queryItems : [URLQueryItem] = [
-            URLQueryItem(name: "fields", value: "product_name,brands,nutriments,nutrition_grades,ingredients_text,image_url")
-        ]
-        
-        urlComponents.queryItems = queryItems
-        
-        guard let url = urlComponents.url else {
-            print("❌ Error: Failed to create final URL")
-            throw URLError(.badURL)
-        }
-        
-        print("🌐 Making request to: \(url.absoluteString)")
         
         do {
-            let (data, response) = try await URLSession.shared.data(from: url)
+            // Use normalized date for comparison
+            let normalizedDate = Calendar.current.startOfDay(for: product.expirationDate)
             
-            // Log response details
-            if let httpResponse = response as? HTTPURLResponse {
-                print("📡 Response status code: \(httpResponse.statusCode)")
+            // Use SwiftData predicate for more efficient querying
+            let predicate = #Predicate<GroupedProducts> { group in
+                group.expirationDate == normalizedDate &&
+                group.userId == userId
             }
             
-            print("📦 Received data size: \(data.count) bytes")
+            let descriptor = FetchDescriptor<GroupedProducts>(predicate: predicate)
+            let existingGroups = try modelContext.fetch(descriptor)
             
-            let decoder = JSONDecoder()
-            let apiResponse = try decoder.decode(OFFAResponse.self, from: data)
-            
-            print("✅ Successfully decoded response")
-            
-            if apiResponse.status == 1 {
-                let product = apiResponse.product
-                print("🏷️ First product name: \(product.productName)")
-                await MainActor.run {
-                    self.name = product.brands.capitalized + " " + product.productName.capitalized
-                    self.productDescription = ""
-                    self.productImageLink = product.imageURL
-                    self.isLoading = false
-                    self.searchSuccess = true
-                    self.errorMessage = nil
-                    self.nutritionGrade = product.nutritionGrade
-                    self.nutritionScore = product.nutriments.nutritionScore
-                    
-                }
+            // Check if we found any existing groups for this date and the userID
+            if let existingGroup = existingGroups.first {
+                // Add to existing group
+                existingGroup.products?.append(product)
+                print("Found existing group for date, adding item to it")
             } else {
-                print("⚠️ No products found in response")
-                await MainActor.run {
-                    self.isLoading = false
-                    self.errorMessage = "No products found for this barcode"
-                }
+                
+                // Create new group
+                let newGroupedProducts = GroupedProducts(expirationDate: normalizedDate, products: [product], userId : userId)
+                
+                modelContext.insert(newGroupedProducts)
+                print("Created new group for date")
             }
             
-        } catch let decodingError as DecodingError {
-            print("❌ JSON Decoding Error: \(decodingError)")
-            print("❌ Decoding Error Details: \(decodingError.localizedDescription)")
-            await MainActor.run {
-                self.isLoading = false
-                self.errorMessage = "Failed to parse product data"
-            }
-        } catch let urlError as URLError {
-            print("❌ Network Error: \(urlError)")
-            print("❌ Network Error Code: \(urlError.code.rawValue)")
-            print("❌ Network Error Description: \(urlError.localizedDescription)")
-            await MainActor.run {
-                self.isLoading = false
-                self.errorMessage = "Network error: \(urlError.localizedDescription)"
-            }
+            // Single save operation
+            try modelContext.save()
+            print("Successfully saved item to database")
+            
         } catch {
-            print("❌ Unknown Error: \(error)")
-            print("❌ Error Type: \(type(of: error))")
-            print("❌ Error Description: \(error.localizedDescription)")
-            await MainActor.run {
-                self.isLoading = false
-                self.errorMessage = "Unexpected error: \(error.localizedDescription)"
-            }
+            print("Error creating item: \(error.localizedDescription)")
+            errorMessage = "Failed to save product. Please try again."
         }
+        
     }
     
 }
