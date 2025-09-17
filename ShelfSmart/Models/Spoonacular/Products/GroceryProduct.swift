@@ -13,12 +13,21 @@ struct GroceryProduct : Codable{
     var badges : [String]?
     var importantBadges : [String]?
     var spoonacularScore : Double?
-    var imageLink : String?
-    var moreImageLinks : [String]?
+    var image : String?
+    var images : [String]?
     var generatedText : String?
     var description : String?
     var upc : String
     var brand : String?
     var ingredientCount : Int?
     var credits : SpoonacularCredit
+    
+    // Computed properties for backward compatibility
+    var imageLink: String? {
+        return image
+    }
+    
+    var moreImageLinks: [String]? {
+        return images
+    }
 }

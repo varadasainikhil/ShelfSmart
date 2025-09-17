@@ -15,7 +15,9 @@ struct AuthenticatedView: View {
             Tab("Home", systemImage: "house.fill") {
                 HomeView()
             }
-            
+            Tab("Random Recipe", systemImage: "shuffle") {
+                MealTypesView()
+            }
             Tab("Profile", systemImage: "person.fill") {
                 ProfileView()
             }

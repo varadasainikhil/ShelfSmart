@@ -26,6 +26,7 @@ struct CardView: View {
                 HStack{
                     VStack{
                         if let imageLink = product.imageLink, !imageLink.isEmpty{
+                            let _ = print("🖼️ CardView - Attempting to load image: \(imageLink)")
                             AsyncImage(url: URL(string: imageLink)){phase in
                                 if let image = phase.image{
                                     image
@@ -33,6 +34,7 @@ struct CardView: View {
                                         .scaledToFill()
                                 }
                                 else  if phase.error != nil {
+                                    let _ = print("🚨 CardView - Image loading error: \(String(describing: phase.error))")
                                     Text("There was an error loading the image")
                                 }
                                 else {
@@ -41,6 +43,7 @@ struct CardView: View {
                             }
                         }
                         else {
+                            let _ = print("🖼️ CardView - No image URL, showing placeholder. ImageLink: \(String(describing: product.imageLink))")
                             Image("placeholder")
                                 .resizable()
                                 .scaledToFill()
@@ -140,13 +143,13 @@ struct CardView: View {
         "gluten_free"
     ], importantBadges:  [
         "gluten_free"
-    ], spoonacularScore: 100.0, imageLink: "https://img.spoonacular.com/products/9348958-312x231.jpg", moreImageLinks: [
+    ], spoonacularScore: 100.0, image: "https://img.spoonacular.com/products/9348958-312x231.jpg", images: [
         "https://img.spoonacular.com/products/9348958-90x90.jpg",
         "https://img.spoonacular.com/products/9348958-312x231.jpg",
         "https://img.spoonacular.com/products/9348958-636x393.jpg"
     ], generatedText:  "LECHE SIN LACTOSA: This product is a tremendous fit if you like to buy products that are free of preservatives, vegetarian, vegan, and gluten-free. According to our research, this product contains no ingredients that you should avoid. This product has 2 ingredients (in our experience: the fewer ingredients, the better!)", description: nil, upc: "8410128750145", brand: nil, ingredientCount: 2, credits: spoonacularCredit)
     
-    let newCredit = Credit(text: spoonacularCredit.text, link: spoonacularCredit.link,  image: spoonacularCredit.image, imageLink: spoonacularCredit.imageLink,)
+    let newCredit = Credit(text: spoonacularCredit.text, link: spoonacularCredit.link,  image: spoonacularCredit.image, imageLink: spoonacularCredit.imageLink)
     
     let newItem = Product(id: groceryProduct.id, barcode: groceryProduct.upc, title: groceryProduct.title, brand: groceryProduct.brand ?? "", importantBadges: groceryProduct.importantBadges, spoonacularScore: groceryProduct.spoonacularScore, productDescription: groceryProduct.description, imageLink: groceryProduct.imageLink, moreImageLinks: groceryProduct.moreImageLinks, generatedText: groceryProduct.generatedText, ingredientCount: groceryProduct.ingredientCount, credits: newCredit, expirationDate: Date.now.addingTimeInterval(86400*3))
     CardView(product: newItem)

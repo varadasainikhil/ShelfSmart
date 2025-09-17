@@ -12,99 +12,156 @@ struct DetailProductView: View {
     @Environment(\.modelContext) private var modelContext
     var product : Product
     var body: some View {
-        VStack{
-            ZStack{
-                if let imageLink = product.imageLink, !imageLink.isEmpty, let url = URL(string: imageLink) {
-                    AsyncImage(url: url){phase in
-                        switch phase {
-                        case .success(let image):
-                            image
-                                .resizable()
-                                .scaledToFill()
-                        case .failure(let error):
-                            Text("There was an issue loading the image")
-                        case .empty:
-                            ProgressView()
-                        @unknown default:
-                            ProgressView()
-                        }
-                    }
-                }
-                else{
-                    Image("placeholder")
-                        .resizable()
-                        .scaledToFill()
-                }
+        ZStack{
+            // Background Color of the screen
+            Rectangle()
+                .fill(product.borderColor.opacity(0.4))
+                .ignoresSafeArea()
+            
+            ScrollView {
                 VStack{
-                    Spacer()
-                    
-                    HStack{
-                        Spacer()
-                        
-                        Button {
-                            // like the item
-                            withAnimation {
-                                product.LikeProduct()
-                                try? modelContext.save()
+                    ZStack{
+                        if let imageLink = product.imageLink, !imageLink.isEmpty {
+                            AsyncImage(url: URL(string: imageLink)){phase in
+                                
+                                if let image = phase.image{
+                                    image
+                                        .resizable()
+                                        .scaledToFit()
+                                        .frame(width: 300, height: 300)
+                                        .clipped()
+                                }
+                                else if phase.error != nil{
+                                    Text("There was an issue loading the image")
+                                }
+                                else {
+                                    ProgressView()
+                                        .frame(width: 300, height: 300)
+                                        .clipped()
+                                }
                             }
-                        } label: {
-                            Image(systemName: product.isLiked ? "heart.fill" : "heart")
-                                .font(.title)
-                                .foregroundStyle(.red)
+                        }
+                        else{
+                            Image("placeholder")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 300, height: 300)
+                                .clipped()
+                        }
+                        
+                        VStack{
+                            
+                            Spacer()
+                            
+                            HStack{
+                                
+                                Spacer()
+                                
+                                Button {
+                                    // Like the item and store it
+                                    withAnimation {
+                                        product.LikeProduct()
+                                        try? modelContext.save()
+                                    }
+                                    
+                                } label: {
+                                    if product.isLiked{
+                                        Image(systemName: "heart.circle.fill")
+                                            .symbolRenderingMode(.palette) // Enable the palette mode
+                                            .foregroundStyle(.white, .red) // Assign colors to the layers
+                                            .font(.system(size: 50))
+                                    }
+                                    else {
+                                        ZStack{
+                                            Image(systemName: "circle.fill")
+                                                .foregroundStyle(.white)
+                                                .font(.system(size: 50, weight: .light))
+                                            
+                                            Image(systemName: "circle")
+                                                .foregroundStyle(.red)
+                                                .font(.system(size: 50, weight: .light))
+                                            
+                                            Image(systemName: "heart")
+                                                .foregroundStyle(.red)
+                                                .font(.system(size: 25))
+                                        }
+                                    }
+                                    
+                                }
+                                .padding(.trailing)
+                                .padding(.bottom)
+                            }
+                            
                         }
                     }
+                    .frame(width: 300, height: 300)
+                    
+                    Text(product.title)
+                        .font(.title.bold())
+                    
+                    
+                    ZStack{
+                        RoundedRectangle(cornerRadius: 12)
+                            .foregroundStyle(product.borderColor.opacity(0.4))
+                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
+                        
+                        HStack{
+                            
+                            Spacer()
+                            
+                            VStack(alignment: .center){
+                                Text("Expires on")
+                                Text("\(product.expirationDate.formatted(date: .abbreviated, time: .omitted))")
+                            }
+                            Spacer()
+                            
+                            Spacer()
+                            
+                            VStack(alignment: .center){
+                                if product.spoonacularScore != nil {
+                                    Text(String(format: "%.2f", product.spoonacularScore!))
+                                }
+                            }
+                            Spacer()
+                        }
+                    }
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 70)
+                    .padding(.horizontal)
+                    
+                    VStack{
+                        if product.productDescription != nil {
+                            Text(product.productDescription!)
+                        }
+                        else if product.generatedText != nil {
+                            Text(product.generatedText!)
+                        }
+                    }
+                    .padding()
+                    
+                    VStack(alignment: .leading){
+                        HStack{
+                            Text("Recipes Using this Product")
+                                .font(.title2.bold())
+                            
+                            Spacer()
+                        }
+                    }
+                    .padding()
+                    
+                    Spacer()
                 }
             }
-            .frame(width: 200, height: 200)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
-
-            Text(product.title)
-            
-            if product.productDescription != nil {
-                Text(product.productDescription!)
-                    .font(.title3)
-            }
-            else if product.generatedText != nil {
-                Text(product.generatedText!)
-                    .font(.title3)
-            }
-            
-            Text("Added on : \(product.dateAdded.formatted(date: .abbreviated, time: .omitted))")
         }
     }
 }
 
+
 #Preview {
     let spoonacularCredit = SpoonacularCredit(text: "openfoodfacts.org under (ODbL) v1.0", link: "https://opendatacommons.org/licenses/odbl/1-0/", image: "openfoodfacts.org under CC BY-SA 3.0 DEED", imageLink:  "https://creativecommons.org/licenses/by-sa/3.0/deed.en")
-    let groceryProduct = GroceryProduct(id: 9348958, title: "LECHE SIN LACTOSA", badges: [
-        "egg_free",
-        "peanut_free",
-        "primal",
-        "sulfite_free",
-        "nut_free",
-        "vegan",
-        "no_preservatives",
-        "soy_free",
-        "msg_free",
-        "no_artificial_colors",
-        "sugar_free",
-        "no_artificial_flavors",
-        "vegetarian",
-        "no_artificial_ingredients",
-        "no_additives",
-        "corn_free",
-        "dairy_free",
-        "paleo",
-        "gluten_free"
-    ], importantBadges:  [
-        "gluten_free"
-    ], spoonacularScore: 100.0, imageLink: "https://img.spoonacular.com/products/9348958-312x231.jpg", moreImageLinks: [
-        "https://img.spoonacular.com/products/9348958-90x90.jpg",
-        "https://img.spoonacular.com/products/9348958-312x231.jpg",
-        "https://img.spoonacular.com/products/9348958-636x393.jpg"
-    ], generatedText:  "LECHE SIN LACTOSA: This product is a tremendous fit if you like to buy products that are free of preservatives, vegetarian, vegan, and gluten-free. According to our research, this product contains no ingredients that you should avoid. This product has 2 ingredients (in our experience: the fewer ingredients, the better!)", description: nil, upc: "8410128750145", brand: nil, ingredientCount: 2, credits: spoonacularCredit)
+    let groceryProduct = GroceryProduct(id: 9348958, title: "LECHE SIN LACTOSA", upc: "8410128750145", credits: spoonacularCredit)
     
-    let newCredit = Credit(text: spoonacularCredit.text, link: spoonacularCredit.link,  image: spoonacularCredit.image, imageLink: spoonacularCredit.imageLink,)
+    let newCredit = Credit(text: spoonacularCredit.text, link: spoonacularCredit.link,  image: spoonacularCredit.image, imageLink: spoonacularCredit.imageLink)
     
     let newProduct = Product(id: groceryProduct.id, barcode: groceryProduct.upc, title: groceryProduct.title, brand: groceryProduct.brand ?? "", importantBadges: groceryProduct.importantBadges, spoonacularScore: groceryProduct.spoonacularScore, productDescription: groceryProduct.description, imageLink: groceryProduct.imageLink, moreImageLinks: groceryProduct.moreImageLinks, generatedText: groceryProduct.generatedText, ingredientCount: groceryProduct.ingredientCount, credits: newCredit, expirationDate: Date.now.addingTimeInterval(86400*3))
     DetailProductView(product: newProduct)
