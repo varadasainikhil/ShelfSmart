@@ -29,7 +29,7 @@ class EntryViewViewModel{
         }
     }
     
-    deinit {
+    deinit {    
         // Ensure cleanup happens even if stopHandler() isn't called
         stopHandler()
     }

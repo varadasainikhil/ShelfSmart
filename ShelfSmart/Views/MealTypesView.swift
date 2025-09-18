@@ -11,65 +11,96 @@ struct MealTypesView: View {
     @Environment(\.modelContext) var modelContext
     @State var viewModel = RandomRecipeViewModel()
     @State private var navigateToRandomRecipe = false
-    var columns = [GridItem(.flexible()),GridItem(.flexible()), GridItem(.flexible())]
+    @State private var selectedMealTypes = Set<String>()
+    
+    // Adaptive grid with better spacing
+    private let columns = [
+        GridItem(.adaptive(minimum: 100, maximum: 120), spacing: 16)
+    ]
+    
     var body: some View {
-        NavigationStack{
-            VStack(alignment: .leading, spacing: 16) {
-                Text("Meal Type")
-                    .font(.largeTitle.bold())
-                    .padding(.leading, 10)
+        NavigationStack {
+            VStack(spacing: 0) {
+                // Header Section
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Choose Your")
+                                .font(.title2)
+                                .foregroundStyle(.secondary)
+                            Text("Meal Types")
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.primary)
+                        }
+                        Spacer()
+                        
+                        // Selection counter
+                        if !viewModel.selectedMealTypes.isEmpty {
+                            Text("\(viewModel.selectedMealTypes.count) selected")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.green)
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
+                    
+                    // Subtitle
+                    Text("Select the types of meals you're interested in")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 20)
+                }
                 
-                ScrollView{
-                    LazyVGrid(columns: columns) {
-                        ForEach(MealType.allCases, id: \.self){ mealType in
-                            VStack{
-                                ZStack{
-                                    Image(mealType.apiValue)
-                                        .resizable()
-                                        .scaledToFill()
-                                        .frame(width: 120, height: 120)
-                                        .clipShape(RoundedRectangle(cornerRadius: 12))
-                                    
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .strokeBorder(lineWidth: viewModel.includeTags.contains(where: {$0 == mealType.apiValue}) ? 4 : 2 )
-                                        .foregroundStyle(viewModel.includeTags.contains(where: {$0 == mealType.apiValue}) ? .green : .black)
-                                    
+                // Meal Types Grid
+                ScrollView {
+                    LazyVGrid(columns: columns, spacing: 20) {
+                        ForEach(MealType.allCases, id: \.self) { mealType in
+                            MealTypeCard(
+                                mealType: mealType,
+                                isSelected: viewModel.selectedMealTypes.contains(mealType.apiValue)
+                            ) {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    if viewModel.selectedMealTypes.contains(mealType.apiValue) {
+                                        viewModel.removeMealType(mealType: mealType)
+                                    } else {
+                                        viewModel.addMealType(mealType: mealType)
+                                    }
                                 }
                                 
-                                Text(mealType.displayName)
-                                    .foregroundStyle(viewModel.includeTags.contains(where: {$0 == mealType.apiValue}) ? .green : .black)
-                                
-                            }
-                            .frame(width: 120, height: 130)
-                            .padding(.bottom)
-                            .onTapGesture {
-                                if viewModel.includeTags.contains(where: {$0 == mealType.apiValue}){
-                                    viewModel.removeMealType(mealType: mealType)
-                                }
-                                else {
-                                    viewModel.addMealType(mealType: mealType)
-                                }
+                                // Haptic feedback
+                                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                                impactFeedback.impactOccurred()
                             }
                         }
                     }
-                    .padding(10)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
+                    .padding(.bottom, 100) // Extra space for bottom buttons
                 }
                 
-                HStack{
-                    Button(action: {
-                        Task {
-                            // Call the API first, then navigate
-                            await viewModel.completelyRandomRecipe()
-                            // Navigate only after API call completes (success or failure)
-                            navigateToRandomRecipe = true
-                        }
-                    }) {
-                        ZStack{
-                            RoundedRectangle(cornerRadius: 12)
-                                .foregroundStyle(.green)
-                                .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
-                            
-                            VStack{
+                Spacer()
+            }
+            .overlay(alignment: .bottom) {
+                // Bottom Action Buttons
+                VStack(spacing: 12) {
+                    HStack(spacing: 12) {
+                        // Surprise Me Button
+                        Button(action: {
+                            Task {
+                                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                                impactFeedback.impactOccurred()
+                                
+                                await viewModel.completelyRandomRecipe()
+                                navigateToRandomRecipe = true
+                            }
+                        }) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .foregroundStyle(.green)
+                                
                                 if viewModel.isLoading {
                                     HStack {
                                         ProgressView()
@@ -80,47 +111,132 @@ struct MealTypesView: View {
                                             .foregroundStyle(.white)
                                     }
                                 } else {
-                                    Text("Surprise Me!")
-                                        .foregroundStyle(.white)
+                                    HStack {
+                                        Image(systemName: "sparkles")
+                                        Text("Surprise Me!")
+                                    }
+                                    .foregroundStyle(.white)
                                 }
                             }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .shadow(radius: 5)
                         }
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .shadow(radius: 5)
-                    }
-                    .disabled(viewModel.isLoading)
-                    .padding(.trailing,3)
-                    .navigationDestination(isPresented: $navigateToRandomRecipe) {
-                        RandomRecipeView(viewModel: viewModel)
-                    }
-                    
-                    
-                    NavigationLink(destination: CuisinesView()) {
-                        ZStack{
-                            RoundedRectangle(cornerRadius: 12)
-                                .foregroundStyle(.green)
-                                .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
-                            
-                            VStack{
-                                Text("Next")
+                        .disabled(viewModel.isLoading)
+                        .padding(.trailing, 3)
+                        
+                        // Next Button
+                        NavigationLink(destination: CuisinesView(viewModel: viewModel)) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .foregroundStyle(.green)
+                                
+                                HStack {
+                                    Text("Next")
+                                    Image(systemName: "arrow.right")
+                                }
+                                .foregroundStyle(.white)
                             }
-                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .shadow(radius: 5)
                         }
-                        
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .shadow(radius: 5)
-                        
+                        .padding(.leading, 3)
                     }
-                    .padding(.leading, 3)
-                    
                 }
-                .padding()
+                .padding(.horizontal, 20)
+                .padding(.bottom, 34)
+                .background(
+                    ZStack {
+                        // Slight blur at the top
+                        Rectangle()
+                            .fill(.regularMaterial)
+                            .mask(
+                                LinearGradient(
+                                    colors: [.black.opacity(0.3), .clear],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                        
+                        // Solid color gradient (white/black based on color scheme)
+                        Rectangle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [.clear, Color(.systemBackground)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    }
+                    .ignoresSafeArea(.container, edges: .bottom)
+                )
             }
-            .padding(.top)
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Meal Types")
+            .navigationDestination(isPresented: $navigateToRandomRecipe) {
+                RandomRecipeView(viewModel: viewModel)
+            }
         }
-        
+    }
+}
+
+// MARK: - Meal Type Card Component
+struct MealTypeCard: View {
+    let mealType: MealType
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 12) {
+                // Image Container
+                ZStack {
+                    // Background image
+                    Image(mealType.apiValue)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 110, height: 110)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                    
+                    
+                    // Selection indicator
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(.green, lineWidth: 3)
+                            .frame(width: 110, height: 110)
+                        
+                        // Checkmark
+                        VStack {
+                            HStack {
+                                Spacer()
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .background(
+                                        Circle()
+                                            .fill(.green)
+                                            .frame(width: 24, height: 24)
+                                    )
+                                    .offset(x: 6, y: -6)
+                            }
+                            Spacer()
+                        }
+                        .frame(width: 110, height: 110)
+                    }
+                }
+                
+                // Label
+                Text(mealType.displayName)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(isSelected ? .green : .primary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+            }
+        }
+        .buttonStyle(PlainButtonStyle())
+        .scaleEffect(isSelected ? 1.05 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
     }
 }
 

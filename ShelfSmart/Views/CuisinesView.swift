@@ -8,64 +8,197 @@
 import SwiftUI
 
 struct CuisinesView: View {
-    @State var viewModel = RandomRecipeViewModel()
-    var columns = [ GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())]
+    @State var viewModel: RandomRecipeViewModel
+    @State private var navigateToIntolerances = false
+    
+    // Adaptive grid with better spacing
+    private let columns = [
+        GridItem(.adaptive(minimum: 100, maximum: 120), spacing: 16)
+    ]
     
     var body: some View {
-        NavigationStack{
-            
-            ScrollView{
-                LazyVGrid(columns: columns) {
-                    ForEach(Cuisine.allCases, id: \.self) { cuisine in
-                        ZStack{
-                            RoundedRectangle(cornerRadius: 12)
-                                .strokeBorder(lineWidth: 2)
-                                .foregroundStyle(viewModel.includeTags.contains(where: {$0 == cuisine.apiValue}) ? .green : .black)
-                            
-                            VStack(alignment: .center){
-                                Text(cuisine.flagEmoji)
-                                    .font(.title)
-                                
-                                Text(cuisine.displayName)
-                                    .font(.title3)
-                            }
+        NavigationStack {
+            VStack(spacing: 0) {
+                // Header Section
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Select Your")
+                                .font(.title2)
+                                .foregroundStyle(.secondary)
+                            Text("Cuisines")
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.primary)
                         }
-                        .frame(width: 120, height: 120)
-                        .padding(.bottom, 8)
-                        .onTapGesture {
-                            if viewModel.includeTags.contains(where: {$0 == cuisine.apiValue}){
-                                viewModel.removeCuisine(cuisine: cuisine)
-                            }
-                            else {
-                                viewModel.addCuisine(cuisine: cuisine)
-                                
-                            }
+                        Spacer()
+                        
+                        // Selection counter
+                        if !viewModel.selectedCuisines.isEmpty {
+                            Text("\(viewModel.selectedCuisines.count) selected")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.green)
                         }
                     }
-                }
-            }
-            NavigationLink(destination: IntolerancesView()) {
-                ZStack{
-                    RoundedRectangle(cornerRadius: 12)
-                        .foregroundStyle(.green)
-                        .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
                     
-                    VStack{
-                        Text("Next")
-                    }
-                    .foregroundStyle(.white)
+                    // Subtitle
+                    Text("Choose cuisines that match your taste preferences")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 20)
                 }
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .shadow(radius: 5)
-                .padding(.horizontal)
                 
+                // Cuisines Grid
+                ScrollView {
+                    LazyVGrid(columns: columns, spacing: 20) {
+                        ForEach(Cuisine.allCases, id: \.self) { cuisine in
+                            CuisineCard(
+                                cuisine: cuisine,
+                                isSelected: viewModel.selectedCuisines.contains(cuisine.apiValue)
+                            ) {
+                                withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                                    if viewModel.selectedCuisines.contains(cuisine.apiValue) {
+                                        viewModel.removeCuisine(cuisine: cuisine)
+                                    } else {
+                                        viewModel.addCuisine(cuisine: cuisine)
+                                    }
+                                }
+                                
+                                // Haptic feedback
+                                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                                impactFeedback.impactOccurred()
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
+                    .padding(.bottom, 100) // Extra space for bottom buttons
+                }
+                
+                Spacer()
+            }
+            .overlay(alignment: .bottom) {
+                // Bottom Action Button
+                VStack(spacing: 12) {
+                    HStack(spacing: 12) {
+                        // Next Button
+                        NavigationLink(destination: IntolerancesView(viewModel: viewModel)) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .foregroundStyle(.green)
+                                
+                                HStack {
+                                    Text("Next")
+                                    Image(systemName: "arrow.right")
+                                }
+                                .foregroundStyle(.white)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .shadow(radius: 5)
+                        }
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 34)
+                .background(
+                    ZStack {
+                        // Slight blur at the top
+                        Rectangle()
+                            .fill(.regularMaterial)
+                            .mask(
+                                LinearGradient(
+                                    colors: [.black.opacity(0.3), .clear],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                        
+                        // Solid color gradient (white/black based on color scheme)
+                        Rectangle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [.clear, Color(.systemBackground)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                    }
+                    .ignoresSafeArea(.container, edges: .bottom)
+                )
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .navigationTitle("Cuisines")
+        }
+    }
+}
+
+// MARK: - Cuisine Card Component
+struct CuisineCard: View {
+    let cuisine: Cuisine
+    let isSelected: Bool
+    let action: () -> Void
+    
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 12) {
+                // Emoji and Content Container
+                ZStack {
+                    // Background
+                    RoundedRectangle(cornerRadius: 16)
+                        .fill(Color(.systemGray6))
+                        .frame(width: 110, height: 110)
+                    
+                    // Content
+                    VStack(spacing: 8) {
+                        Text(cuisine.flagEmoji)
+                            .font(.system(size: 32))
+                        
+                        Text(cuisine.displayName)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(.primary)
+                            .multilineTextAlignment(.center)
+                            .lineLimit(2)
+                    }
+                    .frame(width: 110, height: 110)
+                    
+                    // Selection indicator
+                    if isSelected {
+                        RoundedRectangle(cornerRadius: 16)
+                            .stroke(.green, lineWidth: 3)
+                            .frame(width: 110, height: 110)
+                        
+                        // Checkmark
+                        VStack {
+                            HStack {
+                                Spacer()
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 20, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .background(
+                                        Circle()
+                                            .fill(.green)
+                                            .frame(width: 24, height: 24)
+                                    )
+                                    .offset(x: 6, y: -6)
+                            }
+                            Spacer()
+                        }
+                        .frame(width: 110, height: 110)
+                    }
+                }
             }
         }
-        
+        .buttonStyle(PlainButtonStyle())
+        .scaleEffect(isSelected ? 1.05 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
     }
 }
 
 #Preview {
-    CuisinesView()
+    CuisinesView(viewModel: RandomRecipeViewModel())
 }
