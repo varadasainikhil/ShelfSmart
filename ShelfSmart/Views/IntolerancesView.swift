@@ -153,7 +153,6 @@ struct IntolerancesView: View {
                 )
             }
             .navigationBarTitleDisplayMode(.inline)
-            .navigationTitle("Allergies")
             .navigationDestination(isPresented: $navigateToRandomRecipe) {
                 CustomRandomRecipeView(viewModel: viewModel)
             }

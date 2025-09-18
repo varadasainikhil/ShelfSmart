@@ -790,6 +790,10 @@ class RandomRecipeViewModel {
                 searchSuccess = true
                 errorMessage = nil
                 print("🎉 Complete recipe fetch completed successfully!")
+                
+                // Clear all selections after successful recipe fetch
+                clearAllSelections()
+                print("🧹 Cleared all selections after successful recipe fetch")
             }
             
         } catch let decodingError as DecodingError {

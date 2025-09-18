@@ -132,7 +132,6 @@ struct CuisinesView: View {
                 )
             }
             .navigationBarTitleDisplayMode(.inline)
-            .navigationTitle("Cuisines")
         }
     }
 }

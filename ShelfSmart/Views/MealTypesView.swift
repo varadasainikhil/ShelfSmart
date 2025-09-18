@@ -173,7 +173,6 @@ struct MealTypesView: View {
                 )
             }
             .navigationBarTitleDisplayMode(.inline)
-            .navigationTitle("Meal Types")
             .navigationDestination(isPresented: $navigateToRandomRecipe) {
                 RandomRecipeView(viewModel: viewModel)
             }
