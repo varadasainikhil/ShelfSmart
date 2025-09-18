@@ -22,7 +22,10 @@ struct DetailProductView: View {
                 VStack{
                     ZStack{
                         if let imageLink = product.imageLink, !imageLink.isEmpty {
-                            AsyncImage(url: URL(string: imageLink)){phase in
+                            let _ = print("🖼️ DetailProductView - Attempting to load image: \(imageLink)")
+                            // Convert HTTP to HTTPS if needed for App Transport Security
+                            let secureImageLink = imageLink.hasPrefix("http://") ? imageLink.replacingOccurrences(of: "http://", with: "https://") : imageLink
+                            AsyncImage(url: URL(string: secureImageLink)){phase in
                                 
                                 if let image = phase.image{
                                     image
@@ -32,6 +35,7 @@ struct DetailProductView: View {
                                         .clipped()
                                 }
                                 else if phase.error != nil{
+                                    let _ = print("🚨 DetailProductView - Image loading error: \(String(describing: phase.error))")
                                     Text("There was an issue loading the image")
                                 }
                                 else {
@@ -163,6 +167,6 @@ struct DetailProductView: View {
     
     let newCredit = Credit(text: spoonacularCredit.text, link: spoonacularCredit.link,  image: spoonacularCredit.image, imageLink: spoonacularCredit.imageLink)
     
-    let newProduct = Product(id: groceryProduct.id, barcode: groceryProduct.upc, title: groceryProduct.title, brand: groceryProduct.brand ?? "", importantBadges: groceryProduct.importantBadges, spoonacularScore: groceryProduct.spoonacularScore, productDescription: groceryProduct.description, imageLink: groceryProduct.imageLink, moreImageLinks: groceryProduct.moreImageLinks, generatedText: groceryProduct.generatedText, ingredientCount: groceryProduct.ingredientCount, credits: newCredit, expirationDate: Date.now.addingTimeInterval(86400*3))
+    let newProduct = Product(id: groceryProduct.id ?? 9348958, barcode: groceryProduct.upc ?? "", title: groceryProduct.title ?? "", brand: groceryProduct.brand ?? "", importantBadges: groceryProduct.importantBadges, spoonacularScore: groceryProduct.spoonacularScore, productDescription: groceryProduct.description, imageLink: groceryProduct.image, moreImageLinks: groceryProduct.images, generatedText: groceryProduct.generatedText, ingredientCount: groceryProduct.ingredientCount, credits: newCredit, expirationDate: Date.now.addingTimeInterval(86400*3))
     DetailProductView(product: newProduct)
 }

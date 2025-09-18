@@ -12,6 +12,7 @@ struct HomeView: View {
     @Environment(\.modelContext) var modelContext
     @State var showingAddProduct : Bool = false
     @State var showingDetailProductView : Bool = false
+    @State private var addProductViewModel = AddProductViewViewModel()
     @State private var currentUserId: String = Auth.auth().currentUser?.uid ?? ""
     
     // Get all groups and filter in the view - this will be reactive to changes
@@ -25,54 +26,124 @@ struct HomeView: View {
     }
     
     var body: some View {
-        NavigationStack{
-            VStack(alignment:.leading){
-                Text("Your Products")
-                    .font(.title.bold())
-                    .padding(.leading)
-                    .padding(.top)
-                
-                ZStack{
-                    
-                    if groups.isEmpty{
-                        Text("Start by adding your first product.")
-                            .foregroundStyle(.gray)
+        NavigationStack {
+            VStack(spacing: 0) {
+                // Header Section
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Your")
+                                .font(.title2)
+                                .foregroundStyle(.secondary)
+                            Text("Products")
+                                .font(.largeTitle)
+                                .fontWeight(.bold)
+                                .foregroundStyle(.primary)
+                        }
+                        Spacer()
+                        
+                        // Product count indicator
+                        if !groups.isEmpty {
+                            VStack(spacing: 2) {
+                                Text("\(groups.count)")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.green)
+                                Text("groups")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
                     }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 10)
                     
-                    else {
-                        ScrollViewReader{ proxy in
-                            ScrollView{
-                                LazyVStack{
-                                    ForEach(groups){group in
-                                        GroupView(group: group)
+                    // Subtitle
+                    Text("Track expiration dates and manage your shelf")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 20)
+                }
+                
+                // Content Section
+                ZStack {
+                    if groups.isEmpty {
+                        // Empty State
+                        VStack(spacing: 20) {
+                            Spacer()
+                            
+                            VStack(spacing: 16) {
+                                Circle()
+                                    .fill(.green.opacity(0.2))
+                                    .frame(width: 80, height: 80)
+                                    .overlay {
+                                        Image(systemName: "archivebox")
+                                            .font(.system(size: 32))
+                                            .foregroundStyle(.green)
+                                    }
+                                
+                                VStack(spacing: 8) {
+                                    Text("No products yet")
+                                        .font(.title2)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(.primary)
+                                    
+                                    Text("Start by adding your first product to track its expiration date")
+                                        .font(.subheadline)
+                                        .foregroundStyle(.secondary)
+                                        .multilineTextAlignment(.center)
+                                        .padding(.horizontal, 40)
+                                }
+                            }
+                            
+                            Spacer()
+                        }
+                    } else {
+                        // Products List
+                        ScrollViewReader { proxy in
+                            ScrollView {
+                                LazyVStack(spacing: 16) {
+                                    ForEach(groups) { group in
+                                        EnhancedGroupView(group: group)
                                     }
                                 }
+                                .padding(.horizontal, 20)
+                                .padding(.bottom, 100) // Space for floating button
                             }
                             .scrollContentBackground(.hidden)
                         }
                     }
                     
-                    VStack{
+                    // Floating Add Button
+                    VStack {
                         Spacer()
-                        HStack{
+                        HStack {
                             Spacer()
                             Button {
-                                // Show the sheet for the addProductView
+                                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                                impactFeedback.impactOccurred()
                                 showingAddProduct = true
                             } label: {
-                                Image(systemName: "plus.circle.fill")
-                                    .resizable()
-                                    .frame(width: 50, height: 50)
-                                    .glassEffect()
+                                Circle()
+                                    .fill(.green)
+                                    .frame(width: 56, height: 56)
+                                    .overlay {
+                                        Image(systemName: "plus")
+                                            .font(.system(size: 24, weight: .semibold))
+                                            .foregroundStyle(.white)
+                                    }
+                                    .shadow(color: .green.opacity(0.3), radius: 8, x: 0, y: 4)
                             }
+                            .padding(.trailing, 20)
+                            .padding(.bottom, 34)
                         }
                     }
                 }
-                .padding(.top)
-                .padding(.horizontal, 5)
-                .sheet(isPresented: $showingAddProduct) {
-                    AddProductView()
-                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .sheet(isPresented: $showingAddProduct) {
+                AddProductView(viewModel: addProductViewModel)
             }
         }
         .onAppear {
@@ -86,6 +157,179 @@ struct HomeView: View {
     }
 }
 
+// MARK: - Enhanced Group View Component
+struct EnhancedGroupView: View {
+    var group: GroupedProducts
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            // Group Header
+            HStack {
+                let status = getGroupStatus(for: group)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(status.message)
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                        .foregroundStyle(status.color)
+                    
+                    Text("\(group.products?.count ?? 0) item\(group.products?.count == 1 ? "" : "s")")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                
+                Spacer()
+                
+                // Status indicator
+                Circle()
+                    .fill(status.color.opacity(0.2))
+                    .frame(width: 32, height: 32)
+                    .overlay {
+                        Image(systemName: status.icon)
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(status.color)
+                    }
+            }
+            
+            // Products in group
+            VStack(spacing: 8) {
+                ForEach(group.products ?? [], id: \.id) { product in
+                    NavigationLink(destination: DetailProductView(product: product)) {
+                        EnhancedCardView(product: product)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(.white)
+                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+        )
+    }
+}
+
+// MARK: - Enhanced Card View Component  
+struct EnhancedCardView: View {
+    @Environment(\.modelContext) var modelContext
+    @State private var viewModel = CardViewViewModel()
+    var product: Product
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            // Product Image
+            Group {
+                if let imageLink = product.imageLink, !imageLink.isEmpty {
+                    // Convert HTTP to HTTPS if needed for App Transport Security
+                    let secureImageLink = imageLink.hasPrefix("http://") ? imageLink.replacingOccurrences(of: "http://", with: "https://") : imageLink
+                    AsyncImage(url: URL(string: secureImageLink)) { phase in
+                        if let image = phase.image {
+                            image
+                                .resizable()
+                                .scaledToFill()
+                        } else if phase.error != nil {
+                            Image(systemName: "photo")
+                                .font(.title2)
+                                .foregroundStyle(.secondary)
+                        } else {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                        }
+                    }
+                } else {
+                    Image("placeholder")
+                        .resizable()
+                        .scaledToFill()
+                }
+            }
+            .frame(width: 60, height: 60)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color(.systemGray6))
+            )
+            
+            // Product Info
+            VStack(alignment: .leading, spacing: 4) {
+                Text(product.title)
+                    .font(.body)
+                    .fontWeight(.semibold)
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                
+                if let description = product.productDescription ?? product.generatedText {
+                    Text(description)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+                
+                if let brand = product.brand, !brand.isEmpty {
+                    Text(brand)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                }
+            }
+            
+            Spacer()
+            
+            // Action Button
+            Button {
+                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                impactFeedback.impactOccurred()
+                
+                if product.isExpired {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        viewModel.deleteProduct(modelContext: modelContext, product: product)
+                    }
+                } else {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        product.markUsed()
+                    }
+                }
+            } label: {
+                Circle()
+                    .fill(product.isExpired ? .red.opacity(0.1) : (product.isUsed ? .green.opacity(0.1) : Color(.systemGray6)))
+                    .frame(width: 36, height: 36)
+                    .overlay {
+                        Image(systemName: product.isExpired ? "trash" : (product.isUsed ? "checkmark" : "circle"))
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundStyle(product.isExpired ? .red : (product.isUsed ? .green : .secondary))
+                    }
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(product.borderColor.opacity(0.05))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(product.borderColor.opacity(0.3), lineWidth: 1)
+                )
+        )
+    }
+}
+
+// MARK: - Helper Functions
+private func getGroupStatus(for group: GroupedProducts) -> (message: String, color: Color, icon: String) {
+    let calendar = Calendar.current
+    let today = calendar.startOfDay(for: Date())
+    let expiry = calendar.startOfDay(for: group.expirationDate)
+    let days = calendar.dateComponents([.day], from: today, to: expiry).day ?? 0
+    
+    if days < 0 {
+        return ("Expired \(abs(days)) day\(abs(days) == 1 ? "" : "s") ago", .red, "exclamationmark.triangle.fill")
+    } else if days == 0 {
+        return ("Expires today", .orange, "clock.fill")
+    } else if days <= 3 {
+        return ("Expires in \(days) day\(days == 1 ? "" : "s")", .orange, "clock.fill")
+    } else {
+        return ("Expires in \(days) days", .green, "leaf.fill")
+    }
+}
 
 #Preview {
     do {

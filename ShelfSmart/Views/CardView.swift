@@ -27,7 +27,10 @@ struct CardView: View {
                     VStack{
                         if let imageLink = product.imageLink, !imageLink.isEmpty{
                             let _ = print("🖼️ CardView - Attempting to load image: \(imageLink)")
-                            AsyncImage(url: URL(string: imageLink)){phase in
+                            let _ = print("🖼️ CardView - URL validation: \(URL(string: imageLink) != nil)")
+                            // Convert HTTP to HTTPS if needed for App Transport Security
+                            let secureImageLink = imageLink.hasPrefix("http://") ? imageLink.replacingOccurrences(of: "http://", with: "https://") : imageLink
+                            AsyncImage(url: URL(string: secureImageLink)){phase in
                                 if let image = phase.image{
                                     image
                                         .resizable()
@@ -35,6 +38,7 @@ struct CardView: View {
                                 }
                                 else  if phase.error != nil {
                                     let _ = print("🚨 CardView - Image loading error: \(String(describing: phase.error))")
+                                    let _ = print("🚨 CardView - Failed URL: \(imageLink)")
                                     Text("There was an error loading the image")
                                 }
                                 else {
@@ -151,6 +155,6 @@ struct CardView: View {
     
     let newCredit = Credit(text: spoonacularCredit.text, link: spoonacularCredit.link,  image: spoonacularCredit.image, imageLink: spoonacularCredit.imageLink)
     
-    let newItem = Product(id: groceryProduct.id, barcode: groceryProduct.upc, title: groceryProduct.title, brand: groceryProduct.brand ?? "", importantBadges: groceryProduct.importantBadges, spoonacularScore: groceryProduct.spoonacularScore, productDescription: groceryProduct.description, imageLink: groceryProduct.imageLink, moreImageLinks: groceryProduct.moreImageLinks, generatedText: groceryProduct.generatedText, ingredientCount: groceryProduct.ingredientCount, credits: newCredit, expirationDate: Date.now.addingTimeInterval(86400*3))
+    let newItem = Product(id: groceryProduct.id ?? 9348958, barcode: groceryProduct.upc ?? "", title: groceryProduct.title ?? "", brand: groceryProduct.brand ?? "", importantBadges: groceryProduct.importantBadges, spoonacularScore: groceryProduct.spoonacularScore, productDescription: groceryProduct.description, imageLink: groceryProduct.image, moreImageLinks: groceryProduct.images, generatedText: groceryProduct.generatedText, ingredientCount: groceryProduct.ingredientCount, credits: newCredit, expirationDate: Date.now.addingTimeInterval(86400*3))
     CardView(product: newItem)
 }
