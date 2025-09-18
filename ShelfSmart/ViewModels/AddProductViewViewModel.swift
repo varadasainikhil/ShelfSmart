@@ -33,6 +33,7 @@ class AddProductViewViewModel {
     var isLoading : Bool = false
     var errorMessage : String?
     var searchSuccess : Bool = false
+    var searchAttempted : Bool = false
     var apiResponse : GroceryProduct? = nil
     
     var isSearchButtonDisabled : Bool {
@@ -55,6 +56,7 @@ class AddProductViewViewModel {
             isLoading = true
             errorMessage = nil
             searchSuccess = false
+            searchAttempted = true
             imageLink = ""
         }
         
@@ -282,9 +284,23 @@ class AddProductViewViewModel {
         print("📝 Creating manual product with ID: \(productId)")
         print("🗓️ User selected expiration date: \(expirationDate)")
         
+        // Determine barcode based on whether search was attempted
+        let productBarcode: String = {
+            if searchAttempted && barcode.isEmpty {
+                // User searched but product not found - no barcode
+                return ""
+            } else if barcode.isEmpty {
+                // Pure manual entry - generate barcode
+                return "MANUAL-\(productId)"
+            } else {
+                // User provided barcode
+                return barcode
+            }
+        }()
+
         let product = Product(
             id: productId,
-            barcode: barcode.isEmpty ? "MANUAL-\(productId)" : barcode,
+            barcode: productBarcode,
             title: name,
             brand: "",
             badges: nil,
