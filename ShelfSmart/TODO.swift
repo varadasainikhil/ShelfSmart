@@ -9,9 +9,11 @@
 // TODO: Try to show nutritional score
 // TODO: Add a white background to the signInWithApple button - done, but doesnt work
 // TODO: Firstly add a recipe section to get the recipes using the products
-// TODO: Then please implement a small image carousel, that is going to show the other images of the product using the moreImageLinks
 // TODO: Change the button to add glasseffect in the meal type select view.
 // TODO: Make the user enter information one at a time - like first screen email, then password.
+// TODO: Show user the ingredients of the product in the detailProductView.
+// TODO: Remove the spoonacularScore for the products as it is useless.
+// TODO: 
 
 // Important Questions/ Bugs -
 // 1. Why are we creating a GroceryProduct in the manual entry and then a product. We can directly create product, because to store it locally we only need product.

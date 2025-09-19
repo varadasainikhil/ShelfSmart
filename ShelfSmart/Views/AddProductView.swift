@@ -99,15 +99,32 @@ struct AddProductView: View {
                             impactFeedback.impactOccurred()
                             
                             if viewModel.searchSuccess, let apiResponse = viewModel.apiResponse {
-                                viewModel.createProductFromAPIResponse(apiResponse: apiResponse, modelContext: modelContext)
+                                // For API response, we need to handle reset after async completion (same as manual entry)
+                                Task {
+                                    await viewModel.createProductFromAPIResponse(apiResponse: apiResponse, modelContext: modelContext)
+                                    
+                                    await MainActor.run {
+                                        if viewModel.errorMessage == nil {
+                                            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                                                viewModel.resetAllFields()
+                                                dismiss()
+                                            }
+                                        }
+                                    }
+                                }
                             } else {
-                                viewModel.createManualProduct(modelContext: modelContext)
-                            }
-                            
-                            if viewModel.errorMessage == nil {
-                                withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
-                                    viewModel.resetAllFields()
-                                    dismiss()
+                                // For manual entry, we need to handle reset after async completion
+                                Task {
+                                    await viewModel.createManualProduct(modelContext: modelContext)
+                                    
+                                    await MainActor.run {
+                                        if viewModel.errorMessage == nil {
+                                            withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                                                viewModel.resetAllFields()
+                                                dismiss()
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }

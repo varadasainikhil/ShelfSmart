@@ -193,7 +193,7 @@ struct EnhancedGroupView: View {
             
             // Products in group
             VStack(spacing: 8) {
-                ForEach(group.products ?? [], id: \.id) { product in
+                ForEach(group.products ?? [], id: \.persistentModelID) { product in
                     NavigationLink(destination: DetailProductView(product: product)) {
                         EnhancedCardView(product: product)
                     }

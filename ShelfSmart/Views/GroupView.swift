@@ -18,7 +18,7 @@ struct GroupView: View {
                 Spacer()
             }
             
-            ForEach(group.products ?? []){ product in
+            ForEach(group.products ?? [], id: \.persistentModelID){ product in
                 NavigationLink(destination: DetailProductView(product: product)) {
                     if group.products?.last == product {
                         CardView(product: product)

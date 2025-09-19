@@ -59,6 +59,7 @@ class Product{
         }
     }
     
+    
     func LikeProduct(){
         self.isLiked.toggle()
     }

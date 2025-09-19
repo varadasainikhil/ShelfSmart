@@ -274,13 +274,17 @@ class AddProductViewViewModel {
     }
     
     @MainActor
-    func createProductFromAPIResponse(apiResponse : GroceryProduct, modelContext : ModelContext ){
+    func createProductFromAPIResponse(apiResponse : GroceryProduct, modelContext : ModelContext ) async {
         // Reset any previous error messages
         errorMessage = nil
         
+        // Capture the expiration date before any potential reset
+        let userSelectedExpirationDate = self.expirationDate
+        print("📦 API Product - User selected expiration date: \(userSelectedExpirationDate)")
+        
         // Create groceryProduct from API response
         self.groceryProduct = apiResponse
-        print("📦 Created groceryProduct from API response: \(String(describing: self.groceryProduct?.title))")
+        print("📦 Created groceryProduct from API response: \(String(describing: apiResponse.title))")
         
         // Handle optional credits
         let credit: Credit
@@ -293,17 +297,15 @@ class AddProductViewViewModel {
         
         // Use fallback values for essential fields
         let productTitle = apiResponse.title ?? "Unknown Product"
-        let productBarcode = apiResponse.upc ?? barcode
+        let productBarcode = apiResponse.upc ?? self.barcode
         
-        // Search for recipes using this product's ingredients
-        Task {
-            await searchAndSaveRecipesForProduct(apiResponse: apiResponse, modelContext: modelContext, credit: credit, productTitle: productTitle, productBarcode: productBarcode)
-        }
+        // Search for recipes using this product's ingredients and save product
+        await searchAndSaveRecipesForProduct(apiResponse: apiResponse, modelContext: modelContext, credit: credit, productTitle: productTitle, productBarcode: productBarcode, userExpirationDate: userSelectedExpirationDate)
     }
     
     /// Searches for recipes and creates the product with recipe IDs
     @MainActor
-    private func searchAndSaveRecipesForProduct(apiResponse: GroceryProduct, modelContext: ModelContext, credit: Credit, productTitle: String, productBarcode: String) async {
+    private func searchAndSaveRecipesForProduct(apiResponse: GroceryProduct, modelContext: ModelContext, credit: Credit, productTitle: String, productBarcode: String, userExpirationDate: Date) async {
         // Extract ingredients for recipe search
         var ingredients: [String] = []
         
@@ -323,8 +325,8 @@ class AddProductViewViewModel {
         // Search for recipe IDs
         let recipeIds = await searchForRecipeIds(ingredients: uniqueIngredients)
         
-        // Create product with recipe IDs
-        let product = Product(id: apiResponse.id, manualId: nil, barcode: productBarcode, title: productTitle, brand: apiResponse.brand ?? "",breadcrumbs: apiResponse.breadcrumbs, badges: apiResponse.badges, importantBadges: apiResponse.importantBadges, spoonacularScore: apiResponse.spoonacularScore, productDescription: apiResponse.description, imageLink: apiResponse.image, moreImageLinks: apiResponse.images, generatedText: apiResponse.generatedText, ingredientCount: apiResponse.ingredientCount, recipeIds: recipeIds, credits: credit, expirationDate: expirationDate)
+        // Create product with recipe IDs using the user-selected expiration date
+        let product = Product(id: apiResponse.id, manualId: nil, barcode: productBarcode, title: productTitle, brand: apiResponse.brand ?? "",breadcrumbs: apiResponse.breadcrumbs, badges: apiResponse.badges, importantBadges: apiResponse.importantBadges, spoonacularScore: apiResponse.spoonacularScore, productDescription: apiResponse.description, imageLink: apiResponse.image, moreImageLinks: apiResponse.images, generatedText: apiResponse.generatedText, ingredientCount: apiResponse.ingredientCount, recipeIds: recipeIds, credits: credit, expirationDate: userExpirationDate)
         
         print("Created a new Item")
         print("🖼️ Product imageLink set to: \(String(describing: product.imageLink))")
@@ -340,9 +342,9 @@ class AddProductViewViewModel {
         
         do {
             // Use normalized date for comparison - ensure we use the exact date selected by user
-            let normalizedDate = Calendar.current.startOfDay(for: expirationDate)
-            print("🗓️ Original expiration date: \(expirationDate)")
-            print("🗓️ Normalized date for grouping: \(normalizedDate)")
+            let normalizedDate = Calendar.current.startOfDay(for: userExpirationDate)
+            print("🗓️ API Product - Original expiration date: \(userExpirationDate)")
+            print("🗓️ API Product - Normalized date for grouping: \(normalizedDate)")
             
             // Use SwiftData predicate for more efficient querying
             let predicate = #Predicate<GroupedProducts> { group in
@@ -370,11 +372,14 @@ class AddProductViewViewModel {
             // Single save operation
             try modelContext.save()
             print("Successfully saved item to database")
-            print("✅ GroceryProduct stored: \(String(describing: self.groceryProduct?.title))")
+            print("✅ API Product created: \(product.title)")
+            
+            // Clear error message on success
+            self.errorMessage = nil
             
         } catch {
             print("Error creating item: \(error.localizedDescription)")
-            errorMessage = "Failed to save product. Please try again."
+            self.errorMessage = "Failed to save product. Please try again."
         }
     }
     
@@ -480,82 +485,69 @@ class AddProductViewViewModel {
     
     // Function to create product manually (without API)
     @MainActor
-    func createManualProduct(modelContext: ModelContext) {
+    func createManualProduct(modelContext: ModelContext) async {
         // Reset any previous error messages
         self.errorMessage = nil
         
         // Validate required fields - only name is required
-        guard !self.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+        let productName = self.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let productDescription = self.productDescription
+        let productBarcode = self.barcode
+        let productExpirationDate = self.expirationDate
+        
+        guard !productName.isEmpty else {
             self.errorMessage = "Product name cannot be empty."
             return
         }
         
-        // Create groceryProduct for manual entry
-        let manualGroceryProduct = GroceryProduct(
-            id: nil, // No Spoonacular ID for manual products
-            title: self.name,
-            breadcrumbs: self.name.components(separatedBy: " "),
-            badges: nil,
-            importantBadges: nil,
-            spoonacularScore: nil,
-            image: nil,
-            images: nil,
-            generatedText: nil,
-            description: self.productDescription.isEmpty ? nil : self.productDescription,
-            upc: nil,
-            brand: nil,
-            ingredientCount: nil,
-            credits: nil
-        )
-        
-        // Store the groceryProduct
-        self.groceryProduct = manualGroceryProduct
-        print("📝 Created groceryProduct from manual entry: \(String(describing: self.groceryProduct?.title))")
-        
         // Create default credits for manual products
         let credit = Credit(text: "Manually added product", link: "", image: "User Added", imageLink: "")
         
-        print("📝 Creating manual product")
-        print("🗓️ User selected expiration date: \(self.expirationDate)")
+        print("📝 Creating manual product directly")
+        print("🗓️ User selected expiration date: \(productExpirationDate)")
         
         // Search for recipes using manual product ingredients
-        let ingredients = self.name.components(separatedBy: " ")
-        Task {
-            let recipeIds = await self.searchForRecipeIds(ingredients: ingredients)
+        let ingredients = productName.components(separatedBy: " ")
+        
+        // Search for recipes by ingredients using the name because it is a manual entry
+        let recipeIds = await self.searchForRecipeIds(ingredients: ingredients)
+        
+        // Create Product directly without unnecessary GroceryProduct intermediate step
+        // For manual products: id=nil, manualId=UUID to differentiate from API products
+        let product = Product(
+            id: nil, // No Spoonacular ID for manual products
+            manualId: UUID().uuidString, // Unique identifier for manual entries
+            barcode: productBarcode,
+            title: productName,
+            brand: "",
+            breadcrumbs: productName.components(separatedBy: " "),
+            badges: nil,
+            importantBadges: nil,
+            spoonacularScore: nil,
+            productDescription: productDescription.isEmpty ? nil : productDescription,
+            imageLink: nil,
+            moreImageLinks: nil,
+            generatedText: nil,
+            ingredientCount: nil,
+            recipeIds: recipeIds,
+            credits: credit,
+            expirationDate: productExpirationDate
+        )
             
-            // Use convenience initializer for manual products (automatically generates UUID for manualId)
-            let product = Product(
-                barcode: self.barcode,
-                title: self.name,
-                brand: "",
-                breadcrumbs: self.name.components(separatedBy: " "),
-                badges: nil,
-                importantBadges: nil,
-                spoonacularScore: nil,
-                productDescription: self.productDescription.isEmpty ? nil : self.productDescription,
-                imageLink: nil,
-                moreImageLinks: nil,
-                generatedText: nil,
-                ingredientCount: nil,
-                recipeIds: recipeIds,
-                credits: credit,
-                expirationDate: self.expirationDate
-            )
+        print("📝 Created manual product with expiration date: \(product.expirationDate)")
+        
+        // Find the userId of the user
+        guard let userId = Auth.auth().currentUser?.uid else {
+            self.errorMessage = "Could not find the userID of the user"
+            print("Could not find the userID of the user")
+            return
+        }
             
-            print("📝 Created manual product with expiration date: \(product.expirationDate)")
-            
-            // Find the userId of the user
-            guard let userId = Auth.auth().currentUser?.uid else {
-                self.errorMessage = "Could not find the userID of the user"
-                print("Could not find the userID of the user")
-                return
-            }
-            
-            do {
-                // Use normalized date for comparison - ensure we use the exact date selected by user
-                let normalizedDate = Calendar.current.startOfDay(for: self.expirationDate)
-                print("🗓️ Manual product - Original expiration date: \(self.expirationDate)")
-                print("🗓️ Manual product - Normalized date for grouping: \(normalizedDate)")
+        do {
+            // Use normalized date for comparison - ensure we use the exact date selected by user
+            let normalizedDate = Calendar.current.startOfDay(for: productExpirationDate)
+            print("🗓️ Manual product - Original expiration date: \(productExpirationDate)")
+            print("🗓️ Manual product - Normalized date for grouping: \(normalizedDate)")
                 
                 // Use SwiftData predicate for more efficient querying
                 let predicate = #Predicate<GroupedProducts> { group in
@@ -581,12 +573,14 @@ class AddProductViewViewModel {
                 // Single save operation
                 try modelContext.save()
                 print("✅ Successfully saved manual product to database")
-                print("✅ GroceryProduct stored: \(String(describing: self.groceryProduct?.title))")
+                print("✅ Manual Product created: \(product.title)")
                 
-            } catch {
-                print("❌ Error creating manual product: \(error.localizedDescription)")
-                self.errorMessage = "Failed to save product. Please try again."
-            }
+            // Clear error message on success
+            self.errorMessage = nil
+            
+        } catch {
+            print("❌ Error creating manual product: \(error.localizedDescription)")
+            self.errorMessage = "Failed to save product. Please try again."
         }
     }
 }
