@@ -346,16 +346,16 @@ private func getGroupStatus(for group: GroupedProducts) -> (message: String, col
         let sampleUserId = ""
         let sampleGroups = [
             GroupedProducts(expirationDate: threeDaysFromNow, products: [
-                Product(id: 123456789, barcode: "123456789", title: "Milk", brand: "Organic Milk", expirationDate: threeDaysFromNow),
-                Product(id: 12345679, barcode: "12345679", title: "Bread", brand: "Whole Wheat Bread", expirationDate: threeDaysFromNow)
+                Product(id: 123456789, barcode: "123456789", title: "Milk", brand: "Organic Milk", breadcrumbs: ["Dairy", "Milk"], recipeIds: [111, 222, 333], expirationDate: threeDaysFromNow),
+                Product(id: 12345679, barcode: "12345679", title: "Bread", brand: "Whole Wheat Bread", breadcrumbs: ["Bakery", "Bread"], recipeIds: [444, 555, 666], expirationDate: threeDaysFromNow)
             ], userId: sampleUserId),
             GroupedProducts(expirationDate: fiveDaysFromNow, products: [
-                Product(id: 12345689, barcode: "12345689", title: "Eggs", brand: "Free-range eggs", expirationDate: fiveDaysFromNow),
-                Product(id: 1234589, barcode: "1234589", title: "Yogurt", brand: "Greek Yogurt", expirationDate: fiveDaysFromNow)
+                Product(id: 12345689, barcode: "12345689", title: "Eggs", brand: "Free-range eggs", breadcrumbs: ["Dairy", "Eggs"], recipeIds: [777, 888, 999], expirationDate: fiveDaysFromNow),
+                Product(id: 1234589, barcode: "1234589", title: "Yogurt", brand: "Greek Yogurt", breadcrumbs: ["Dairy", "Yogurt"], recipeIds: [101, 202, 303], expirationDate: fiveDaysFromNow)
             ], userId: sampleUserId),
             GroupedProducts(expirationDate: twoDaysAgo, products: [
-                Product(id: 345689, barcode: "345689", title: "Honey", brand: "Organic Honey", expirationDate: twoDaysAgo),
-                Product(id: 45689, barcode: "45689", title: "Tortilla", brand: "Corn Tortilla", expirationDate: twoDaysAgo)
+                Product(id: 345689, barcode: "345689", title: "Honey", brand: "Organic Honey", breadcrumbs: ["Sweeteners", "Honey"], recipeIds: [404, 505, 606], expirationDate: twoDaysAgo),
+                Product(id: 45689, barcode: "45689", title: "Tortilla", brand: "Corn Tortilla", breadcrumbs: ["Bakery", "Tortilla"], recipeIds: [707, 808, 909], expirationDate: twoDaysAgo)
             ], userId: sampleUserId)
         ]
         

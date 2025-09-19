@@ -11,3 +11,9 @@
 // TODO: Firstly add a recipe section to get the recipes using the products
 // TODO: Then please implement a small image carousel, that is going to show the other images of the product using the moreImageLinks
 // TODO: Change the button to add glasseffect in the meal type select view.
+
+
+// Important Questions/ Bugs -
+// 1. Why are we creating a GroceryProduct in the manual entry and then a product. We can directly create product, because to store it locally we only need product.
+// 2. Why are we saving the recipe in modelContext as soon we create a recipe model, we have to let the user choose whether they want to save it or not.
+

@@ -40,8 +40,8 @@ struct GroupView: View {
     // Use empty string to match what HomeView uses when no user is authenticated
     let sampleUserId = ""
     let sampleGroup = GroupedProducts(expirationDate: threeDaysFromNow, products: [
-        Product(id: 123456789, barcode: "123456789", title: "Milk", brand: "Organic Milk", expirationDate: threeDaysFromNow),
-        Product(id: 12345679, barcode: "12345679", title: "Bread", brand: "Whole Wheat Bread", expirationDate: threeDaysFromNow)
+        Product(id: 123456789, barcode: "123456789", title: "Milk", brand: "Organic Milk", breadcrumbs: ["Dairy", "Milk"], recipeIds: [111, 222, 333], expirationDate: threeDaysFromNow),
+        Product(id: 12345679, barcode: "12345679", title: "Bread", brand: "Whole Wheat Bread", breadcrumbs: ["Bakery", "Bread"], recipeIds: [444, 555, 666], expirationDate: threeDaysFromNow)
     ], userId: sampleUserId)
     
     return GroupView(group: sampleGroup)

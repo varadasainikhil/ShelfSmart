@@ -1,11 +1,12 @@
 struct GroceryProduct : Codable{
     var id : Int?
     var title : String?
-    var badges : [String]?
-    var importantBadges : [String]?
+    var breadcrumbs : [String]? = [String]()
+    var badges : [String]? = [String]()
+    var importantBadges : [String]? = [String]()
     var spoonacularScore : Double?
     var image : String?
-    var images : [String]?
+    var images : [String]? = [String]()
     var generatedText : String?
     var description : String?
     var upc : String?

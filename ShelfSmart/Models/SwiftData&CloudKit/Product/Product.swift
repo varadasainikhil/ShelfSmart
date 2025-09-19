@@ -16,6 +16,7 @@ class Product{
     var barcode : String = ""
     var title : String = ""
     var brand : String?
+    var breadcrumbs : [String]?
     var badges : [String]? = [String]()
     var importantBadges : [String]? = [String]()
     var spoonacularScore: Double?
@@ -24,6 +25,7 @@ class Product{
     var moreImageLinks : [String]? = [String]()
     var generatedText : String?
     var ingredientCount : Int?
+    var recipeIds : [Int]? = [Int]() // Array of recipe IDs found for this product
     
     var dateAdded : Date = Date.now
     var expirationDate : Date = Date.now
@@ -74,12 +76,13 @@ class Product{
         }
     }
     
-    init(id: Int?, manualId: String? = nil, barcode: String, title: String, brand: String, badges: [String]? = nil, importantBadges: [String]? = nil, spoonacularScore: Double? = nil, productDescription: String? = nil, imageLink: String? = nil, moreImageLinks: [String]? = nil, generatedText: String? = nil, ingredientCount: Int? = nil, credits: Credit? = nil, expirationDate: Date) {
+    init(id: Int?, manualId: String? = nil, barcode: String, title: String, brand: String, breadcrumbs : [String]?, badges: [String]? = nil, importantBadges: [String]? = nil, spoonacularScore: Double? = nil, productDescription: String? = nil, imageLink: String? = nil, moreImageLinks: [String]? = nil, generatedText: String? = nil, ingredientCount: Int? = nil, recipeIds: [Int]? = nil, credits: Credit? = nil, expirationDate: Date) {
         self.id = id
         self.manualId = manualId
         self.barcode = barcode
         self.title = title
         self.brand = brand
+        self.breadcrumbs = breadcrumbs
         self.badges = badges
         self.importantBadges = importantBadges
         self.spoonacularScore = spoonacularScore
@@ -88,6 +91,7 @@ class Product{
         self.moreImageLinks = moreImageLinks
         self.generatedText = generatedText
         self.ingredientCount = ingredientCount
+        self.recipeIds = recipeIds
         self.credits = credits
         self.dateAdded = .now
         self.expirationDate = expirationDate
@@ -96,8 +100,8 @@ class Product{
     }
 
     // Convenience initializer for manual products (no Spoonacular ID required)
-    convenience init(barcode: String, title: String, brand: String, badges: [String]? = nil, importantBadges: [String]? = nil, spoonacularScore: Double? = nil, productDescription: String? = nil, imageLink: String? = nil, moreImageLinks: [String]? = nil, generatedText: String? = nil, ingredientCount: Int? = nil, credits: Credit? = nil, expirationDate: Date) {
-        self.init(id: nil, manualId: UUID().uuidString, barcode: barcode, title: title, brand: brand, badges: badges, importantBadges: importantBadges, spoonacularScore: spoonacularScore, productDescription: productDescription, imageLink: imageLink, moreImageLinks: moreImageLinks, generatedText: generatedText, ingredientCount: ingredientCount, credits: credits, expirationDate: expirationDate)
+    convenience init(barcode: String, title: String, brand: String,breadcrumbs : [String]? = nil, badges: [String]? = nil, importantBadges: [String]? = nil, spoonacularScore: Double? = nil, productDescription: String? = nil, imageLink: String? = nil, moreImageLinks: [String]? = nil, generatedText: String? = nil, ingredientCount: Int? = nil, recipeIds: [Int]? = nil, credits: Credit? = nil, expirationDate: Date) {
+        self.init(id: nil, manualId: UUID().uuidString, barcode: barcode, title: title, brand: brand,breadcrumbs: breadcrumbs, badges: badges, importantBadges: importantBadges, spoonacularScore: spoonacularScore, productDescription: productDescription, imageLink: imageLink, moreImageLinks: moreImageLinks, generatedText: generatedText, ingredientCount: ingredientCount, recipeIds: recipeIds, credits: credits, expirationDate: expirationDate)
     }
     
 
