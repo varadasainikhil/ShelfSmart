@@ -132,6 +132,10 @@ struct AddProductView: View {
             }
             .navigationTitle("Add a Product")
             .navigationBarTitleDisplayMode(.inline)
+            .onAppear {
+                // Reset all fields when view appears for clean sheet
+                viewModel.resetAllFields()
+            }
             .toolbar{
                 ToolbarItem(placement: .topBarTrailing) {
                     Button {
@@ -145,6 +149,8 @@ struct AddProductView: View {
 
                         // Only dismiss if no error occurred
                         if viewModel.errorMessage == nil {
+                            // Reset fields before dismissing for next time
+                            viewModel.resetAllFields()
                             dismiss()
                         }
                         

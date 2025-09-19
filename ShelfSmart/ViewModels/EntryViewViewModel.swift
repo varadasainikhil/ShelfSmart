@@ -12,9 +12,9 @@ import FirebaseAuth
 class EntryViewViewModel{
     var isLoggedIn : Bool = false
     var currentUserId : String = ""
-    
+
     private var handler : AuthStateDidChangeListenerHandle? = nil
-    
+
     init() {
         self.handler = Auth.auth().addStateDidChangeListener({ auth, user in
             self.currentUserId = user?.uid ?? ""

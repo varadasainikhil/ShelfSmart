@@ -100,8 +100,25 @@ struct DetailProductView: View {
                     }
                     .frame(width: 300, height: 300)
                     
-                    Text(product.title)
-                        .font(.title.bold())
+                    VStack(spacing: 8) {
+                        Text(product.title)
+                            .font(.title.bold())
+                        
+                        // Product type tag
+                        HStack {
+                            Image(systemName: product.id != nil ? "cloud.fill" : "person.fill")
+                                .font(.caption)
+                            Text(product.type)
+                                .font(.caption.bold())
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 4)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(product.id != nil ? Color.blue.opacity(0.2) : Color.green.opacity(0.2))
+                        )
+                        .foregroundColor(product.id != nil ? .blue : .green)
+                    }
                     
                     
                     ZStack{
@@ -167,6 +184,6 @@ struct DetailProductView: View {
     
     let newCredit = Credit(text: spoonacularCredit.text, link: spoonacularCredit.link,  image: spoonacularCredit.image, imageLink: spoonacularCredit.imageLink)
     
-    let newProduct = Product(id: groceryProduct.id ?? 9348958, barcode: groceryProduct.upc ?? "", title: groceryProduct.title ?? "", brand: groceryProduct.brand ?? "", importantBadges: groceryProduct.importantBadges, spoonacularScore: groceryProduct.spoonacularScore, productDescription: groceryProduct.description, imageLink: groceryProduct.image, moreImageLinks: groceryProduct.images, generatedText: groceryProduct.generatedText, ingredientCount: groceryProduct.ingredientCount, credits: newCredit, expirationDate: Date.now.addingTimeInterval(86400*3))
+    let newProduct = Product(id: groceryProduct.id ?? 9348958, barcode: groceryProduct.upc ?? "", title: groceryProduct.title ?? "", brand: groceryProduct.brand ?? "", badges: groceryProduct.badges, importantBadges: groceryProduct.importantBadges, spoonacularScore: groceryProduct.spoonacularScore, productDescription: groceryProduct.description, imageLink: groceryProduct.image, moreImageLinks: groceryProduct.images, generatedText: groceryProduct.generatedText, ingredientCount: groceryProduct.ingredientCount, credits: newCredit, expirationDate: Date.now.addingTimeInterval(86400*3))
     DetailProductView(product: newProduct)
 }

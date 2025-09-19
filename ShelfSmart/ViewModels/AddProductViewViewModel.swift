@@ -36,8 +36,38 @@ class AddProductViewViewModel {
     var searchAttempted : Bool = false
     var apiResponse : GroceryProduct? = nil
     
+    // Store the groceryProduct - created when saving the product
+    var groceryProduct : GroceryProduct? = nil
+    
     var isSearchButtonDisabled : Bool {
         return barcode.isEmpty || isLoading
+    }
+    
+    // Helper function to get current groceryProduct
+    func getCurrentGroceryProduct() -> GroceryProduct? {
+        return groceryProduct
+    }
+    
+    // Helper function to clear groceryProduct
+    func clearGroceryProduct() {
+        groceryProduct = nil
+        print("🗑️ Cleared groceryProduct")
+    }
+    
+    // Reset all fields to initial state for clean sheet
+    func resetAllFields() {
+        barcode = ""
+        name = ""
+        productDescription = ""
+        imageLink = ""
+        expirationDate = Calendar.current.date(byAdding: .day, value: 7, to: Date.now) ?? Date.now
+        isLoading = false
+        errorMessage = nil
+        searchSuccess = false
+        searchAttempted = false
+        apiResponse = nil
+        groceryProduct = nil
+        print("🔄 Reset all fields to initial state - clean sheet ready")
     }
     
     func getAPIKey() -> String? {
@@ -99,6 +129,40 @@ class AddProductViewViewModel {
             // Log response details
             if let httpResponse = response as? HTTPURLResponse {
                 print("📡 Response status code: \(httpResponse.statusCode)")
+                
+                switch httpResponse.statusCode {
+                case 200...299:
+                    print("✅ Successful response")
+                case 401:
+                    print("❌ Unauthorized: Invalid API key")
+                    await MainActor.run {
+                        isLoading = false
+                        errorMessage = "Invalid API key. Please check your configuration."
+                    }
+                    return
+                case 402:
+                    print("❌ Payment required: API quota exceeded")
+                    await MainActor.run {
+                        isLoading = false
+                        errorMessage = "API quota exceeded. Please try again later."
+                    }
+                    return
+                case 404:
+                    print("❌ Not found: Invalid endpoint or product not found")
+                    await MainActor.run {
+                        isLoading = false
+                        errorMessage = "Product not found for this barcode."
+                        self.barcode = ""
+                    }
+                    return
+                default:
+                    print("❌ Unexpected status code: \(httpResponse.statusCode)")
+                    await MainActor.run {
+                        isLoading = false
+                        errorMessage = "An unexpected error occurred. Please try again."
+                    }
+                    return
+                }
             }
             
             print("📦 Received data size: \(data.count) bytes")
@@ -109,17 +173,6 @@ class AddProductViewViewModel {
             }
             
             let decoder = JSONDecoder()
-            
-            // First try to decode as an error response
-            if let errorResponse = try? decoder.decode(APIErrorResponse.self, from: data) {
-                print("❌ API returned error: \(errorResponse.message)")
-                await MainActor.run {
-                    self.isLoading = false
-                    self.errorMessage = "Product not found for this barcode"
-                    self.barcode = "" // Clear barcode so user can enter/scan a new one
-                }
-                return
-            }
             
             // If not an error, try to decode as a product
             let apiResponse = try decoder.decode(GroceryProduct.self, from: data)
@@ -189,9 +242,14 @@ class AddProductViewViewModel {
         }
     }
     
+    @MainActor
     func createProductFromAPIResponse(apiResponse : GroceryProduct, modelContext : ModelContext ){
         // Reset any previous error messages
         errorMessage = nil
+        
+        // Create groceryProduct from API response
+        self.groceryProduct = apiResponse
+        print("📦 Created groceryProduct from API response: \(String(describing: self.groceryProduct?.title))")
         
         // Handle optional credits
         let credit: Credit
@@ -202,18 +260,11 @@ class AddProductViewViewModel {
             credit = Credit(text: "Product information provided by Spoonacular", link: "https://spoonacular.com", image: "Spoonacular", imageLink: "https://spoonacular.com")
         }
         
-        // Generate a fallback ID if the API doesn't provide one
-        let productId = apiResponse.id ?? {
-            let fallbackId = Int.random(in: 1000000...9999999)
-            print("⚠️ API didn't provide ID, generating fallback ID: \(fallbackId)")
-            return fallbackId
-        }()
-        
         // Use fallback values for essential fields
         let productTitle = apiResponse.title ?? "Unknown Product"
         let productBarcode = apiResponse.upc ?? barcode
-        
-        let product = Product(id: productId, barcode: productBarcode, title: productTitle, brand: apiResponse.brand ?? "", badges: apiResponse.badges, importantBadges: apiResponse.importantBadges, spoonacularScore: apiResponse.spoonacularScore, productDescription: apiResponse.description, imageLink: apiResponse.image, moreImageLinks: apiResponse.images, generatedText: apiResponse.generatedText, ingredientCount: apiResponse.ingredientCount, credits: credit, expirationDate: expirationDate)
+
+        let product = Product(id: apiResponse.id, manualId: nil, barcode: productBarcode, title: productTitle, brand: apiResponse.brand ?? "", badges: apiResponse.badges, importantBadges: apiResponse.importantBadges, spoonacularScore: apiResponse.spoonacularScore, productDescription: apiResponse.description, imageLink: apiResponse.image, moreImageLinks: apiResponse.images, generatedText: apiResponse.generatedText, ingredientCount: apiResponse.ingredientCount, credits: credit, expirationDate: expirationDate)
         
         print("Created a new Item")
         print("🖼️ Product imageLink set to: \(String(describing: product.imageLink))")
@@ -254,53 +305,60 @@ class AddProductViewViewModel {
                 print("Created new group for date")
             }
             
-            // Single save operation
-            try modelContext.save()
-            print("Successfully saved item to database")
-            
-        } catch {
-            print("Error creating item: \(error.localizedDescription)")
-            errorMessage = "Failed to save product. Please try again."
-        }
+        // Single save operation
+        try modelContext.save()
+        print("Successfully saved item to database")
+        print("✅ GroceryProduct stored: \(String(describing: self.groceryProduct?.title))")
+        
+    } catch {
+        print("Error creating item: \(error.localizedDescription)")
+        errorMessage = "Failed to save product. Please try again."
+    }
         
     }
     
     // Function to create product manually (without API)
+    @MainActor
     func createManualProduct(modelContext: ModelContext) {
         // Reset any previous error messages
         errorMessage = nil
         
         // Validate required fields - only name is required
-        guard !name.isEmpty else {
-            errorMessage = "Product name is required to save the product"
+        guard !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            errorMessage = "Product name cannot be empty."
             return
         }
         
+        // Create groceryProduct for manual entry
+        let manualGroceryProduct = GroceryProduct(
+            id: nil, // No Spoonacular ID for manual products
+            title: name,
+            badges: nil,
+            importantBadges: nil,
+            spoonacularScore: nil,
+            image: nil,
+            images: nil,
+            generatedText: nil,
+            description: productDescription.isEmpty ? nil : productDescription,
+            upc: nil,
+            brand: nil,
+            ingredientCount: nil,
+            credits: nil
+        )
+        
+        // Store the groceryProduct
+        self.groceryProduct = manualGroceryProduct
+        print("📝 Created groceryProduct from manual entry: \(String(describing: self.groceryProduct?.title))")
+        
         // Create default credits for manual products
         let credit = Credit(text: "Manually added product", link: "", image: "User Added", imageLink: "")
-        
-        // Generate a random ID for manual products
-        let productId = Int.random(in: 1000000...9999999)
-        print("📝 Creating manual product with ID: \(productId)")
-        print("🗓️ User selected expiration date: \(expirationDate)")
-        
-        // Determine barcode based on whether search was attempted
-        let productBarcode: String = {
-            if searchAttempted && barcode.isEmpty {
-                // User searched but product not found - no barcode
-                return ""
-            } else if barcode.isEmpty {
-                // Pure manual entry - generate barcode
-                return "MANUAL-\(productId)"
-            } else {
-                // User provided barcode
-                return barcode
-            }
-        }()
 
+        print("📝 Creating manual product")
+        print("🗓️ User selected expiration date: \(expirationDate)")
+
+        // Use convenience initializer for manual products (automatically generates UUID for manualId)
         let product = Product(
-            id: productId,
-            barcode: productBarcode,
+            barcode: barcode,
             title: name,
             brand: "",
             badges: nil,
@@ -351,14 +409,15 @@ class AddProductViewViewModel {
                 print("📝 Created new group for manual product")
             }
             
-            // Single save operation
-            try modelContext.save()
-            print("✅ Successfully saved manual product to database")
-            
-        } catch {
-            print("❌ Error creating manual product: \(error.localizedDescription)")
-            errorMessage = "Failed to save product. Please try again."
-        }
+        // Single save operation
+        try modelContext.save()
+        print("✅ Successfully saved manual product to database")
+        print("✅ GroceryProduct stored: \(String(describing: self.groceryProduct?.title))")
+        
+    } catch {
+        print("❌ Error creating manual product: \(error.localizedDescription)")
+        errorMessage = "Failed to save product. Please try again."
+    }
     }
     
 }

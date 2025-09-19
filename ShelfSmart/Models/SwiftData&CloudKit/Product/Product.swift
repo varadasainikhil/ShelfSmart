@@ -11,16 +11,17 @@ import SwiftUI
 
 @Model
 class Product{
-    var id : Int?
+    var id : Int? // Spoonacular API ID
+    var manualId : String? // UUID for manually created products
     var barcode : String = ""
     var title : String = ""
     var brand : String?
-    var badges : [String]?
-    var importantBadges : [String]?
+    var badges : [String]? = [String]()
+    var importantBadges : [String]? = [String]()
     var spoonacularScore: Double?
     var productDescription : String?
     var imageLink : String?
-    var moreImageLinks : [String]?
+    var moreImageLinks : [String]? = [String]()
     var generatedText : String?
     var ingredientCount : Int?
     
@@ -45,6 +46,17 @@ class Product{
         return true
     }
     
+    // Dynamic property to determine product type
+    var type: String {
+        if id != nil {
+            return "Fetched from Spoonacular"
+        } else if manualId != nil {
+            return "Manual Entry"
+        } else {
+            return "Unknown"
+        }
+    }
+    
     func LikeProduct(){
         self.isLiked.toggle()
     }
@@ -62,8 +74,9 @@ class Product{
         }
     }
     
-    init(id: Int, barcode: String, title: String, brand: String, badges: [String]? = nil, importantBadges: [String]? = nil, spoonacularScore: Double? = nil, productDescription: String? = nil, imageLink: String? = nil, moreImageLinks: [String]? = nil, generatedText: String? = nil, ingredientCount: Int? = nil, credits: Credit? = nil, expirationDate: Date) {
+    init(id: Int?, manualId: String? = nil, barcode: String, title: String, brand: String, badges: [String]? = nil, importantBadges: [String]? = nil, spoonacularScore: Double? = nil, productDescription: String? = nil, imageLink: String? = nil, moreImageLinks: [String]? = nil, generatedText: String? = nil, ingredientCount: Int? = nil, credits: Credit? = nil, expirationDate: Date) {
         self.id = id
+        self.manualId = manualId
         self.barcode = barcode
         self.title = title
         self.brand = brand
@@ -80,7 +93,11 @@ class Product{
         self.expirationDate = expirationDate
         self.isUsed = false
         self.isLiked = false
-        
+    }
+
+    // Convenience initializer for manual products (no Spoonacular ID required)
+    convenience init(barcode: String, title: String, brand: String, badges: [String]? = nil, importantBadges: [String]? = nil, spoonacularScore: Double? = nil, productDescription: String? = nil, imageLink: String? = nil, moreImageLinks: [String]? = nil, generatedText: String? = nil, ingredientCount: Int? = nil, credits: Credit? = nil, expirationDate: Date) {
+        self.init(id: nil, manualId: UUID().uuidString, barcode: barcode, title: title, brand: brand, badges: badges, importantBadges: importantBadges, spoonacularScore: spoonacularScore, productDescription: productDescription, imageLink: imageLink, moreImageLinks: moreImageLinks, generatedText: generatedText, ingredientCount: ingredientCount, credits: credits, expirationDate: expirationDate)
     }
     
 
