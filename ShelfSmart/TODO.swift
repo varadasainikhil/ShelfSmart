@@ -11,7 +11,7 @@
 // TODO: Firstly add a recipe section to get the recipes using the products
 // TODO: Then please implement a small image carousel, that is going to show the other images of the product using the moreImageLinks
 // TODO: Change the button to add glasseffect in the meal type select view.
-
+// TODO: Make the user enter information one at a time - like first screen email, then password.
 
 // Important Questions/ Bugs -
 // 1. Why are we creating a GroceryProduct in the manual entry and then a product. We can directly create product, because to store it locally we only need product.
