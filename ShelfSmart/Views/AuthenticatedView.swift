@@ -19,7 +19,7 @@ struct AuthenticatedView: View {
                 MealTypesView()
             }
             Tab("Profile", systemImage: "person.fill") {
-                ProfileViewFixed()
+                ProfileView()
             }
         }
     }

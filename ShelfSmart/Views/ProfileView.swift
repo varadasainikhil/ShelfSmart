@@ -15,10 +15,6 @@ struct ProfileView: View {
     @State private var currentUserId: String = Auth.auth().currentUser?.uid ?? ""
     @State private var showDeleteConfirmation = false
     
-    // Date of Birth fields
-    @State private var selectedDay: Int = 0
-    @State private var selectedMonth: Int = 0
-    @State private var selectedYear: Int = 0
     
     // Get all groups and filter in the view - this will be reactive to changes
     @Query(sort: \GroupedProducts.expirationDate) private var allGroups: [GroupedProducts]
@@ -30,13 +26,6 @@ struct ProfileView: View {
         }
     }
     
-    // Date ranges
-    private let days = Array(1...31)
-    private let months = Array(1...12)
-    private var years: [Int] {
-        let currentYear = Calendar.current.component(.year, from: Date())
-        return Array(1900...currentYear).reversed()
-    }
     
     var body: some View {
         NavigationStack {
@@ -76,101 +65,35 @@ struct ProfileView: View {
                         .padding(.bottom, 20)
                 }
                 
-                // Date of Birth Section - Evenly Spaced
+                // Content Section - Centered
                 VStack(spacing: 0) {
                     Spacer()
                     
                     VStack(spacing: 32) {
-                        // Date of Birth Title
-                        Text("Date of birth")
-                            .font(.title2)
-                            .fontWeight(.semibold)
-                            .foregroundStyle(.primary)
-                        
-                        // Date Picker Fields
-                        HStack(spacing: 20) {
-                            // Day Picker
-                            VStack(spacing: 8) {
-                                Text("DD")
-                                    .font(.caption)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(.secondary)
-                                
-                                Menu {
-                                    ForEach(days, id: \.self) { day in
-                                        Button("\(day)") {
-                                            selectedDay = day
-                                        }
-                                    }
-                                } label: {
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color(.systemGray6))
-                                        .frame(height: 50)
-                                        .overlay {
-                                            Text(selectedDay == 0 ? "DD" : "\(selectedDay)")
-                                                .font(.body)
-                                                .fontWeight(.medium)
-                                                .foregroundStyle(selectedDay == 0 ? .secondary : .primary)
-                                        }
+                        // Welcome message or placeholder content
+                        VStack(spacing: 16) {
+                            Circle()
+                                .fill(.green.opacity(0.2))
+                                .frame(width: 80, height: 80)
+                                .overlay {
+                                    Image(systemName: "leaf.fill")
+                                        .font(.system(size: 32))
+                                        .foregroundStyle(.green)
                                 }
-                                .frame(maxWidth: .infinity)
-                            }
                             
-                            // Month Picker
                             VStack(spacing: 8) {
-                                Text("MM")
-                                    .font(.caption)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(.secondary)
+                                Text("Keep your shelf organized")
+                                    .font(.title2)
+                                    .fontWeight(.semibold)
+                                    .foregroundStyle(.primary)
                                 
-                                Menu {
-                                    ForEach(months, id: \.self) { month in
-                                        Button("\(month)") {
-                                            selectedMonth = month
-                                        }
-                                    }
-                                } label: {
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color(.systemGray6))
-                                        .frame(height: 50)
-                                        .overlay {
-                                            Text(selectedMonth == 0 ? "MM" : "\(selectedMonth)")
-                                                .font(.body)
-                                                .fontWeight(.medium)
-                                                .foregroundStyle(selectedMonth == 0 ? .secondary : .primary)
-                                        }
-                                }
-                                .frame(maxWidth: .infinity)
-                            }
-                            
-                            // Year Picker
-                            VStack(spacing: 8) {
-                                Text("YYYY")
-                                    .font(.caption)
-                                    .fontWeight(.medium)
+                                Text("Track your products and never let food go to waste")
+                                    .font(.subheadline)
                                     .foregroundStyle(.secondary)
-                                
-                                Menu {
-                                    ForEach(years, id: \.self) { year in
-                                        Button(String(year)) {
-                                            selectedYear = year
-                                        }
-                                    }
-                                } label: {
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color(.systemGray6))
-                                        .frame(height: 50)
-                                        .overlay {
-                                            Text(selectedYear == 0 ? "YYYY" : String(selectedYear))
-                                                .font(.body)
-                                                .fontWeight(.medium)
-                                                .foregroundStyle(selectedYear == 0 ? .secondary : .primary)
-                                        }
-                                }
-                                .frame(maxWidth: .infinity)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 40)
                             }
                         }
-                        .padding(.horizontal, 20)
                     }
                     
                     Spacer()
