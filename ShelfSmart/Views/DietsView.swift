@@ -198,7 +198,7 @@ struct DietCard: View {
                     // Content
                     VStack(spacing: 6) {
                         // Diet icon/emoji based on type
-                        Text(dietEmoji(for: diet))
+                        Text(diet.emoji)
                             .font(.system(size: 28))
                         
                         Text(diet.displayName)
@@ -250,23 +250,6 @@ struct DietCard: View {
         .buttonStyle(PlainButtonStyle())
         .scaleEffect(isSelected ? 1.05 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
-    }
-    
-    // Helper function to return appropriate emoji for each diet
-    private func dietEmoji(for diet: Diet) -> String {
-        switch diet {
-        case .glutenFree: return "🌾"
-        case .ketogenic: return "🥑"
-        case .vegetarian: return "🥕"
-        case .lactoVegetarian: return "🥛"
-        case .ovoVegetarian: return "🥚"
-        case .vegan: return "🌱"
-        case .pescetarian: return "🐟"
-        case .paleo: return "🦴"
-        case .primal: return "🥩"
-        case .lowFODMAP: return "🍃"
-        case .whole30: return "🌿"
-        }
     }
 }
 

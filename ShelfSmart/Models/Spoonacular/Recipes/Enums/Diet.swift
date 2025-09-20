@@ -42,6 +42,23 @@ enum Diet: String, CaseIterable, Codable {
         return self.rawValue
     }
     
+    // Associated emoji for better UX
+    var emoji: String {
+        switch self {
+        case .glutenFree: return "🌾"
+        case .ketogenic: return "🥑"
+        case .vegetarian: return "🥕"
+        case .lactoVegetarian: return "🥛"
+        case .ovoVegetarian: return "🥚"
+        case .vegan: return "🌱"
+        case .pescetarian: return "🐟"
+        case .paleo: return "🦴"
+        case .primal: return "🥩"
+        case .lowFODMAP: return "🍃"
+        case .whole30: return "🌿"
+        }
+    }
+    
     // Optional: Brief description for each diet
     var description: String {
         switch self {
