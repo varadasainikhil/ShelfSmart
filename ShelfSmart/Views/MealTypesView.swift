@@ -9,8 +9,8 @@ import SwiftUI
 
 struct MealTypesView: View {
     @Environment(\.modelContext) var modelContext
-    @State var viewModel = RandomRecipeViewModel()
-    @State private var navigateToRandomRecipe = false
+    @Environment(\.dismiss) private var dismiss
+    @State var viewModel: RandomRecipeViewModel
     @State private var selectedMealTypes = Set<String>()
     
     // Adaptive grid with better spacing
@@ -87,42 +87,26 @@ struct MealTypesView: View {
                 // Bottom Action Buttons
                 VStack(spacing: 12) {
                     HStack(spacing: 12) {
-                        // Surprise Me Button
+                        // Back Button
                         Button(action: {
-                            Task {
-                                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                                impactFeedback.impactOccurred()
-                                
-                                await viewModel.completelyRandomRecipe()
-                                navigateToRandomRecipe = true
-                            }
+                            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                            impactFeedback.impactOccurred()
+                            dismiss()
                         }) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 12)
                                     .foregroundStyle(.green)
                                 
-                                if viewModel.isLoading {
-                                    HStack {
-                                        ProgressView()
-                                            .progressViewStyle(CircularProgressViewStyle())
-                                            .scaleEffect(0.8)
-                                            .tint(.white)
-                                        Text("Loading...")
-                                            .foregroundStyle(.white)
-                                    }
-                                } else {
-                                    HStack {
-                                        Image(systemName: "sparkles")
-                                        Text("Surprise Me!")
-                                    }
-                                    .foregroundStyle(.white)
+                                HStack {
+                                    Image(systemName: "arrow.left")
+                                    Text("Back")
                                 }
+                                .foregroundStyle(.white)
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
                             .shadow(radius: 5)
                         }
-                        .disabled(viewModel.isLoading)
                         .padding(.trailing, 3)
                         
                         // Next Button
@@ -173,9 +157,7 @@ struct MealTypesView: View {
                 )
             }
             .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(isPresented: $navigateToRandomRecipe) {
-                RandomRecipeView(viewModel: viewModel)
-            }
+            .navigationBarBackButtonHidden(true)
         }
     }
 }
@@ -240,5 +222,5 @@ struct MealTypeCard: View {
 }
 
 #Preview {
-    MealTypesView()
+    MealTypesView(viewModel: RandomRecipeViewModel())
 }

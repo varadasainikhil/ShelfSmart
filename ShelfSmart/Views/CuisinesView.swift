@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct CuisinesView: View {
+    @Environment(\.dismiss) private var dismiss
     @State var viewModel: RandomRecipeViewModel
     @State private var navigateToIntolerances = false
     
@@ -82,9 +83,31 @@ struct CuisinesView: View {
                 Spacer()
             }
             .overlay(alignment: .bottom) {
-                // Bottom Action Button
+                // Bottom Action Buttons
                 VStack(spacing: 12) {
                     HStack(spacing: 12) {
+                        // Back Button
+                        Button(action: {
+                            let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                            impactFeedback.impactOccurred()
+                            dismiss()
+                        }) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .foregroundStyle(.green)
+                                
+                                HStack {
+                                    Image(systemName: "arrow.left")
+                                    Text("Back")
+                                }
+                                .foregroundStyle(.white)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 50)
+                            .shadow(radius: 5)
+                        }
+                        .padding(.trailing, 3)
+                        
                         // Next Button
                         NavigationLink(destination: IntolerancesView(viewModel: viewModel)) {
                             ZStack {
@@ -101,6 +124,7 @@ struct CuisinesView: View {
                             .frame(height: 50)
                             .shadow(radius: 5)
                         }
+                        .padding(.leading, 3)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -132,6 +156,7 @@ struct CuisinesView: View {
                 )
             }
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(true)
         }
     }
 }

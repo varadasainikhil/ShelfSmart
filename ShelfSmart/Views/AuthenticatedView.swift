@@ -16,7 +16,7 @@ struct AuthenticatedView: View {
                 HomeView()
             }
             Tab("Random Recipe", systemImage: "shuffle") {
-                MealTypesView()
+                DietsView()
             }
             Tab("Profile", systemImage: "person.fill") {
                 ProfileView()
