@@ -20,7 +20,7 @@ struct CustomRandomRecipeView: View {
                     loadingView
                 } else if let errorMessage = viewModel.errorMessage {
                     errorView(errorMessage)
-                } else if let recipe = viewModel.fetchedRecipe {
+                } else if let recipe = viewModel.currentRecipe {
                     recipeContentView(recipe)
                 } else if viewModel.hasAnySelections {
                     // User has made selections but no recipe yet - show loading or try to get one
@@ -118,7 +118,7 @@ struct CustomRandomRecipeView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
-    private func recipeContentView(_ recipe: SDRecipe) -> some View {
+    private func recipeContentView(_ recipe: Recipe) -> some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 // Selected Filters Summary
@@ -223,7 +223,7 @@ struct CustomRandomRecipeView: View {
         .padding(.bottom, 8)
     }
     
-    private func recipeInfoView(_ recipe: SDRecipe) -> some View {
+    private func recipeInfoView(_ recipe: Recipe) -> some View {
         HStack {
             if let readyInMinutes = recipe.readyInMinutes {
                 HStack(spacing: 4) {
@@ -261,7 +261,7 @@ struct CustomRandomRecipeView: View {
         }
     }
     
-    private func dietBadgesView(_ recipe: SDRecipe) -> some View {
+    private func dietBadgesView(_ recipe: Recipe) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack {
                 if recipe.vegetarian == true {
@@ -304,14 +304,14 @@ struct CustomRandomRecipeView: View {
         }
     }
     
-    private func ingredientsView(_ recipe: SDRecipe) -> some View {
+    private func ingredientsView(_ recipe: Recipe) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Ingredients")
                 .font(.title2)
                 .fontWeight(.bold)
             
             LazyVStack(alignment: .leading, spacing: 12) {
-                ForEach(Array(recipe.extendedIngredients.enumerated()), id: \.offset) { index, ingredient in
+                ForEach(Array((recipe.extendedIngredients ?? []).enumerated()), id: \.offset) { index, ingredient in
                     HStack(alignment: .center, spacing: 12) {
                         Circle()
                             .fill(Color.black)
@@ -348,7 +348,7 @@ struct CustomRandomRecipeView: View {
         .padding(.top)
     }
     
-    private func directionsView(_ recipe: SDRecipe) -> some View {
+    private func directionsView(_ recipe: Recipe) -> some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Directions")
                 .font(.title2)
@@ -356,7 +356,7 @@ struct CustomRandomRecipeView: View {
             
             if let analyzedInstructions = recipe.analyzedInstructions, !analyzedInstructions.isEmpty {
                 LazyVStack(alignment: .leading, spacing: 16) {
-                    ForEach(Array(analyzedInstructions[0].steps.enumerated()), id: \.offset) { index, step in
+                    ForEach(Array((analyzedInstructions[0].steps ?? []).enumerated()), id: \.offset) { index, step in
                         HStack(alignment: .top, spacing: 12) {
                             Text("\(step.number).")
                                 .font(.body)
@@ -385,7 +385,12 @@ struct CustomRandomRecipeView: View {
     private var actionButtonsView: some View {
         VStack(spacing: 12) {
             Button(action: {
-                viewModel.saveFetchedRecipe(to: modelContext)
+                let success = viewModel.saveCurrentRecipe(to: modelContext)
+                if success {
+                    // Show success feedback
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                    impactFeedback.impactOccurred()
+                }
             }) {
                 HStack {
                     Image(systemName: "heart.fill")
@@ -424,7 +429,7 @@ struct CustomRandomRecipeView: View {
         .padding(.top, 24)
     }
     
-    private func creditsView(_ recipe: SDRecipe) -> some View {
+    private func creditsView(_ recipe: Recipe) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             Divider()
                 .padding(.vertical, 16)

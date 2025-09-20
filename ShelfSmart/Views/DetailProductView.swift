@@ -251,7 +251,7 @@ struct DetailProductView: View {
             }
         }
         .sheet(isPresented: $showingRecipeDetail) {
-            if let recipe = recipeViewModel.fetchedRecipe {
+            if let recipe = recipeViewModel.currentRecipe {
                 // You can create a custom recipe detail view here
                 // For now, showing a simple view with recipe details
                 NavigationView {
@@ -281,7 +281,7 @@ struct DetailProductView: View {
                                         .font(.subheadline.bold())
                                         .padding(.horizontal)
                                     
-                                    ForEach(Array(instruction.steps.enumerated()), id: \.offset) { stepIndex, step in
+                                    ForEach(Array((instruction.steps ?? []).enumerated()), id: \.offset) { stepIndex, step in
                                         Text("\(stepIndex + 1). \(step.step)")
                                             .font(.body)
                                             .padding(.horizontal)

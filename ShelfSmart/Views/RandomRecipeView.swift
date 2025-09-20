@@ -54,7 +54,7 @@ struct RandomRecipeView: View {
                     .padding()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     
-                } else if let recipe = viewModel.fetchedRecipe {
+                } else if let recipe = viewModel.currentRecipe {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) {
                             // Recipe Image
@@ -190,7 +190,7 @@ struct RandomRecipeView: View {
                                     .fontWeight(.bold)
                                 
                                 LazyVStack(alignment: .leading, spacing: 12) {
-                                    ForEach(Array(recipe.extendedIngredients.enumerated()), id: \.offset) { index, ingredient in
+                                    ForEach(Array((recipe.extendedIngredients ?? []).enumerated()), id: \.offset) { index, ingredient in
                                         HStack(alignment: .center, spacing: 12) {
                                             // Bullet point
                                             Circle()
@@ -238,7 +238,7 @@ struct RandomRecipeView: View {
                                 
                                 if let analyzedInstructions = recipe.analyzedInstructions, !analyzedInstructions.isEmpty {
                                     LazyVStack(alignment: .leading, spacing: 16) {
-                                        ForEach(Array(analyzedInstructions[0].steps.enumerated()), id: \.offset) { index, step in
+                                        ForEach(Array((analyzedInstructions[0].steps ?? []).enumerated()), id: \.offset) { index, step in
                                             HStack(alignment: .top, spacing: 12) {
                                                 // Step number
                                                 Text("\(step.number).")

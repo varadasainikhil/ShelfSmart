@@ -8,31 +8,35 @@
 import Foundation
 import SwiftData
 
-// Wrapper for Spoonacular random recipe API response
+// MARK: - API Response Models
 struct RandomRecipeResponse: Codable {
     let recipes: [Recipe]
 }
 
 @Observable
 class RandomRecipeViewModel {
-    // Separate arrays for better organization and performance
+    // MARK: - Selection State
     var selectedMealTypes: [String] = []
     var selectedCuisines: [String] = []
     var selectedDiets: [String] = []
     var selectedIntolerances: [String] = []
     
+    // MARK: - UI State
     var isLoading = false
-    var errorMessage : String?
+    var errorMessage: String?
     var searchSuccess = false
-    var id : Int?
-    var fetchedRecipe: SDRecipe?
     
-    // Properties for find by ingredients functionality
+    // MARK: - Recipe Data (Raw API Response - NOT SwiftData models)
+    var currentRecipeId: Int?
+    var currentRecipe: Recipe? // Raw API response
+    var currentRecipeSummary: FindByIngredientsRecipe? // For ingredient-based searches
+    
+    // MARK: - Ingredient Search Results
     var foundRecipeIds: [Int] = []
     var foundRecipeSummaries: [FindByIngredientsRecipe] = []
     var ingredientsSearchSuccess = false
     
-    /// Computed property that combines all selected tags if needed
+    // MARK: - Computed Properties
     var allSelectedTags: [String] {
         return selectedMealTypes + selectedCuisines + selectedDiets + selectedIntolerances
     }
@@ -104,302 +108,242 @@ class RandomRecipeViewModel {
                selectedDiets.count + selectedIntolerances.count
     }
     
-    func getAPIKey() -> String? {
+    /// Gets API key from Info.plist
+    private func getAPIKey() -> String? {
         guard let path = Bundle.main.path(forResource: "Info", ofType: "plist"),
               let plist = NSDictionary(contentsOfFile: path),
               let apiKey = plist["API_KEY"] as? String else {
             return nil
         }
-        print(apiKey)
         return apiKey
     }
     
+    /// Sets loading state and clears previous errors
+    private func setLoadingState(_ loading: Bool) async {
+        await MainActor.run {
+            isLoading = loading
+            if loading {
+                errorMessage = nil
+                searchSuccess = false
+            }
+        }
+    }
+    
+    /// Sets error message and stops loading
+    private func setError(_ message: String) async {
+        await MainActor.run {
+            isLoading = false
+            errorMessage = message
+            searchSuccess = false
+        }
+    }
+    
+    /// Handles HTTP response status codes
+    private func handleHTTPResponse(_ response: HTTPURLResponse) async -> Bool {
+        switch response.statusCode {
+        case 200...299:
+            return true
+        case 401:
+            await setError("Invalid API key. Please check your configuration.")
+        case 402:
+            await setError("API quota exceeded. Please try again later.")
+        case 403:
+            await setError("Access denied. Please check your API permissions.")
+        case 404:
+            await setError("API endpoint not found. Please try again.")
+        case 429:
+            await setError("Rate limit exceeded. Please wait before trying again.")
+        case 500...599:
+            await setError("Server error. Please try again later.")
+        default:
+            await setError("Unexpected error occurred. Please try again.")
+        }
+        return false
+    }
+    
+    /// Makes API request with error handling
+    private func makeAPIRequest(url: URL) async throws -> (Data, HTTPURLResponse) {
+        let (data, response) = try await URLSession.shared.data(from: url)
+        
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+        
+        guard await handleHTTPResponse(httpResponse) else {
+            throw URLError(.badServerResponse)
+        }
+        
+        return (data, httpResponse)
+    }
+    
+    // MARK: - Recipe Fetching Methods
+    
+    /// Fetches a completely random recipe
     func completelyRandomRecipe() async {
-        // Prevent duplicate calls if already loading
-        if isLoading {
+        guard !isLoading else {
             print("⚠️ Already loading recipe, skipping duplicate call")
             return
         }
         
-        // Set initial loading state
-        await MainActor.run {
-            isLoading = true
-            errorMessage = nil
-            searchSuccess = false
-            fetchedRecipe = nil
-        }
-        
+        await setLoadingState(true)
         print("🔍 Searching for random recipe")
         
         do {
-            // Get and validate API key
             guard let apiKey = getAPIKey(), !apiKey.isEmpty else {
-                print("❌ Error: API key is nil or empty")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "API key not configured. Please check your configuration."
-                }
+                await setError("API key not configured. Please check your configuration.")
                 return
             }
             
-            print("✅ API key retrieved successfully")
-            
-            // Build URL with query parameters
-            guard var urlComponents = URLComponents(string: "https://api.spoonacular.com/recipes/random") else {
-                print("❌ Error: Failed to create URL components")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Invalid API URL configuration"
-                }
-                return
-            }
-            
-            var queryItems: [URLQueryItem] = [
-                URLQueryItem(name: "apiKey", value: apiKey),
-                URLQueryItem(name: "number", value: "1") // Ensure we get exactly 1 recipe
-            ]
-            
-            // Add include tags if any are selected (use combined tags)
-            if hasAnySelections {
-                let tagsString = allSelectedTags.joined(separator: ",")
-                queryItems.append(URLQueryItem(name: "include-tags", value: tagsString))
-                print("🏷️ Including tags: \(tagsString)")
-            }
-            
-            urlComponents.queryItems = queryItems
-            
-            guard let url = urlComponents.url else {
-                print("❌ Error: Failed to create final URL")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Failed to construct API request URL"
-                }
+            guard let url = buildRandomRecipeURL(apiKey: apiKey) else {
+                await setError("Failed to construct API request URL")
                 return
             }
             
             print("🌐 Making request to: \(url.absoluteString)")
             
-            // Make API request
-            let (data, response) = try await URLSession.shared.data(from: url)
+            let (data, _) = try await makeAPIRequest(url: url)
             
-            // Validate HTTP response
-            guard let httpResponse = response as? HTTPURLResponse else {
-                print("❌ Error: Invalid response type")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Invalid server response"
-                }
+            // Parse and validate response
+            let apiResponse = try JSONDecoder().decode(RandomRecipeResponse.self, from: data)
+            
+            guard let recipe = apiResponse.recipes.first else {
+                await setError("No recipes found matching your criteria. Please try different filters.")
                 return
             }
             
-            print("📡 Response status code: \(httpResponse.statusCode)")
-            
-            // Handle HTTP error status codes
-            switch httpResponse.statusCode {
-            case 200...299:
-                print("✅ Successful response")
-            case 401:
-                print("❌ Unauthorized: Invalid API key")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Invalid API key. Please check your configuration."
-                }
-                return
-            case 402:
-                print("❌ Payment required: API quota exceeded")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "API quota exceeded. Please try again later."
-                }
-                return
-            case 403:
-                print("❌ Forbidden: Access denied")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Access denied. Please check your API permissions."
-                }
-                return
-            case 404:
-                print("❌ Not found: Invalid endpoint")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "API endpoint not found. Please try again."
-                }
-                return
-            case 429:
-                print("❌ Too many requests: Rate limit exceeded")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Rate limit exceeded. Please wait before trying again."
-                }
-                return
-            case 500...599:
-                print("❌ Server error: \(httpResponse.statusCode)")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Server error. Please try again later."
-                }
-                return
-            default:
-                print("❌ Unexpected status code: \(httpResponse.statusCode)")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Unexpected error occurred. Please try again."
-                }
-                return
-            }
-            
-            print("📦 Received data size: \(data.count) bytes")
-            
-            // Validate data is not empty
-            guard !data.isEmpty else {
-                print("❌ Error: Empty response data")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Empty response from server"
-                }
-                return
-            }
-            
-            // Parse JSON response
-            let decoder = JSONDecoder()
-            let apiResponse = try decoder.decode(RandomRecipeResponse.self, from: data)
-            
-            print("✅ Successfully decoded API response")
-            
-            // Validate we received recipes
-            guard !apiResponse.recipes.isEmpty else {
-                print("⚠️ No recipes found in response")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "No recipes found matching your criteria. Please try different filters."
-                }
-                return
-            }
-            
-            // Get the first (and should be only) recipe
-            let recipe = apiResponse.recipes[0]
-            print("🍽️ Recipe found: \(recipe.title)")
-            print("🆔 Recipe ID: \(recipe.id)")
-            
-            // Convert to SwiftData model (but don't save to context)
-            let sdRecipe = SDRecipe(from: recipe)
-            
-            print("✅ Successfully converted to SwiftData model")
-            
-            // Update UI on main actor
+            // Store raw recipe data (NO SwiftData conversion yet)
             await MainActor.run {
-                fetchedRecipe = sdRecipe
-                id = recipe.id
+                currentRecipe = recipe
+                currentRecipeId = recipe.id
                 isLoading = false
                 searchSuccess = true
                 errorMessage = nil
                 print("🎉 Recipe fetch completed successfully!")
             }
             
-        } catch let decodingError as DecodingError {
-            print("❌ JSON Decoding Error: \(decodingError)")
-            
-            // Provide more specific decoding error messages
-            let decodingMessage: String
-            switch decodingError {
-            case .dataCorrupted:
-                decodingMessage = "Corrupted data received from server"
-            case .keyNotFound(let key, _):
-                decodingMessage = "Missing required field: \(key.stringValue)"
-            case .typeMismatch(let type, _):
-                decodingMessage = "Invalid data type received: expected \(type)"
-            case .valueNotFound(let type, _):
-                decodingMessage = "Missing required value of type: \(type)"
-            @unknown default:
-                decodingMessage = "Failed to parse server response"
-            }
-            
-            await MainActor.run {
-                isLoading = false
-                errorMessage = decodingMessage
-            }
-            
-        } catch let urlError as URLError {
-            print("❌ Network Error: \(urlError)")
-            print("❌ Network Error Code: \(urlError.code.rawValue)")
-            
-            // Provide user-friendly network error messages
-            let networkMessage: String
-            switch urlError.code {
-            case .notConnectedToInternet:
-                networkMessage = "No internet connection. Please check your network settings."
-            case .timedOut:
-                networkMessage = "Request timed out. Please try again."
-            case .cannotFindHost:
-                networkMessage = "Cannot reach server. Please check your connection."
-            case .networkConnectionLost:
-                networkMessage = "Network connection lost. Please try again."
-            case .dnsLookupFailed:
-                networkMessage = "DNS lookup failed. Please check your internet connection."
-            default:
-                networkMessage = "Network error occurred. Please try again."
-            }
-            
-            await MainActor.run {
-                isLoading = false
-                errorMessage = networkMessage
-            }
-            
         } catch {
-            print("❌ Unexpected Error: \(error)")
-            print("❌ Error Type: \(type(of: error))")
-            print("❌ Error Description: \(error.localizedDescription)")
-            
-            await MainActor.run {
-                isLoading = false
-                errorMessage = "An unexpected error occurred. Please try again."
-            }
+            await handleError(error)
         }
     }
     
-    /// Clears the currently fetched recipe and resets search state
-    func clearFetchedRecipe() {
-        fetchedRecipe = nil
-        searchSuccess = false
-        errorMessage = nil
-        id = nil
+    /// Builds URL for random recipe API call
+    private func buildRandomRecipeURL(apiKey: String) -> URL? {
+        guard var urlComponents = URLComponents(string: "https://api.spoonacular.com/recipes/random") else {
+            return nil
+        }
+        
+        var queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "apiKey", value: apiKey),
+            URLQueryItem(name: "number", value: "1")
+        ]
+        
+        // Add filters if any are selected
+        if hasAnySelections {
+            let tagsString = allSelectedTags.joined(separator: ",")
+            queryItems.append(URLQueryItem(name: "include-tags", value: tagsString))
+            print("🏷️ Including tags: \(tagsString)")
+        }
+        
+        urlComponents.queryItems = queryItems
+        return urlComponents.url
     }
     
-    /// Saves the currently fetched recipe to SwiftData context
-    func saveFetchedRecipe(to modelContext: ModelContext) {
-        guard let recipe = fetchedRecipe else {
+    /// Handles errors with user-friendly messages
+    private func handleError(_ error: Error) async {
+        print("❌ Error: \(error)")
+        
+        let errorMessage: String
+        if let urlError = error as? URLError {
+            errorMessage = getNetworkErrorMessage(for: urlError)
+        } else if let decodingError = error as? DecodingError {
+            errorMessage = getDecodingErrorMessage(for: decodingError)
+        } else {
+            errorMessage = "An unexpected error occurred. Please try again."
+        }
+        
+        await setError(errorMessage)
+    }
+    
+    /// Provides user-friendly network error messages
+    private func getNetworkErrorMessage(for error: URLError) -> String {
+        switch error.code {
+        case .notConnectedToInternet:
+            return "No internet connection. Please check your network settings."
+        case .timedOut:
+            return "Request timed out. Please try again."
+        case .cannotFindHost:
+            return "Cannot reach server. Please check your connection."
+        case .networkConnectionLost:
+            return "Network connection lost. Please try again."
+        case .dnsLookupFailed:
+            return "DNS lookup failed. Please check your internet connection."
+        default:
+            return "Network error occurred. Please try again."
+        }
+    }
+    
+    /// Provides user-friendly decoding error messages
+    private func getDecodingErrorMessage(for error: DecodingError) -> String {
+        switch error {
+        case .dataCorrupted:
+            return "Corrupted data received from server"
+        case .keyNotFound(let key, _):
+            return "Missing required field: \(key.stringValue)"
+        case .typeMismatch(let type, _):
+            return "Invalid data type received: expected \(type)"
+        case .valueNotFound(let type, _):
+            return "Missing required value of type: \(type)"
+        @unknown default:
+            return "Failed to parse server response"
+        }
+    }
+    
+    // MARK: - Recipe Management
+    
+    /// Clears the currently fetched recipe and resets search state
+    func clearCurrentRecipe() {
+        currentRecipe = nil
+        currentRecipeId = nil
+        currentRecipeSummary = nil
+        searchSuccess = false
+        errorMessage = nil
+    }
+    
+    /// Creates and saves SDRecipe model to SwiftData context (ONLY when user wants to save)
+    func saveCurrentRecipe(to modelContext: ModelContext) -> Bool {
+        guard let recipe = currentRecipe else {
             errorMessage = "No recipe to save"
-            return
+            return false
         }
         
         do {
-            modelContext.insert(recipe)
+            // Convert to SwiftData model ONLY when saving
+            let sdRecipe = SDRecipe(from: recipe)
+            modelContext.insert(sdRecipe)
             try modelContext.save()
             print("✅ Recipe saved to SwiftData successfully")
+            return true
         } catch {
             print("❌ Failed to save recipe: \(error)")
             errorMessage = "Failed to save recipe: \(error.localizedDescription)"
+            return false
         }
     }
     
+    /// Creates SDRecipe model from current recipe (for preview/saving later)
+    func createSDRecipeFromCurrent() -> SDRecipe? {
+        guard let recipe = currentRecipe else { return nil }
+        return SDRecipe(from: recipe)
+    }
+    
     /// Fetches a custom random recipe based on user-selected filters
-    /// Uses the separate arrays for better performance and clarity
     func customRandomRecipe() async {
-        // Prevent duplicate calls if already loading
-        if isLoading {
+        guard !isLoading else {
             print("⚠️ Already loading recipe, skipping duplicate call")
             return
         }
         
-        // Set initial loading state
-        await MainActor.run {
-            isLoading = true
-            errorMessage = nil
-            searchSuccess = false
-            fetchedRecipe = nil
-        }
-        
+        await setLoadingState(true)
         print("🔍 Searching for custom random recipe with filters:")
         print("   Meal Types: \(selectedMealTypes)")
         print("   Cuisines: \(selectedCuisines)")
@@ -407,703 +351,199 @@ class RandomRecipeViewModel {
         print("   Intolerances: \(selectedIntolerances)")
         
         do {
-            // Get and validate API key
             guard let apiKey = getAPIKey(), !apiKey.isEmpty else {
-                print("❌ Error: API key is nil or empty")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "API key not configured. Please check your configuration."
-                }
+                await setError("API key not configured. Please check your configuration.")
                 return
             }
             
-            print("✅ API key retrieved successfully")
-            
-            // Build URL with query parameters
-            guard var urlComponents = URLComponents(string: "https://api.spoonacular.com/recipes/complexSearch") else {
-                print("❌ Error: Failed to create URL components")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Invalid API URL configuration"
-                }
-                return
-            }
-            
-            var queryItems: [URLQueryItem] = [
-                URLQueryItem(name: "apiKey", value: apiKey),
-                URLQueryItem(name: "number", value: "1"), // Ensure we get exactly 1 recipe
-                URLQueryItem(name: "sort", value: "random")
-            ]
-            
-            // Add meal type parameter (use 'type' for Spoonacular API)
-            if !selectedMealTypes.isEmpty {
-                let mealTypesString = selectedMealTypes.joined(separator: ",")
-                queryItems.append(URLQueryItem(name: "type", value: mealTypesString))
-                print("🍽️ Adding meal types: \(mealTypesString)")
-            }
-            
-            // Add cuisine parameter
-            if !selectedCuisines.isEmpty {
-                let cuisinesString = selectedCuisines.joined(separator: ",")
-                queryItems.append(URLQueryItem(name: "cuisine", value: cuisinesString))
-                print("🌍 Adding cuisines: \(cuisinesString)")
-            }
-            
-            // Add diet parameter
-            if !selectedDiets.isEmpty {
-                let dietsString = selectedDiets.joined(separator: ",")
-                queryItems.append(URLQueryItem(name: "diet", value: dietsString))
-                print("🥗 Adding diets: \(dietsString)")
-            }
-            
-            // Add intolerances parameter (use 'excludeIngredients' for Spoonacular API)
-            if !selectedIntolerances.isEmpty {
-                let intolerancesString = selectedIntolerances.joined(separator: ",")
-                queryItems.append(URLQueryItem(name: "excludeIngredients", value: intolerancesString))
-                print("🚫 Adding intolerances: \(intolerancesString)")
-            }
-            
-            urlComponents.queryItems = queryItems
-            
-            guard let url = urlComponents.url else {
-                print("❌ Error: Failed to create final URL")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Failed to construct API request URL"
-                }
+            guard let url = buildComplexSearchURL(apiKey: apiKey) else {
+                await setError("Failed to construct API request URL")
                 return
             }
             
             print("🌐 Making request to: \(url.absoluteString)")
             
-            // Make API request
-            let (data, response) = try await URLSession.shared.data(from: url)
+            let (data, _) = try await makeAPIRequest(url: url)
             
-            // Validate HTTP response
-            guard let httpResponse = response as? HTTPURLResponse else {
-                print("❌ Error: Invalid response type")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Invalid server response"
-                }
+            // Parse search results
+            let searchResponse = try JSONDecoder().decode(ComplexSearchRecipeResponse.self, from: data)
+            
+            guard let searchResult = searchResponse.results.first, searchResult.id > 0 else {
+                await setError("No recipes found matching your criteria. Please try different filters.")
                 return
             }
             
-            print("📡 Response status code: \(httpResponse.statusCode)")
+            print("✅ Found recipe: \(searchResult.title) (ID: \(searchResult.id))")
             
-            // Handle HTTP error status codes
-            switch httpResponse.statusCode {
-            case 200...299:
-                print("✅ Successful response")
-            case 401:
-                print("❌ Unauthorized: Invalid API key")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Invalid API key. Please check your configuration."
-                }
-                return
-            case 402:
-                print("❌ Payment required: API quota exceeded")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "API quota exceeded. Please try again later."
-                }
-                return
-            case 403:
-                print("❌ Forbidden: Access denied")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Access denied. Please check your API permissions."
-                }
-                return
-            case 404:
-                print("❌ Not found: Invalid endpoint")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "API endpoint not found. Please try again."
-                }
-                return
-            case 429:
-                print("❌ Too many requests: Rate limit exceeded")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Rate limit exceeded. Please wait before trying again."
-                }
-                return
-            case 500...599:
-                print("❌ Server error: \(httpResponse.statusCode)")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Server error. Please try again later."
-                }
-                return
-            default:
-                print("❌ Unexpected status code: \(httpResponse.statusCode)")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Unexpected error occurred. Please try again."
-                }
-                return
-            }
-            
-            print("📦 Received data size: \(data.count) bytes")
-            
-            // Validate data is not empty
-            guard !data.isEmpty else {
-                print("❌ Error: Empty response data")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Empty response from server"
-                }
-                return
-            }
-            
-            // Parse JSON response
-            let decoder = JSONDecoder()
-            let apiResponse = try decoder.decode(ComplexSearchRecipeResponse.self, from: data)
-            
-            print("✅ Successfully decoded API response")
-            
-            
-            // Validate we received recipes
-            guard !apiResponse.results.isEmpty else {
-                print("⚠️ No recipes found in response")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "No recipes found matching your criteria. Please try different filters."
-                }
-                return
-            }
-            
-            // Get the first (and should be only) recipe
-            let searchResult = apiResponse.results[0]
-            print("🍽️ Recipe found: \(searchResult.title)")
-            print("🆔 Recipe ID: \(searchResult.id)")
-            
-            // Validate that we have a valid recipe ID
-            guard searchResult.id > 0 else {
-                print("❌ Invalid recipe ID: \(searchResult.id)")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Invalid recipe data received. Please try again."
-                }
-                return
-            }
-            
-            print("✅ Valid recipe ID confirmed, fetching complete recipe details...")
-            
-            // Fetch complete recipe details using the ID
+            // Fetch complete recipe details
             await fetchCompleteRecipeById(id: searchResult.id)
             
-        } catch let decodingError as DecodingError {
-            print("❌ JSON Decoding Error: \(decodingError)")
-            
-            // Provide more specific decoding error messages
-            let decodingMessage: String
-            switch decodingError {
-            case .dataCorrupted:
-                decodingMessage = "Corrupted data received from server"
-            case .keyNotFound(let key, _):
-                decodingMessage = "Missing required field: \(key.stringValue)"
-            case .typeMismatch(let type, _):
-                decodingMessage = "Invalid data type received: expected \(type)"
-            case .valueNotFound(let type, _):
-                decodingMessage = "Missing required value of type: \(type)"
-            @unknown default:
-                decodingMessage = "Failed to parse server response"
-            }
-            
-            await MainActor.run {
-                isLoading = false
-                errorMessage = decodingMessage
-            }
-            
-        } catch let urlError as URLError {
-            print("❌ Network Error: \(urlError)")
-            print("❌ Network Error Code: \(urlError.code.rawValue)")
-            
-            // Provide user-friendly network error messages
-            let networkMessage: String
-            switch urlError.code {
-            case .notConnectedToInternet:
-                networkMessage = "No internet connection. Please check your network settings."
-            case .timedOut:
-                networkMessage = "Request timed out. Please try again."
-            case .cannotFindHost:
-                networkMessage = "Cannot reach server. Please check your connection."
-            case .networkConnectionLost:
-                networkMessage = "Network connection lost. Please try again."
-            case .dnsLookupFailed:
-                networkMessage = "DNS lookup failed. Please check your internet connection."
-            default:
-                networkMessage = "Network error occurred. Please try again."
-            }
-            
-            await MainActor.run {
-                isLoading = false
-                errorMessage = networkMessage
-            }
-            
         } catch {
-            print("❌ Unexpected Error: \(error)")
-            print("❌ Error Type: \(type(of: error))")
-            print("❌ Error Description: \(error.localizedDescription)")
-            
-            await MainActor.run {
-                isLoading = false
-                errorMessage = "An unexpected error occurred. Please try again."
-            }
+            await handleError(error)
         }
     }
     
+    /// Builds URL for complex search API call
+    private func buildComplexSearchURL(apiKey: String) -> URL? {
+        guard var urlComponents = URLComponents(string: "https://api.spoonacular.com/recipes/complexSearch") else {
+            return nil
+        }
+        
+        var queryItems: [URLQueryItem] = [
+            URLQueryItem(name: "apiKey", value: apiKey),
+            URLQueryItem(name: "number", value: "1"),
+            URLQueryItem(name: "sort", value: "random")
+        ]
+        
+        // Add filters
+        if !selectedMealTypes.isEmpty {
+            queryItems.append(URLQueryItem(name: "type", value: selectedMealTypes.joined(separator: ",")))
+        }
+        if !selectedCuisines.isEmpty {
+            queryItems.append(URLQueryItem(name: "cuisine", value: selectedCuisines.joined(separator: ",")))
+        }
+        if !selectedDiets.isEmpty {
+            queryItems.append(URLQueryItem(name: "diet", value: selectedDiets.joined(separator: ",")))
+        }
+        if !selectedIntolerances.isEmpty {
+            queryItems.append(URLQueryItem(name: "excludeIngredients", value: selectedIntolerances.joined(separator: ",")))
+        }
+        
+        urlComponents.queryItems = queryItems
+        return urlComponents.url
+    }
+    
     /// Fetches complete recipe details by ID from Spoonacular API
-    /// This is called after getting a recipe ID from complexSearch to get full recipe details
     private func fetchCompleteRecipeById(id: Int) async {
         print("🔍 Fetching complete recipe details for ID: \(id)")
         
         do {
-            // Get API key
             guard let apiKey = getAPIKey(), !apiKey.isEmpty else {
-                print("❌ Error: API key is nil or empty")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "API key not configured. Please check your configuration."
-                }
+                await setError("API key not configured. Please check your configuration.")
                 return
             }
             
-            // Build URL for recipe information endpoint
-            guard var urlComponents = URLComponents(string: "https://api.spoonacular.com/recipes/\(id)/information") else {
-                print("❌ Error: Failed to create URL components")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Invalid API URL configuration"
-                }
-                return
-            }
-            
-            urlComponents.queryItems = [
-                URLQueryItem(name: "apiKey", value: apiKey),
-                URLQueryItem(name: "includeNutrition", value: "false") // Set to true if you want nutrition data
-            ]
-            
-            guard let url = urlComponents.url else {
-                print("❌ Error: Failed to create final URL")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Failed to construct API request URL"
-                }
+            guard let url = buildRecipeInfoURL(id: id, apiKey: apiKey) else {
+                await setError("Failed to construct API request URL")
                 return
             }
             
             print("🌐 Making request to: \(url.absoluteString)")
             
-            // Make API request
-            let (data, response) = try await URLSession.shared.data(from: url)
+            let (data, _) = try await makeAPIRequest(url: url)
             
-            // Validate HTTP response
-            guard let httpResponse = response as? HTTPURLResponse else {
-                print("❌ Error: Invalid response type")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Invalid server response"
-                }
-                return
-            }
+            // Parse recipe details
+            let recipe = try JSONDecoder().decode(Recipe.self, from: data)
             
-            print("📡 Response status code: \(httpResponse.statusCode)")
-            
-            // Handle HTTP error status codes
-            switch httpResponse.statusCode {
-            case 200...299:
-                print("✅ Successful response")
-            case 401:
-                print("❌ Unauthorized: Invalid API key")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Invalid API key. Please check your configuration."
-                }
-                return
-            case 402:
-                print("❌ Payment required: API quota exceeded")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "API quota exceeded. Please try again later."
-                }
-                return
-            case 404:
-                print("❌ Recipe not found")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Recipe not found. Please try a different search."
-                }
-                return
-            case 429:
-                print("❌ Too many requests: Rate limit exceeded")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Rate limit exceeded. Please wait before trying again."
-                }
-                return
-            case 500...599:
-                print("❌ Server error: \(httpResponse.statusCode)")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Server error. Please try again later."
-                }
-                return
-            default:
-                print("❌ Unexpected status code: \(httpResponse.statusCode)")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Unexpected error occurred. Please try again."
-                }
-                return
-            }
-            
-            print("📦 Received data size: \(data.count) bytes")
-            
-            // Validate data is not empty
-            guard !data.isEmpty else {
-                print("❌ Error: Empty response data")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Empty response from server"
-                }
-                return
-            }
-            
-            // Parse JSON response - the recipe information endpoint returns a single Recipe object
-            let decoder = JSONDecoder()
-            let recipe = try decoder.decode(Recipe.self, from: data)
-            
-            print("✅ Successfully decoded complete recipe")
-            print("🍽️ Complete recipe: \(recipe.title)")
+            print("✅ Successfully decoded complete recipe: \(recipe.title)")
             print("🥘 Ingredients count: \(recipe.extendedIngredients?.count ?? 0)")
-            print("📋 Has instructions: \(recipe.analyzedInstructions?.isEmpty == false || recipe.instructions?.isEmpty == false)")
             
-            // Convert to SwiftData model
-            let sdRecipe = SDRecipe(from: recipe)
-            
-            print("✅ Successfully converted to SDRecipe model")
-            
-            // Update UI on main actor
+            // Store raw recipe data (NO SwiftData conversion yet)
             await MainActor.run {
-                fetchedRecipe = sdRecipe
-                self.id = recipe.id
+                currentRecipe = recipe
+                currentRecipeId = recipe.id
                 isLoading = false
                 searchSuccess = true
                 errorMessage = nil
                 print("🎉 Complete recipe fetch completed successfully!")
-                
-                // Clear all selections after successful recipe fetch
-                clearAllSelections()
-                print("🧹 Cleared all selections after successful recipe fetch")
-            }
-            
-        } catch let decodingError as DecodingError {
-            print("❌ JSON Decoding Error: \(decodingError)")
-            
-            let decodingMessage: String
-            switch decodingError {
-            case .dataCorrupted:
-                decodingMessage = "Corrupted data received from server"
-            case .keyNotFound(let key, _):
-                decodingMessage = "Missing required field: \(key.stringValue)"
-            case .typeMismatch(let type, _):
-                decodingMessage = "Invalid data type received: expected \(type)"
-            case .valueNotFound(let type, _):
-                decodingMessage = "Missing required value of type: \(type)"
-            @unknown default:
-                decodingMessage = "Failed to parse server response"
-            }
-            
-            await MainActor.run {
-                isLoading = false
-                errorMessage = decodingMessage
-            }
-            
-        } catch let urlError as URLError {
-            print("❌ Network Error: \(urlError)")
-            
-            let networkMessage: String
-            switch urlError.code {
-            case .notConnectedToInternet:
-                networkMessage = "No internet connection. Please check your network settings."
-            case .timedOut:
-                networkMessage = "Request timed out. Please try again."
-            case .cannotFindHost:
-                networkMessage = "Cannot reach server. Please check your connection."
-            case .networkConnectionLost:
-                networkMessage = "Network connection lost. Please try again."
-            case .dnsLookupFailed:
-                networkMessage = "DNS lookup failed. Please check your internet connection."
-            default:
-                networkMessage = "Network error occurred. Please try again."
-            }
-            
-            await MainActor.run {
-                isLoading = false
-                errorMessage = networkMessage
             }
             
         } catch {
-            print("❌ Unexpected Error: \(error)")
-            print("❌ Error Type: \(type(of: error))")
-            print("❌ Error Description: \(error.localizedDescription)")
-            
-            await MainActor.run {
-                isLoading = false
-                errorMessage = "An unexpected error occurred. Please try again."
-            }
+            await handleError(error)
         }
     }
     
-    // MARK: - Find Recipes by Ingredients (Simplified)
+    /// Builds URL for recipe information API call
+    private func buildRecipeInfoURL(id: Int, apiKey: String) -> URL? {
+        guard var urlComponents = URLComponents(string: "https://api.spoonacular.com/recipes/\(id)/information") else {
+            return nil
+        }
+        
+        urlComponents.queryItems = [
+            URLQueryItem(name: "apiKey", value: apiKey),
+            URLQueryItem(name: "includeNutrition", value: "false")
+        ]
+        
+        return urlComponents.url
+    }
+    
+    // MARK: - Ingredient Search Methods
     
     /// Searches for recipe IDs using ingredients from products
-    /// Returns only recipe IDs and basic info - full details fetched separately when needed
-    /// - Parameter ingredients: Array of ingredient names to search for
     func findRecipeIdsByIngredients(ingredients: [String]) async {
-        // Prevent duplicate calls if already loading
-        if isLoading {
+        guard !isLoading else {
             print("⚠️ Already loading recipes, skipping duplicate call")
             return
         }
         
-        // Set initial loading state
-        await MainActor.run {
-            isLoading = true
-            errorMessage = nil
-            ingredientsSearchSuccess = false
-            foundRecipeIds = []
-            foundRecipeSummaries = []
-        }
+        await setLoadingState(true)
+        foundRecipeIds = []
+        foundRecipeSummaries = []
         
         print("🔍 Searching for recipe IDs with ingredients: \(ingredients)")
         
         do {
-            // Get and validate API key
             guard let apiKey = getAPIKey(), !apiKey.isEmpty else {
-                print("❌ Error: API key is nil or empty")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "API key not configured. Please check your configuration."
-                }
+                await setError("API key not configured. Please check your configuration.")
                 return
             }
             
-            print("✅ API key retrieved successfully")
-            
-            // Build URL with query parameters
-            guard var urlComponents = URLComponents(string: "https://api.spoonacular.com/recipes/findByIngredients") else {
-                print("❌ Error: Failed to create URL components")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Invalid API URL configuration"
-                }
-                return
-            }
-            
-            // Join ingredients with commas as required by the API
-            let ingredientsString = ingredients.joined(separator: ",")
-            
-            var queryItems: [URLQueryItem] = [
-                URLQueryItem(name: "apiKey", value: apiKey),
-                URLQueryItem(name: "ingredients", value: ingredientsString),
-                URLQueryItem(name: "number", value: "3"), // Limit to 3 recipes as requested
-                URLQueryItem(name: "ignorePantry", value: "true") // Ignore pantry items as requested
-            ]
-            
-            urlComponents.queryItems = queryItems
-            
-            guard let url = urlComponents.url else {
-                print("❌ Error: Failed to create final URL")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Failed to construct API request URL"
-                }
+            guard let url = buildIngredientSearchURL(ingredients: ingredients, apiKey: apiKey) else {
+                await setError("Failed to construct API request URL")
                 return
             }
             
             print("🌐 Making request to: \(url.absoluteString)")
             
-            // Make API request
-            let (data, response) = try await URLSession.shared.data(from: url)
+            let (data, _) = try await makeAPIRequest(url: url)
             
-            // Validate HTTP response
-            guard let httpResponse = response as? HTTPURLResponse else {
-                print("❌ Error: Invalid response type")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Invalid server response"
-                }
-                return
-            }
+            // Parse ingredient search results
+            let recipes = try JSONDecoder().decode([FindByIngredientsRecipe].self, from: data)
             
-            print("📡 Response status code: \(httpResponse.statusCode)")
-            
-            // Handle HTTP error status codes
-            switch httpResponse.statusCode {
-            case 200...299:
-                print("✅ Successful response")
-            case 401:
-                print("❌ Unauthorized: Invalid API key")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Invalid API key. Please check your configuration."
-                }
-                return
-            case 402:
-                print("❌ Payment required: API quota exceeded")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "API quota exceeded. Please try again later."
-                }
-                return
-            case 403:
-                print("❌ Forbidden: Access denied")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Access denied. Please check your API permissions."
-                }
-                return
-            case 404:
-                print("❌ Not found: Invalid endpoint")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "API endpoint not found. Please try again."
-                }
-                return
-            case 429:
-                print("❌ Too many requests: Rate limit exceeded")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Rate limit exceeded. Please wait before trying again."
-                }
-                return
-            case 500...599:
-                print("❌ Server error: \(httpResponse.statusCode)")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Server error. Please try again later."
-                }
-                return
-            default:
-                print("❌ Unexpected status code: \(httpResponse.statusCode)")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Unexpected error occurred. Please try again."
-                }
-                return
-            }
-            
-            print("📦 Received data size: \(data.count) bytes")
-            
-            // Validate data is not empty
-            guard !data.isEmpty else {
-                print("❌ Error: Empty response data")
-                await MainActor.run {
-                    isLoading = false
-                    errorMessage = "Empty response from server"
-                }
-                return
-            }
-            
-            // Parse JSON response - the findByIngredients endpoint returns an array of FindByIngredientsRecipe
-            let decoder = JSONDecoder()
-            let recipes = try decoder.decode([FindByIngredientsRecipe].self, from: data)
-            
-            print("✅ Successfully decoded API response")
-            print("🍽️ Found \(recipes.count) recipes")
-            
-            // Extract recipe IDs and basic info
-            let recipeIds = recipes.map { $0.id }
+            print("✅ Found \(recipes.count) recipes")
             
             // Update UI on main actor
             await MainActor.run {
-                foundRecipeIds = recipeIds
+                foundRecipeIds = recipes.map { $0.id }
                 foundRecipeSummaries = recipes
                 isLoading = false
                 ingredientsSearchSuccess = true
                 errorMessage = nil
                 print("🎉 Recipe ID search completed successfully!")
-                print("📋 Recipe IDs: \(recipeIds)")
-            }
-            
-        } catch let decodingError as DecodingError {
-            print("❌ JSON Decoding Error: \(decodingError)")
-            
-            // Provide more specific decoding error messages
-            let decodingMessage: String
-            switch decodingError {
-            case .dataCorrupted:
-                decodingMessage = "Corrupted data received from server"
-            case .keyNotFound(let key, _):
-                decodingMessage = "Missing required field: \(key.stringValue)"
-            case .typeMismatch(let type, _):
-                decodingMessage = "Invalid data type received: expected \(type)"
-            case .valueNotFound(let type, _):
-                decodingMessage = "Missing required value of type: \(type)"
-            @unknown default:
-                decodingMessage = "Failed to parse server response"
-            }
-            
-            await MainActor.run {
-                isLoading = false
-                errorMessage = decodingMessage
-            }
-            
-        } catch let urlError as URLError {
-            print("❌ Network Error: \(urlError)")
-            print("❌ Network Error Code: \(urlError.code.rawValue)")
-            
-            // Provide user-friendly network error messages
-            let networkMessage: String
-            switch urlError.code {
-            case .notConnectedToInternet:
-                networkMessage = "No internet connection. Please check your network settings."
-            case .timedOut:
-                networkMessage = "Request timed out. Please try again."
-            case .cannotFindHost:
-                networkMessage = "Cannot reach server. Please check your connection."
-            case .networkConnectionLost:
-                networkMessage = "Network connection lost. Please try again."
-            case .dnsLookupFailed:
-                networkMessage = "DNS lookup failed. Please check your internet connection."
-            default:
-                networkMessage = "Network error occurred. Please try again."
-            }
-            
-            await MainActor.run {
-                isLoading = false
-                errorMessage = networkMessage
             }
             
         } catch {
-            print("❌ Unexpected Error: \(error)")
-            print("❌ Error Type: \(type(of: error))")
-            print("❌ Error Description: \(error.localizedDescription)")
-            
-            await MainActor.run {
-                isLoading = false
-                errorMessage = "An unexpected error occurred. Please try again."
-            }
+            await handleError(error)
         }
     }
     
+    /// Builds URL for ingredient search API call
+    private func buildIngredientSearchURL(ingredients: [String], apiKey: String) -> URL? {
+        guard var urlComponents = URLComponents(string: "https://api.spoonacular.com/recipes/findByIngredients") else {
+            return nil
+        }
+        
+        let ingredientsString = ingredients.joined(separator: ",")
+        
+        urlComponents.queryItems = [
+            URLQueryItem(name: "apiKey", value: apiKey),
+            URLQueryItem(name: "ingredients", value: ingredientsString),
+            URLQueryItem(name: "number", value: "3"),
+            URLQueryItem(name: "ignorePantry", value: "true")
+        ]
+        
+        return urlComponents.url
+    }
+    
     /// Searches for recipe IDs using ingredients from a list of products
-    /// - Parameter products: Array of Product objects to extract ingredients from
     func findRecipeIdsFromProducts(products: [Product]) async {
         // Extract ingredients from products
         var ingredients: [String] = []
         
         for product in products {
-            // Use breadcrumbs if available, otherwise use title
             if let breadcrumbs = product.breadcrumbs, !breadcrumbs.isEmpty {
                 ingredients.append(contentsOf: breadcrumbs)
             } else {
-                // Fallback to using the product title as an ingredient
                 ingredients.append(product.title)
             }
         }
@@ -1126,12 +566,8 @@ class RandomRecipeViewModel {
     }
     
     /// Fetches full recipe details for a specific recipe ID
-    /// Call this only when user wants to see full details
-    /// - Parameter recipeId: The ID of the recipe to fetch full details for
     func fetchFullRecipeDetails(recipeId: Int) async {
         print("🔍 Fetching full details for recipe ID: \(recipeId)")
-        
-        // Use the existing fetchCompleteRecipeById function
         await fetchCompleteRecipeById(id: recipeId)
     }
 }
