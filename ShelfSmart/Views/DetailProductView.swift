@@ -10,8 +10,8 @@ import SwiftData
 
 struct DetailProductView: View {
     @Environment(\.modelContext) private var modelContext
-    @State private var recipeViewModel = RandomRecipeViewModel()
-    @State private var showingRecipeDetail = false
+    @State private var recipeCardViewModel = RecipeCardViewModel()
+    @State private var recipeToShow: Recipe?
     var product : Product
     var body: some View {
         ZStack{
@@ -163,7 +163,7 @@ struct DetailProductView: View {
                     .padding()
                     
                     // Recipes Section
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 16) {
                         HStack{
                             Text("Recipes Using this Product")
                                 .font(.title2.bold())
@@ -182,45 +182,80 @@ struct DetailProductView: View {
                             }
                         }
                         
-                        // Recipe IDs display
+                        // Recipe Cards Display
                         if let recipeIds = product.recipeIds, !recipeIds.isEmpty {
-                            VStack(spacing: 8) {
-                                ForEach(Array(recipeIds.enumerated()), id: \.offset) { index, recipeId in
-                                    HStack {
-                                        // Recipe number
-                                        Text("\(index + 1)")
-                                            .font(.caption.bold())
-                                            .foregroundColor(.white)
-                                            .frame(width: 24, height: 24)
-                                            .background(Color.blue)
-                                            .clipShape(Circle())
-                                        
-                                        // Recipe ID
-                                        Text("Recipe ID: \(recipeId)")
-                                            .font(.body)
-                                            .foregroundColor(.primary)
-                                        
-                                        Spacer()
-                                        
-                                        // View recipe button
-                                        Button("View") {
-                                            Task {
-                                                await recipeViewModel.fetchFullRecipeDetails(recipeId: recipeId)
-                                                showingRecipeDetail = true
-                                            }
+                            if recipeCardViewModel.isLoading && recipeCardViewModel.recipes.isEmpty {
+                                // Loading state
+                                VStack(spacing: 12) {
+                                    ProgressView()
+                                        .scaleEffect(1.2)
+                                    Text("Loading recipes...")
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 40)
+                            } else if recipeCardViewModel.hasRecipes {
+                                // Recipe cards grid - 2x2 layout for 4 recipes
+                                LazyVGrid(columns: [
+                                    GridItem(.flexible(), spacing: 12),
+                                    GridItem(.flexible(), spacing: 12)
+                                ], spacing: 16) {
+                                    ForEach(recipeCardViewModel.recipes, id: \.id) { recipe in
+                                        RecipeCard(recipe: recipe) {
+                                            // Set the selected recipe and show detail view
+                                            print("🍽️ Recipe tapped: \(recipe.title)")
+                                            recipeToShow = recipe
                                         }
-                                        .font(.caption.bold())
-                                        .foregroundColor(.blue)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 6)
-                                        .background(Color.blue.opacity(0.1))
-                                        .clipShape(Capsule())
-                                        .disabled(recipeViewModel.isLoading)
                                     }
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 8)
-                                    .background(Color(.systemGray6))
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                                }
+                            } else if let errorMessage = recipeCardViewModel.errorMessage {
+                                // Error state
+                                VStack(spacing: 12) {
+                                    Image(systemName: "exclamationmark.triangle")
+                                        .font(.title2)
+                                        .foregroundColor(.orange)
+                                    
+                                    Text("Failed to load recipes")
+                                        .font(.headline)
+                                    
+                                    Text(errorMessage)
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .multilineTextAlignment(.center)
+                                    
+                                    Button("Try Again") {
+                                        Task {
+                                            await recipeCardViewModel.fetchMultipleRecipeDetails(recipeIds: recipeIds)
+                                        }
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .controlSize(.small)
+                                }
+                                .padding()
+                                .background(Color(.systemGray6))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                            } else {
+                                // No recipes loaded yet - trigger loading
+                                VStack(spacing: 12) {
+                                    Image(systemName: "fork.knife")
+                                        .font(.title2)
+                                        .foregroundColor(.gray)
+                                    
+                                    Text("Loading recipes...")
+                                        .font(.headline)
+                                    
+                                    Text("Fetching recipe details for this product")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                        .multilineTextAlignment(.center)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 40)
+                                .onAppear {
+                                    Task {
+                                        await recipeCardViewModel.fetchMultipleRecipeDetails(recipeIds: recipeIds)
+                                    }
                                 }
                             }
                         } else {
@@ -250,81 +285,8 @@ struct DetailProductView: View {
                 }
             }
         }
-        .sheet(isPresented: $showingRecipeDetail) {
-            if let recipe = recipeViewModel.currentRecipe {
-                // You can create a custom recipe detail view here
-                // For now, showing a simple view with recipe details
-                NavigationView {
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text(recipe.title)
-                            .font(.title.bold())
-                            .padding()
-                        
-                        if let summary = recipe.summary {
-                            Text("Summary")
-                                .font(.headline)
-                                .padding(.horizontal)
-                            
-                            Text(summary)
-                                .font(.body)
-                                .padding(.horizontal)
-                        }
-                        
-                        if let instructions = recipe.analyzedInstructions, !instructions.isEmpty {
-                            Text("Instructions")
-                                .font(.headline)
-                                .padding(.horizontal)
-                            
-                            ForEach(Array(instructions.enumerated()), id: \.offset) { index, instruction in
-                                VStack(alignment: .leading, spacing: 8) {
-                                    Text("Step \(index + 1)")
-                                        .font(.subheadline.bold())
-                                        .padding(.horizontal)
-                                    
-                                    ForEach(Array((instruction.steps ?? []).enumerated()), id: \.offset) { stepIndex, step in
-                                        Text("\(stepIndex + 1). \(step.step)")
-                                            .font(.body)
-                                            .padding(.horizontal)
-                                    }
-                                }
-                            }
-                        }
-                        
-                        Spacer()
-                    }
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .navigationBarTrailing) {
-                            Button("Done") {
-                                showingRecipeDetail = false
-                            }
-                        }
-                    }
-                }
-            } else if recipeViewModel.isLoading {
-                VStack {
-                    ProgressView()
-                        .scaleEffect(1.5)
-                    Text("Loading recipe details...")
-                        .font(.headline)
-                        .padding()
-                }
-            } else {
-                VStack {
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.largeTitle)
-                        .foregroundColor(.orange)
-                    
-                    Text("Failed to load recipe")
-                        .font(.headline)
-                        .padding()
-                    
-                    Button("Try Again") {
-                        showingRecipeDetail = false
-                    }
-                    .buttonStyle(.borderedProminent)
-                }
-            }
+        .sheet(item: $recipeToShow) { recipe in
+            RecipeDetailView(recipe: recipe)
         }
     }
 }

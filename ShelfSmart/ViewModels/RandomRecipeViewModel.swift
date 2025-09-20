@@ -528,7 +528,7 @@ class RandomRecipeViewModel {
         urlComponents.queryItems = [
             URLQueryItem(name: "apiKey", value: apiKey),
             URLQueryItem(name: "ingredients", value: ingredientsString),
-            URLQueryItem(name: "number", value: "3"),
+            URLQueryItem(name: "number", value: "4"),
             URLQueryItem(name: "ignorePantry", value: "true")
         ]
         

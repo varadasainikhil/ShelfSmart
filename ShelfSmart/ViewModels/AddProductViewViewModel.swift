@@ -406,7 +406,7 @@ class AddProductViewViewModel {
             var queryItems: [URLQueryItem] = [
                 URLQueryItem(name: "apiKey", value: apiKey),
                 URLQueryItem(name: "ingredients", value: ingredientsString),
-                URLQueryItem(name: "number", value: "3"), // Limit to 3 recipes as requested
+                URLQueryItem(name: "number", value: "4"), // Limit to 4 recipes as requested
                 URLQueryItem(name: "ignorePantry", value: "true") // Ignore pantry items as requested
             ]
             
