@@ -11,27 +11,15 @@ struct RecipeCard: View {
     let recipe: Recipe
     let onTap: () -> Void
     
+    
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 0) {
                 // Recipe Image
-                AsyncImage(url: URL(string: recipe.image ?? "")) { image in
+                SimpleAsyncImage(url: recipe.image) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
-                } placeholder: {
-                    Rectangle()
-                        .fill(.gray.opacity(0.3))
-                        .overlay {
-                            VStack(spacing: 8) {
-                                Image(systemName: "photo")
-                                    .font(.title2)
-                                    .foregroundColor(.gray)
-                                Text("Loading...")
-                                    .font(.caption)
-                                    .foregroundColor(.gray)
-                            }
-                        }
                 }
                 .frame(height: 120)
                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))

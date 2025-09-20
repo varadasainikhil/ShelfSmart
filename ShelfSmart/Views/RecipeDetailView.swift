@@ -13,22 +13,17 @@ struct RecipeDetailView: View {
     @Environment(\.dismiss) var dismiss
     let recipe: Recipe
     
+    
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     // Recipe Image
                     if let imageUrl = recipe.image, !imageUrl.isEmpty {
-                        AsyncImage(url: URL(string: imageUrl)) { image in
+                        SimpleAsyncImage(url: imageUrl) { image in
                             image
                                 .resizable()
                                 .aspectRatio(contentMode: .fill)
-                        } placeholder: {
-                            Rectangle()
-                                .fill(.gray.opacity(0.3))
-                                .overlay {
-                                    ProgressView()
-                                }
                         }
                         .frame(height: 200)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -94,9 +89,6 @@ struct RecipeDetailView: View {
                         dismiss()
                     }
                 }
-            }
-            .onAppear {
-                print("📖 Showing recipe: \(recipe.title)")
             }
         }
     }

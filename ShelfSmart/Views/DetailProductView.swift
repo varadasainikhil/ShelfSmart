@@ -124,32 +124,60 @@ struct DetailProductView: View {
                     
                     
                     ZStack{
-                        RoundedRectangle(cornerRadius: 12)
-                            .foregroundStyle(product.borderColor.opacity(0.4))
-                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
+                        RoundedRectangle(cornerRadius: 16)
+                            .foregroundStyle(product.borderColor.opacity(0.3))
+                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 16))
                         
-                        HStack{
+                        HStack(spacing: 20){
                             
-                            Spacer()
-                            
-                            VStack(alignment: .center){
-                                Text("Expires on")
+                            // Expiration Date Section
+                            VStack(alignment: .center, spacing: 4){
+                                HStack(spacing: 4) {
+                                    Image(systemName: "calendar")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    Text("Expires on")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
                                 Text("\(product.expirationDate.formatted(date: .abbreviated, time: .omitted))")
+                                    .font(.subheadline.bold())
+                                    .foregroundColor(product.isExpired ? .red : .primary)
                             }
-                            Spacer()
+                            .frame(maxWidth: .infinity)
                             
-                            Spacer()
+                            // Divider
+                            Rectangle()
+                                .fill(Color.secondary.opacity(0.3))
+                                .frame(width: 1, height: 40)
                             
-                            VStack(alignment: .center){
-                                if product.spoonacularScore != nil {
-                                    Text(String(format: "%.2f", product.spoonacularScore!))
+                            // Ingredients Section
+                            VStack(alignment: .center, spacing: 4){
+                                HStack(spacing: 4) {
+                                    Image(systemName: "list.bullet")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    Text("Ingredients")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                }
+                                if let ingredientCount = product.ingredientCount {
+                                    Text("\(ingredientCount)")
+                                        .font(.title2.bold())
+                                        .foregroundColor(.primary)
+                                } else {
+                                    Text("N/A")
+                                        .font(.title2.bold())
+                                        .foregroundColor(.secondary)
                                 }
                             }
-                            Spacer()
+                            .frame(maxWidth: .infinity)
+                            
                         }
+                        .padding(.horizontal, 20)
                     }
                     .frame(maxWidth: .infinity)
-                    .frame(height: 70)
+                    .frame(height: 80)
                     .padding(.horizontal)
                     
                     VStack{
@@ -203,10 +231,9 @@ struct DetailProductView: View {
                                 ], spacing: 16) {
                                     ForEach(recipeCardViewModel.recipes, id: \.id) { recipe in
                                         RecipeCard(recipe: recipe) {
-                                            // Set the selected recipe and show detail view
-                                            print("🍽️ Recipe tapped: \(recipe.title)")
                                             recipeToShow = recipe
                                         }
+                                        .id("recipe-\(recipe.id)") // Ensure stable identity
                                     }
                                 }
                             } else if let errorMessage = recipeCardViewModel.errorMessage {
