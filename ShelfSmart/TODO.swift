@@ -13,9 +13,9 @@
 // TODO: Make the user enter information one at a time - like first screen email, then password.
 // TODO: Show user the ingredients of the product in the detailProductView.
 // TODO: Remove the spoonacularScore for the products as it is useless.
-// TODO: 
+// TODO: Review why the mealTypesView takes so much time to load, i know it is because of the images being loaded. Check for alternate ways to do this.
+
 
 // Important Questions/ Bugs -
-// 1. Why are we creating a GroceryProduct in the manual entry and then a product. We can directly create product, because to store it locally we only need product.
 // 2. Why are we saving the recipe in modelContext as soon we create a recipe model, we have to let the user choose whether they want to save it or not.
 

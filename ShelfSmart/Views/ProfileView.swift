@@ -19,10 +19,20 @@ struct ProfileView: View {
     // Get all groups and filter in the view - this will be reactive to changes
     @Query(sort: \GroupedProducts.expirationDate) private var allGroups: [GroupedProducts]
     
+    // Get all products for liked products section
+    @Query private var allProducts: [Product]
+    
     // Computed property that filters groups by current user
     var groups: [GroupedProducts] {
         return allGroups.filter { group in
             group.userId == currentUserId
+        }
+    }
+    
+    // Computed property for liked products by current user
+    var likedProducts: [Product] {
+        return allProducts.filter { product in
+            product.isLiked && (product.groupedProducts?.userId == currentUserId)
         }
     }
     
@@ -65,39 +75,125 @@ struct ProfileView: View {
                         .padding(.bottom, 20)
                 }
                 
-                // Content Section - Centered
-                VStack(spacing: 0) {
-                    Spacer()
-                    
-                    VStack(spacing: 32) {
-                        // Welcome message or placeholder content
-                        VStack(spacing: 16) {
-                            Circle()
-                                .fill(.green.opacity(0.2))
-                                .frame(width: 80, height: 80)
-                                .overlay {
-                                    Image(systemName: "leaf.fill")
-                                        .font(.system(size: 32))
-                                        .foregroundStyle(.green)
+                // Content Sections
+                ScrollView {
+                    LazyVStack(spacing: 24) {
+                        // Liked Products Section
+                        VStack(alignment: .leading, spacing: 12) {
+                            // Section Header
+                            NavigationLink(destination: AllLikedProductsView()) {
+                                HStack {
+                                    Text("Liked Products")
+                                        .font(.title3)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(.primary)
+                                    
+                                    Spacer()
+                                    
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundStyle(.secondary)
                                 }
-                            
-                            VStack(spacing: 8) {
-                                Text("Keep your shelf organized")
-                                    .font(.title2)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .padding(.horizontal, 20)
+                        
+                            // Recent 5 Liked Items - Horizontal Scroll
+                            if !likedProducts.isEmpty {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 12) {
+                                        ForEach(Array(likedProducts.prefix(5)), id: \.self) { product in
+                                            NavigationLink(destination: DetailProductView(product: product)) {
+                                                LikedProductCard(product: product)
+                                            }
+                                            .buttonStyle(PlainButtonStyle())
+                                        }
+                                    }
+                                    .padding(.horizontal, 20)
+                                }
+                                .padding(.bottom, 16)
+                            }
+                        
+                            if likedProducts.isEmpty {
+                                // Empty State for Liked Products
+                                VStack(spacing: 16) {
+                                    Circle()
+                                        .fill(.red.opacity(0.1))
+                                        .frame(width: 60, height: 60)
+                                        .overlay {
+                                            Image(systemName: "heart.slash")
+                                                .font(.system(size: 24))
+                                                .foregroundStyle(.red.opacity(0.7))
+                                        }
+                                    
+                                    VStack(spacing: 6) {
+                                        Text("No liked products yet")
+                                            .font(.subheadline)
+                                            .fontWeight(.medium)
+                                            .foregroundStyle(.primary)
+                                        
+                                        Text("Start liking products to see them here")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .multilineTextAlignment(.center)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 140)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color(.systemGray6))
+                                )
+                                .padding(.horizontal, 20)
+                            }
+                        }
+                        
+                        // Future: Liked Recipes Section
+                        // This section will be added later for liked recipes
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Text("Liked Recipes")
+                                    .font(.title3)
                                     .fontWeight(.semibold)
                                     .foregroundStyle(.primary)
                                 
-                                Text("Track your products and never let food go to waste")
-                                    .font(.subheadline)
-                                    .foregroundStyle(.secondary)
-                                    .multilineTextAlignment(.center)
-                                    .padding(.horizontal, 40)
+                                Spacer()
                             }
+                            .padding(.horizontal, 20)
+                            
+                            // Placeholder for liked recipes
+                            VStack(spacing: 16) {
+                                Circle()
+                                    .fill(.orange.opacity(0.1))
+                                    .frame(width: 60, height: 60)
+                                    .overlay {
+                                        Image(systemName: "book.closed")
+                                            .font(.system(size: 24))
+                                            .foregroundStyle(.orange.opacity(0.7))
+                                    }
+                                
+                                VStack(spacing: 6) {
+                                    Text("Recipe likes coming soon")
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                        .foregroundStyle(.primary)
+                                    
+                                    Text("Save your favorite recipes for easy access")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                        .multilineTextAlignment(.center)
+                                }
+                            }
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 140)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color(.systemGray6))
+                            )
+                            .padding(.horizontal, 20)
                         }
                     }
-                    
-                    Spacer()
-                    Spacer()
+                    .padding(.bottom, 120) // Extra space for bottom buttons
                 }
             }
             .overlay(alignment: .bottom) {
@@ -192,7 +288,91 @@ struct ProfileView: View {
     }
 }
 
+// MARK: - Liked Product Card Component
+struct LikedProductCard: View {
+    let product: Product
+    
+    var body: some View {
+        VStack(alignment: .center, spacing: 8) {
+            // Product Image
+            ZStack {
+                if let imageLink = product.imageLink, !imageLink.isEmpty {
+                    let secureImageLink = imageLink.hasPrefix("http://") ? imageLink.replacingOccurrences(of: "http://", with: "https://") : imageLink
+                    AsyncImage(url: URL(string: secureImageLink)) { phase in
+                        if let image = phase.image {
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 80, height: 80)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                        } else if phase.error != nil {
+                            Image("placeholder")
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 80, height: 80)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                        } else {
+                            ProgressView()
+                                .frame(width: 80, height: 80)
+                        }
+                    }
+                } else {
+                    Image("placeholder")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 80, height: 80)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+                
+                // Heart indicator overlay
+                VStack {
+                    HStack {
+                        Spacer()
+                        Image(systemName: "heart.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .background(
+                                Circle()
+                                    .fill(.red)
+                                    .frame(width: 22, height: 22)
+                            )
+                            .offset(x: -6, y: 6)
+                    }
+                    Spacer()
+                }
+            }
+            .frame(width: 80, height: 80)
+            .background(Color(.systemGray5))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            
+            // Product Info
+            VStack(alignment: .center, spacing: 2) {
+                Text(product.title)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+            }
+            .frame(height: 28) // Reduced height for text area
+            .padding(.horizontal, 4)
+        }
+        .frame(width: 100, height: 120)
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemGray6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(product.borderColor.opacity(0.3), lineWidth: 1)
+                )
+        )
+        .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 1)
+    }
+}
+
 
 #Preview {
     ProfileView(viewModel: ProfileViewViewModel())
 }
+
