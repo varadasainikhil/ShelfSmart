@@ -30,9 +30,18 @@ class CardViewViewModel{
                     return
                 }
                 
-                // Remove the matching product
+                // Remove the matching product - handle both API and manual products safely
                 group.products?.removeAll { productInGroup in
-                    productInGroup.id == product.id
+                    // Match API products by their Spoonacular ID
+                    if let productId = product.id, let groupProductId = productInGroup.id {
+                        return productId == groupProductId
+                    }
+                    // Match manual products by their UUID
+                    if let productManualId = product.manualId, let groupProductManualId = productInGroup.manualId {
+                        return productManualId == groupProductManualId
+                    }
+                    // No match if we can't compare properly
+                    return false
                 }
                 
                 // Clean up empty group
