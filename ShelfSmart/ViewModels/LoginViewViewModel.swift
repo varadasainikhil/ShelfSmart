@@ -243,8 +243,3 @@ class LoginViewViewModel{
         }
     }
 }
-
-
-
-// The functionality of resetting is perfect.
-// UI Changes - Clear the sign up view textfields after the sign up is successfull, check for login View as well.

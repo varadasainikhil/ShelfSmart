@@ -212,7 +212,22 @@ final class SignUpViewViewModel{
             }
         }
     }
-    
+
+    // Clear text fields based on success or failure
+    func clearTextFields(success: Bool) {
+        if success {
+            // Clear all fields on successful sign up
+            fullName = ""
+            emailAddress = ""
+            password = ""
+            confirmationPassword = ""
+        } else {
+            // Clear only password fields on failed sign up
+            password = ""
+            confirmationPassword = ""
+        }
+    }
+
     // Creating an account
     func createAccount() async{
         print("Sign Up button is pressed.")
@@ -231,12 +246,19 @@ final class SignUpViewViewModel{
 
                 try db.collection("users").document(userId).setData(from: user)
                 print("User with user id: \(userId) updated to Firebase")
-                
+
+                // Clear all fields on successful sign up
+                await MainActor.run {
+                    self.clearTextFields(success: true)
+                }
+
             } catch {
                 print("Error creating account: \(error.localizedDescription)")
                 await MainActor.run {
                     self.errorMessage = error.localizedDescription
                     self.showingError = true
+                    // Clear only password fields on failed sign up
+                    self.clearTextFields(success: false)
                 }
             }
         }
