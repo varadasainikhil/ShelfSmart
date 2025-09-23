@@ -68,6 +68,7 @@ class AddProductViewViewModel {
         searchAttempted = false
         apiResponse = nil
         groceryProduct = nil
+        self.recipes = [SDRecipe]()
         print("🔄 Reset all fields to initial state - clean sheet ready")
     }
     
@@ -671,7 +672,9 @@ class AddProductViewViewModel {
                 print("✅ Successfully decoded recipe information")
                 
                 let sdRecipe = SDRecipe(from : recipe)
-                self.recipes.append(sdRecipe)
+                await MainActor.run {
+                    self.recipes.append(sdRecipe)
+                }
                 
                 print("Added recipe to product : \(sdRecipe.title ?? "Unknown Recipe")")
             } catch {
