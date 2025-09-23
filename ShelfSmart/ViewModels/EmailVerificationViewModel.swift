@@ -1,0 +1,181 @@
+//
+//  EmailVerificationViewModel.swift
+//  ShelfSmart
+//
+//  Created by Sai Nikhil Varada on 9/23/25.
+//
+
+import Foundation
+import FirebaseAuth
+import FirebaseFirestore
+
+@Observable
+final class EmailVerificationViewModel {
+    var userEmail: String
+    var isCheckingVerification: Bool = false
+    var isResendingEmail: Bool = false
+    var resendCooldownSeconds: Int = 0
+    var showingSuccess: Bool = false
+    var showingError: Bool = false
+    var successMessage: String = ""
+    var errorMessage: String = ""
+    private var cooldownTimer: Timer?
+    private let resendCooldownDuration: Int = 60 // 60 seconds cooldown
+
+    var canResendEmail: Bool {
+        return !isResendingEmail && resendCooldownSeconds == 0
+    }
+
+    init(userEmail: String) {
+        self.userEmail = userEmail
+    }
+
+    func checkEmailVerification(onSuccess: (() async -> Void)? = nil) async {
+        await MainActor.run {
+            isCheckingVerification = true
+        }
+
+        do {
+            // Reload the current user to get the latest verification status
+            try await Auth.auth().currentUser?.reload()
+
+            guard let currentUser = Auth.auth().currentUser else {
+                await MainActor.run {
+                    self.errorMessage = "No user found. Please try signing up again."
+                    self.showingError = true
+                    self.isCheckingVerification = false
+                }
+                return
+            }
+
+            if currentUser.isEmailVerified {
+                // Email is verified, create user in Firestore
+                await createUserInFirestore(currentUser)
+
+                await MainActor.run {
+                    self.successMessage = "Email verified successfully! Welcome to ShelfSmart."
+                    self.showingSuccess = true
+                    self.isCheckingVerification = false
+                }
+
+                // Call the success callback if provided
+                if let onSuccess = onSuccess {
+                    await onSuccess()
+                }
+            } else {
+                await MainActor.run {
+                    self.errorMessage = "Email not yet verified. Please check your inbox and click the verification link."
+                    self.showingError = true
+                    self.isCheckingVerification = false
+                }
+            }
+        } catch {
+            await MainActor.run {
+                self.errorMessage = "Error checking verification status: \(error.localizedDescription)"
+                self.showingError = true
+                self.isCheckingVerification = false
+            }
+        }
+    }
+
+    func resendVerificationEmail() async {
+        guard canResendEmail else { return }
+
+        await MainActor.run {
+            isResendingEmail = true
+        }
+
+        do {
+            try await Auth.auth().currentUser?.sendEmailVerification()
+
+            await MainActor.run {
+                self.successMessage = "Verification email sent! Please check your inbox."
+                self.showingSuccess = true
+                self.isResendingEmail = false
+                self.startResendCooldown()
+            }
+        } catch {
+            await MainActor.run {
+                self.errorMessage = "Error sending verification email: \(error.localizedDescription)"
+                self.showingError = true
+                self.isResendingEmail = false
+            }
+        }
+    }
+
+    func signOut() async {
+        do {
+            try Auth.auth().signOut()
+        } catch {
+            await MainActor.run {
+                self.errorMessage = "Error signing out: \(error.localizedDescription)"
+                self.showingError = true
+            }
+        }
+    }
+
+    private func createUserInFirestore(_ firebaseUser: FirebaseAuth.User) async {
+        let db = Firestore.firestore()
+        let userId = firebaseUser.uid
+
+        do {
+            let user = User(
+                name: extractUserName(from: firebaseUser),
+                email: firebaseUser.email ?? "",
+                signupMethod: "email_password",
+                isEmailVerified: true,
+                emailVerificationSentAt: Date()
+            )
+
+            try db.collection("users").document(userId).setData(from: user)
+            print("Verified user with ID: \(userId) added to Firestore")
+        } catch {
+            print("Error adding verified user to Firestore: \(error.localizedDescription)")
+        }
+    }
+
+    private func extractUserName(from firebaseUser: FirebaseAuth.User) -> String {
+        // Try to get display name first
+        if let displayName = firebaseUser.displayName, !displayName.isEmpty {
+            return displayName
+        }
+
+        // Fallback to email prefix
+        if let email = firebaseUser.email, !email.isEmpty {
+            return String(email.split(separator: "@").first ?? "User")
+        }
+
+        return "User"
+    }
+
+    func startCooldownTimer() {
+        // Start with initial cooldown if recently sent
+        startResendCooldown()
+    }
+
+    func stopCooldownTimer() {
+        cooldownTimer?.invalidate()
+        cooldownTimer = nil
+    }
+
+    private func startResendCooldown() {
+        resendCooldownSeconds = resendCooldownDuration
+
+        cooldownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+
+                if self.resendCooldownSeconds > 0 {
+                    self.resendCooldownSeconds -= 1
+                } else {
+                    self.cooldownTimer?.invalidate()
+                    self.cooldownTimer = nil
+                }
+            }
+        }
+    }
+
+    deinit {
+        stopCooldownTimer()
+    }
+}

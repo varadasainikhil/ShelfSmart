@@ -8,7 +8,6 @@
 import Foundation
 
 // TODO: 2a. Add a email verification through a code or a link for new users.
-// TODO: 2b. Add a reset password for those who are signing up with email/password.
 // TODO: 3. Add a one parameter at a time sign up process - User first enters email, clicks next, enters password and confirms it.
 // TODO: 4. Try to add a method to share recipes
 // TODO: 5. Make the UI uniform : Button with glass effect.

@@ -47,6 +47,8 @@ final class SignUpViewViewModel{
     var isButtonActive : Bool = false
     var showingError : Bool = false
     var errorMessage : String = ""
+    var showingSuccess : Bool = false
+    var successMessage : String = ""
     
     
     func checkCriteriaMet(){
@@ -196,7 +198,7 @@ final class SignUpViewViewModel{
                 let db = Firestore.firestore()
             
                 do{
-                    let user = User(name: userName, email: userEmail, signupMethod: "apple_signin")
+                    let user = User(name: userName, email: userEmail, signupMethod: "apple_signin", isEmailVerified: true, emailVerificationSentAt: Date())
 
                     try db.collection("users").document(userId).setData(from: user)
                     print("User with user id: \(userId) updated to Firebase")
@@ -235,21 +237,20 @@ final class SignUpViewViewModel{
             do {
                 // Create user with Firebase Auth using async/await
                 let authResult = try await Auth.auth().createUser(withEmail: emailAddress, password: password)
-                print("User signed in successfully with ID: \(authResult.user.uid)")
-                
-                // Get the user ID from the auth result
-                let userId = authResult.user.uid
-                
-                // Create a new user document in Firestore
-                let db = Firestore.firestore()
-                let user = User(name: fullName, email: emailAddress, signupMethod: "email_password")
+                print("User account created successfully with ID: \(authResult.user.uid)")
 
-                try db.collection("users").document(userId).setData(from: user)
-                print("User with user id: \(userId) updated to Firebase")
+                // Send email verification
+                try await authResult.user.sendEmailVerification()
+                print("Email verification sent to: \(emailAddress)")
+
+                // DO NOT create user in Firestore yet - wait for email verification
+                // User will be added to Firestore only after email verification
 
                 // Clear all fields on successful sign up
                 await MainActor.run {
                     self.clearTextFields(success: true)
+                    self.successMessage = "Account created! Please check your email to verify your account."
+                    self.showingSuccess = true
                 }
 
             } catch {

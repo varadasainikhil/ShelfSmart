@@ -181,6 +181,11 @@ struct SignUpView: View {
             } message: {
                 Text(viewModel.errorMessage)
             }
+            .alert("Success", isPresented: $viewModel.showingSuccess) {
+                Button("OK") { }
+            } message: {
+                Text(viewModel.successMessage)
+            }
         }
     }
 }

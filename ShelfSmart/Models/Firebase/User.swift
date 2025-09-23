@@ -12,4 +12,6 @@ struct User : Codable{
     var email : String
     var joinDate : Date = Date.now
     var signupMethod : String
+    var isEmailVerified : Bool = false
+    var emailVerificationSentAt : Date? = nil
 }
