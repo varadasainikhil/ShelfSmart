@@ -19,7 +19,10 @@ struct EntryView: View {
                 } else {
                     // User is authenticated but email is not verified
                     EmailVerificationView(
-                        viewModel: EmailVerificationViewModel(userEmail: viewModel.currentUserEmail),
+                        viewModel: EmailVerificationViewModel(
+                            userEmail: viewModel.currentUserEmail,
+                            userFullName: authManager.fullName
+                        ),
                         onVerificationSuccess: {
                             await viewModel.refreshUserStatus()
                         }

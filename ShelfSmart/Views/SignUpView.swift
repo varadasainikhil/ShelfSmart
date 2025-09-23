@@ -72,14 +72,16 @@ struct SignUpView: View {
                                 title: "Full Name",
                                 placeholder: "Enter your full name",
                                 text: $viewModel.fullName,
-                                keyboardType: .default
+                                keyboardType: .default,
+                                capitalization: .words
                             )
                             
                             CompactTextField(
                                 title: "Email",
                                 placeholder: "Enter your email",
                                 text: $viewModel.emailAddress,
-                                keyboardType: .emailAddress
+                                keyboardType: .emailAddress,
+                                capitalization: .never
                             )
                             
                             CompactSecureField(

@@ -210,5 +210,5 @@ struct EmailVerificationView: View {
 }
 
 #Preview {
-    EmailVerificationView(viewModel: EmailVerificationViewModel(userEmail: "test@example.com"))
+    EmailVerificationView(viewModel: EmailVerificationViewModel(userEmail: "test@example.com", userFullName: "John Doe"))
 }

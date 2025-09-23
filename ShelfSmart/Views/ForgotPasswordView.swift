@@ -76,7 +76,8 @@ struct ForgotPasswordView: View {
                             title: "Email",
                             placeholder: "Enter your email address",
                             text: $viewModel.forgotPasswordEmail,
-                            keyboardType: .emailAddress
+                            keyboardType: .emailAddress,
+                            capitalization: .never
                         )
 
                         // Send Reset Link Button

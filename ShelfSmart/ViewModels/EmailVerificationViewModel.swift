@@ -12,6 +12,7 @@ import FirebaseFirestore
 @Observable
 final class EmailVerificationViewModel {
     var userEmail: String
+    var userFullName: String
     var isCheckingVerification: Bool = false
     var isResendingEmail: Bool = false
     var resendCooldownSeconds: Int = 0
@@ -26,8 +27,9 @@ final class EmailVerificationViewModel {
         return !isResendingEmail && resendCooldownSeconds == 0
     }
 
-    init(userEmail: String) {
+    init(userEmail: String, userFullName: String) {
         self.userEmail = userEmail
+        self.userFullName = userFullName
     }
 
     func checkEmailVerification(onSuccess: (() async -> Void)? = nil) async {
@@ -120,7 +122,7 @@ final class EmailVerificationViewModel {
 
         do {
             let user = User(
-                name: extractUserName(from: firebaseUser),
+                name: userFullName,
                 email: firebaseUser.email ?? "",
                 signupMethod: "email_password",
                 isEmailVerified: true,
@@ -134,19 +136,6 @@ final class EmailVerificationViewModel {
         }
     }
 
-    private func extractUserName(from firebaseUser: FirebaseAuth.User) -> String {
-        // Try to get display name first
-        if let displayName = firebaseUser.displayName, !displayName.isEmpty {
-            return displayName
-        }
-
-        // Fallback to email prefix
-        if let email = firebaseUser.email, !email.isEmpty {
-            return String(email.split(separator: "@").first ?? "User")
-        }
-
-        return "User"
-    }
 
     func startCooldownTimer() {
         // Start with initial cooldown if recently sent

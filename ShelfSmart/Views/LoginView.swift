@@ -78,7 +78,8 @@ struct LoginView: View {
                                 title: "Email",
                                 placeholder: "Enter your email",
                                 text: $viewModel.emailAddress,
-                                keyboardType: .emailAddress
+                                keyboardType: .emailAddress,
+                                capitalization: .never
                             )
                             
                             CompactSecureField(
@@ -192,6 +193,7 @@ struct CompactTextField: View {
     let placeholder: String
     @Binding var text: String
     let keyboardType: UIKeyboardType
+    let capitalization: TextInputAutocapitalization
     
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -203,7 +205,7 @@ struct CompactTextField: View {
             TextField(placeholder, text: $text)
                 .textFieldStyle(PlainTextFieldStyle())
                 .keyboardType(keyboardType)
-                .textInputAutocapitalization(.never)
+                .textInputAutocapitalization(capitalization)
                 .autocorrectionDisabled()
                 .padding(.horizontal, 12)
                 .padding(.vertical, 10)
