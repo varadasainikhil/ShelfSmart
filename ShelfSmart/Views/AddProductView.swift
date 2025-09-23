@@ -94,6 +94,8 @@ struct AddProductView: View {
                     ModernSaveButton(
                         searchSuccess: viewModel.searchSuccess,
                         hasApiResponse: viewModel.apiResponse != nil,
+                        isSaving: viewModel.isSaving,
+                        isDisabled: viewModel.isSaveButtonDisabled,
                         onSave: {
                             let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                             impactFeedback.impactOccurred()
@@ -498,14 +500,22 @@ struct ModernManualEntryCard: View {
 struct ModernSaveButton: View {
     let searchSuccess: Bool
     let hasApiResponse: Bool
+    let isSaving: Bool
+    let isDisabled: Bool
     let onSave: () -> Void
     
     var body: some View {
         Button(action: onSave) {
             HStack(spacing: 10) {
-                Image(systemName: "plus.circle.fill")
-                    .font(.system(size: 20, weight: .semibold))
-                Text(searchSuccess ? "Save Product" : "Add Product")
+                if isSaving {
+                    ProgressView()
+                        .scaleEffect(0.9)
+                        .tint(.white)
+                } else {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 20, weight: .semibold))
+                }
+                Text(isSaving ? "Saving..." : (searchSuccess ? "Save Product" : "Add Product"))
                     .font(.headline)
                     .fontWeight(.bold)
             }
@@ -514,11 +524,12 @@ struct ModernSaveButton: View {
             .padding(.vertical, 18)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(.green)
-                    .shadow(color: .green.opacity(0.4), radius: 12, x: 0, y: 6)
+                    .fill(isDisabled ? Color(.systemGray4) : .green)
+                    .shadow(color: isDisabled ? .clear : .green.opacity(0.4), radius: 12, x: 0, y: 6)
             )
         }
         .buttonStyle(PlainButtonStyle())
+        .disabled(isDisabled)
         .scaleEffect(searchSuccess ? 1.02 : 1.0)
         .animation(.spring(response: 0.4, dampingFraction: 0.8), value: searchSuccess)
         .padding(.horizontal, 20)

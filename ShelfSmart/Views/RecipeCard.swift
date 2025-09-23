@@ -9,20 +9,42 @@ import SwiftUI
 
 struct RecipeCard: View {
     let recipe: Recipe
+    let isLiked: Bool
     let onTap: () -> Void
-    
-    
+
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 0) {
-                // Recipe Image
-                SimpleAsyncImage(url: recipe.image) { image in
-                    image
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
+                // Recipe Image with Heart Indicator
+                ZStack {
+                    SimpleAsyncImage(url: recipe.image) { image in
+                        image
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                    }
+                    .frame(height: 120)
+                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+
+                    // Heart indicator overlay (visual only, when liked)
+                    if isLiked {
+                        VStack {
+                            HStack {
+                                Spacer()
+                                Image(systemName: "heart.fill")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .background(
+                                        Circle()
+                                            .fill(.red)
+                                            .frame(width: 22, height: 22)
+                                    )
+                            }
+                            .padding(.trailing, 8)
+                            .padding(.top, 8)
+                            Spacer()
+                        }
+                    }
                 }
-                .frame(height: 120)
-                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                 
                 // Recipe Info - Fixed height container
                 VStack(alignment: .leading, spacing: 8) {
@@ -154,7 +176,7 @@ struct RecipeCardButtonStyle: ButtonStyle {
         spoonacularSourceUrl: "https://spoonacular.com/recipe/12345"
     )
     
-    RecipeCard(recipe: sampleRecipe) {
+    RecipeCard(recipe: sampleRecipe, isLiked: true) {
         print("Recipe tapped")
     }
     .padding()

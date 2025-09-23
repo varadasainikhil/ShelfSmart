@@ -7,12 +7,24 @@
 
 import SwiftUI
 import SwiftData
+import FirebaseAuth
 
 struct DetailProductView: View {
     @Environment(\.modelContext) private var modelContext
     @State private var recipeCardViewModel = RecipeCardViewModel()
     @State private var recipeToShow: Recipe?
     var product : Product
+
+    // Query to check liked recipes
+    @Query private var allRecipes: [SDRecipe]
+
+    // Helper function to check if recipe is liked
+    private func isRecipeLiked(_ recipeId: Int) -> Bool {
+        let currentUserId = Auth.auth().currentUser?.uid ?? ""
+        return allRecipes.contains { recipe in
+            recipe.id == recipeId && recipe.isLiked && recipe.userId == currentUserId
+        }
+    }
     var body: some View {
         ZStack{
             // Background Color of the screen
@@ -69,31 +81,19 @@ struct DetailProductView: View {
                                         product.LikeProduct()
                                         try? modelContext.save()
                                     }
-                                    
                                 } label: {
-                                    if product.isLiked{
-                                        Image(systemName: "heart.circle.fill")
-                                            .symbolRenderingMode(.palette) // Enable the palette mode
-                                            .foregroundStyle(.white, .red) // Assign colors to the layers
-                                            .font(.system(size: 50))
-                                    }
-                                    else {
-                                        ZStack{
-                                            Image(systemName: "circle.fill")
-                                                .foregroundStyle(.white)
-                                                .font(.system(size: 50, weight: .light))
-                                            
-                                            Image(systemName: "circle")
-                                                .foregroundStyle(.red)
-                                                .font(.system(size: 50, weight: .light))
-                                            
-                                            Image(systemName: "heart")
-                                                .foregroundStyle(.red)
-                                                .font(.system(size: 25))
-                                        }
-                                    }
-                                    
+                                    Image(systemName: product.isLiked ? "heart.fill" : "heart")
+                                        .font(.system(size: 24, weight: .semibold))
+                                        .foregroundStyle(product.isLiked ? .red : .white)
+                                        .frame(width: 44, height: 44)
+                                        .background(
+                                            Circle()
+                                                .fill(.black.opacity(0.3))
+                                                .blur(radius: 1)
+                                        )
+                                        .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
                                 }
+                                .buttonStyle(PlainButtonStyle())
                                 .padding(.trailing)
                                 .padding(.bottom)
                             }
@@ -230,7 +230,7 @@ struct DetailProductView: View {
                                     GridItem(.flexible(), spacing: 12)
                                 ], spacing: 16) {
                                     ForEach(recipeCardViewModel.recipes, id: \.id) { recipe in
-                                        RecipeCard(recipe: recipe) {
+                                        RecipeCard(recipe: recipe, isLiked: isRecipeLiked(recipe.id)) {
                                             recipeToShow = recipe
                                         }
                                         .id("recipe-\(recipe.id)") // Ensure stable identity

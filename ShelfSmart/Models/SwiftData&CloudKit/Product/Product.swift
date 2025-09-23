@@ -28,7 +28,7 @@ class Product{
     var recipeIds : [Int]? = [Int]() // Array of recipe IDs found for this product
     
     // One-to-many relationship with SDRecipe
-    @Relationship(deleteRule: .cascade, inverse: \SDRecipe.product)
+    @Relationship(deleteRule: .nullify, inverse: \SDRecipe.product)
     var recipes : [SDRecipe]? = [SDRecipe]()
     
     var dateAdded : Date = Date.now

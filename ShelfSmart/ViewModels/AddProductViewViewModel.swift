@@ -32,6 +32,7 @@ class AddProductViewViewModel {
         }
     }
     var isLoading : Bool = false
+    var isSaving : Bool = false
     var errorMessage : String?
     var searchSuccess : Bool = false
     var searchAttempted : Bool = false
@@ -42,6 +43,10 @@ class AddProductViewViewModel {
     
     var isSearchButtonDisabled : Bool {
         return barcode.isEmpty || isLoading
+    }
+
+    var isSaveButtonDisabled : Bool {
+        return isSaving || isLoading || (name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !searchSuccess)
     }
     
     // Helper function to get current groceryProduct
@@ -63,6 +68,7 @@ class AddProductViewViewModel {
         imageLink = ""
         expirationDate = Calendar.current.date(byAdding: .day, value: 7, to: Date.now) ?? Date.now
         isLoading = false
+        isSaving = false
         errorMessage = nil
         searchSuccess = false
         searchAttempted = false
@@ -277,7 +283,8 @@ class AddProductViewViewModel {
     
     @MainActor
     func createProductFromAPIResponse(apiResponse : GroceryProduct, modelContext : ModelContext ) async {
-        // Reset any previous error messages
+        // Set saving state and reset any previous error messages
+        isSaving = true
         errorMessage = nil
         
         // Capture the expiration date before any potential reset
@@ -382,10 +389,12 @@ class AddProductViewViewModel {
             
             // Clear error message on success
             self.errorMessage = nil
-            
+            self.isSaving = false
+
         } catch {
             print("Error creating item: \(error.localizedDescription)")
             self.errorMessage = "Failed to save product. Please try again."
+            self.isSaving = false
         }
     }
     
@@ -491,7 +500,8 @@ class AddProductViewViewModel {
     // Function to create product manually (without API)
     @MainActor
     func createManualProduct(modelContext: ModelContext) async {
-        // Reset any previous error messages
+        // Set saving state and reset any previous error messages
+        self.isSaving = true
         self.errorMessage = nil
         
         // Validate required fields - only name is required
@@ -502,6 +512,7 @@ class AddProductViewViewModel {
         
         guard !productName.isEmpty else {
             self.errorMessage = "Product name cannot be empty."
+            self.isSaving = false
             return
         }
         
@@ -548,6 +559,7 @@ class AddProductViewViewModel {
         // Find the userId of the user
         guard let userId = Auth.auth().currentUser?.uid else {
             self.errorMessage = "Could not find the userID of the user"
+            self.isSaving = false
             print("Could not find the userID of the user")
             return
         }
@@ -586,10 +598,12 @@ class AddProductViewViewModel {
                 
             // Clear error message on success
             self.errorMessage = nil
-            
+            self.isSaving = false
+
         } catch {
             print("❌ Error creating manual product: \(error.localizedDescription)")
             self.errorMessage = "Failed to save product. Please try again."
+            self.isSaving = false
         }
     }
     

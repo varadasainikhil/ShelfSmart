@@ -7,26 +7,68 @@
 
 import SwiftUI
 import SwiftData
+import FirebaseAuth
 
 struct RecipeDetailView: View {
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) var dismiss
     let recipe: Recipe
+
+    // Query to find if this recipe is already saved and liked
+    @Query private var savedRecipes: [SDRecipe]
+
+    private var existingRecipe: SDRecipe? {
+        savedRecipes.first { $0.id == recipe.id }
+    }
+
+    private var isLiked: Bool {
+        existingRecipe?.isLiked ?? false
+    }
     
     
     var body: some View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
-                    // Recipe Image
+                    // Recipe Image with Heart Overlay
                     if let imageUrl = recipe.image, !imageUrl.isEmpty {
-                        SimpleAsyncImage(url: imageUrl) { image in
-                            image
-                                .resizable()
-                                .aspectRatio(contentMode: .fill)
+                        ZStack {
+                            SimpleAsyncImage(url: imageUrl) { image in
+                                image
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fill)
+                            }
+                            .frame(height: 200)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+
+                            // Heart Overlay
+                            VStack {
+                                Spacer()
+                                HStack {
+                                    Spacer()
+                                    Button(action: {
+                                        toggleLikeRecipe()
+                                        // Show success feedback
+                                        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                                        impactFeedback.impactOccurred()
+                                    }) {
+                                        Image(systemName: isLiked ? "heart.fill" : "heart")
+                                            .font(.system(size: 24, weight: .semibold))
+                                            .foregroundStyle(isLiked ? .red : .white)
+                                            .frame(width: 44, height: 44)
+                                            .background(
+                                                Circle()
+                                                    .fill(.black.opacity(0.3))
+                                                    .blur(radius: 1)
+                                            )
+                                            .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                    .padding(.trailing, 12)
+                                    .padding(.bottom, 12)
+                                }
+                            }
                         }
-                        .frame(height: 200)
-                        .clipShape(RoundedRectangle(cornerRadius: 12))
                         .padding(.horizontal)
                     }
                     
@@ -71,10 +113,7 @@ struct RecipeDetailView: View {
                         
                         // Directions Section
                         directionsView(recipe)
-                        
-                        // Action Buttons
-                        actionButtonsView
-                        
+
                         // Credits Section
                         creditsView(recipe)
                     }
@@ -254,34 +293,6 @@ struct RecipeDetailView: View {
         .padding(.top)
     }
     
-    private var actionButtonsView: some View {
-        VStack(spacing: 12) {
-            Button(action: {
-                let success = saveRecipe()
-                if success {
-                    // Show success feedback
-                    let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                    impactFeedback.impactOccurred()
-                }
-            }) {
-                HStack {
-                    Image(systemName: "heart.fill")
-                    Text("Save Recipe")
-                        .fontWeight(.semibold)
-                }
-                .foregroundStyle(.white)
-                .frame(maxWidth: .infinity)
-                .frame(height: 50)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(.green)
-                )
-                .shadow(radius: 5)
-            }
-        }
-        .padding(.top, 24)
-    }
-    
     private func creditsView(_ recipe: Recipe) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             Divider()
@@ -335,18 +346,34 @@ struct RecipeDetailView: View {
     }
     
     // MARK: - Helper Methods
-    
-    private func saveRecipe() -> Bool {
+
+    private func toggleLikeRecipe() {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            print("❌ No authenticated user found")
+            return
+        }
+
         do {
-            // Convert to SwiftData model
-            let sdRecipe = SDRecipe(from: recipe)
-            modelContext.insert(sdRecipe)
+            if let existing = existingRecipe {
+                // Recipe already exists, toggle like status
+                existing.likeRecipe(userId: userId)
+                if !existing.isLiked {
+                    // If unliked and not associated with a product, remove it
+                    if existing.product == nil {
+                        modelContext.delete(existing)
+                    }
+                }
+            } else {
+                // Recipe doesn't exist, create and like it
+                let sdRecipe = SDRecipe(from: recipe)
+                sdRecipe.likeRecipe(userId: userId)
+                modelContext.insert(sdRecipe)
+            }
+
             try modelContext.save()
-            print("✅ Recipe saved to SwiftData successfully")
-            return true
+            print("✅ Recipe like status updated successfully")
         } catch {
-            print("❌ Failed to save recipe: \(error)")
-            return false
+            print("❌ Failed to update recipe like status: \(error)")
         }
     }
 }

@@ -21,6 +21,9 @@ struct ProfileView: View {
     
     // Get all products for liked products section
     @Query private var allProducts: [Product]
+
+    // Get all recipes for liked recipes section
+    @Query private var allRecipes: [SDRecipe]
     
     // Computed property that filters groups by current user
     var groups: [GroupedProducts] {
@@ -33,6 +36,13 @@ struct ProfileView: View {
     var likedProducts: [Product] {
         return allProducts.filter { product in
             product.isLiked && (product.groupedProducts?.userId == currentUserId)
+        }
+    }
+
+    // Computed property for liked recipes by current user
+    var likedRecipes: [SDRecipe] {
+        return allRecipes.filter { recipe in
+            recipe.isLiked && recipe.userId == currentUserId
         }
     }
     
@@ -148,49 +158,74 @@ struct ProfileView: View {
                             }
                         }
                         
-                        // Future: Liked Recipes Section
-                        // This section will be added later for liked recipes
+                        // Liked Recipes Section
                         VStack(alignment: .leading, spacing: 12) {
-                            HStack {
-                                Text("Liked Recipes")
-                                    .font(.title3)
-                                    .fontWeight(.semibold)
-                                    .foregroundStyle(.primary)
-                                
-                                Spacer()
-                            }
-                            .padding(.horizontal, 20)
-                            
-                            // Placeholder for liked recipes
-                            VStack(spacing: 16) {
-                                Circle()
-                                    .fill(.orange.opacity(0.1))
-                                    .frame(width: 60, height: 60)
-                                    .overlay {
-                                        Image(systemName: "book.closed")
-                                            .font(.system(size: 24))
-                                            .foregroundStyle(.orange.opacity(0.7))
-                                    }
-                                
-                                VStack(spacing: 6) {
-                                    Text("Recipe likes coming soon")
-                                        .font(.subheadline)
-                                        .fontWeight(.medium)
+                            // Section Header
+                            NavigationLink(destination: AllLikedRecipesView()) {
+                                HStack {
+                                    Text("Liked Recipes")
+                                        .font(.title3)
+                                        .fontWeight(.semibold)
                                         .foregroundStyle(.primary)
-                                    
-                                    Text("Save your favorite recipes for easy access")
-                                        .font(.caption)
+
+                                    Spacer()
+
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 14, weight: .medium))
                                         .foregroundStyle(.secondary)
-                                        .multilineTextAlignment(.center)
                                 }
                             }
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 140)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color(.systemGray6))
-                            )
+                            .buttonStyle(PlainButtonStyle())
                             .padding(.horizontal, 20)
+
+                            // Recent 5 Liked Recipes - Horizontal Scroll
+                            if !likedRecipes.isEmpty {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 12) {
+                                        ForEach(Array(likedRecipes.prefix(5)), id: \.self) { recipe in
+                                            NavigationLink(destination: RecipeDetailView(recipe: recipe.toRecipe())) {
+                                                LikedRecipeCard(recipe: recipe)
+                                            }
+                                            .buttonStyle(PlainButtonStyle())
+                                        }
+                                    }
+                                    .padding(.horizontal, 20)
+                                }
+                                .padding(.bottom, 16)
+                            }
+
+                            if likedRecipes.isEmpty {
+                                // Empty State for Liked Recipes
+                                VStack(spacing: 16) {
+                                    Circle()
+                                        .fill(.orange.opacity(0.1))
+                                        .frame(width: 60, height: 60)
+                                        .overlay {
+                                            Image(systemName: "heart.slash")
+                                                .font(.system(size: 24))
+                                                .foregroundStyle(.orange.opacity(0.7))
+                                        }
+
+                                    VStack(spacing: 6) {
+                                        Text("No liked recipes yet")
+                                            .font(.subheadline)
+                                            .fontWeight(.medium)
+                                            .foregroundStyle(.primary)
+
+                                        Text("Start liking recipes to see them here")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .multilineTextAlignment(.center)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 140)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color(.systemGray6))
+                                )
+                                .padding(.horizontal, 20)
+                            }
                         }
                     }
                     .padding(.bottom, 120) // Extra space for bottom buttons
@@ -371,6 +406,94 @@ struct LikedProductCard: View {
     }
 }
 
+// MARK: - Liked Recipe Card Component
+struct LikedRecipeCard: View {
+    let recipe: SDRecipe
+
+    var body: some View {
+        VStack(alignment: .center, spacing: 8) {
+            // Recipe Image
+            ZStack {
+                if let imageLink = recipe.image, !imageLink.isEmpty {
+                    let secureImageLink = imageLink.hasPrefix("http://") ? imageLink.replacingOccurrences(of: "http://", with: "https://") : imageLink
+                    AsyncImage(url: URL(string: secureImageLink)) { phase in
+                        if let image = phase.image {
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 80, height: 80)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                        } else if phase.error != nil {
+                            Image("placeholder")
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 80, height: 80)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                        } else {
+                            ProgressView()
+                                .frame(width: 80, height: 80)
+                        }
+                    }
+                } else {
+                    Image("placeholder")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 80, height: 80)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+
+                // Heart indicator overlay
+                VStack {
+                    HStack {
+                        Spacer()
+                        Image(systemName: "heart.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .background(
+                                Circle()
+                                    .fill(.red)
+                                    .frame(width: 22, height: 22)
+                            )
+                            .offset(x: -6, y: 6)
+                    }
+                    Spacer()
+                }
+            }
+            .frame(width: 80, height: 80)
+            .background(Color(.systemGray5))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+
+            // Recipe Info
+            VStack(alignment: .center, spacing: 2) {
+                Text(recipe.title ?? "Unknown Recipe")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+
+                if let readyInMinutes = recipe.readyInMinutes {
+                    Text("\(readyInMinutes) mins")
+                        .font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(height: 28)
+            .padding(.horizontal, 4)
+        }
+        .frame(width: 100, height: 120)
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemGray6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(.orange.opacity(0.3), lineWidth: 1)
+                )
+        )
+        .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 1)
+    }
+}
 
 #Preview {
     ProfileView(viewModel: ProfileViewViewModel())

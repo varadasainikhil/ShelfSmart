@@ -51,7 +51,11 @@ class SDRecipe {
     
     var spoonacularScore : Double?
     var spoonacularSourceUrl : String?
-    
+
+    // Like functionality
+    var isLiked : Bool = false
+    var userId : String? // To track which user liked this recipe
+
     // Relationship back to product
     var product: Product?
 
@@ -94,6 +98,10 @@ class SDRecipe {
         // Convert arrays of complex structs to arrays of models
         self.extendedIngredients = recipe.extendedIngredients?.map { SDIngredients(from: $0) } ?? []
         self.analyzedInstructions = recipe.analyzedInstructions?.map { SDAnalyzedInstructions(from: $0) }
+
+        // Initialize like properties
+        self.isLiked = false
+        self.userId = nil
     }
     
     // Required for SwiftData - simplified initializer with required fields only
@@ -133,5 +141,52 @@ class SDRecipe {
         self.instructions = nil
         self.analyzedInstructions = nil
         self.spoonacularScore = nil
+        self.isLiked = false
+        self.userId = nil
+    }
+
+    // Method to toggle like status
+    func likeRecipe(userId: String) {
+        self.isLiked.toggle()
+        self.userId = self.isLiked ? userId : nil
+    }
+
+    // Convert SDRecipe back to Recipe for UI display
+    func toRecipe() -> Recipe {
+        return Recipe(
+            id: self.id ?? 0,
+            image: self.image,
+            title: self.title ?? "Unknown Recipe",
+            readyInMinutes: self.readyInMinutes,
+            servings: self.servings,
+            sourceUrl: self.sourceUrl ?? "",
+            vegetarian: self.vegetarian,
+            glutenFree: self.glutenFree,
+            dairyFree: self.dairyFree,
+            veryHealthy: self.veryHealthy,
+            cheap: self.cheap,
+            veryPopular: self.veryPopular,
+            sustainable: self.sustainable,
+            lowFodmap: self.lowFodmap,
+            weightWatcherSmartPoints: self.weightWatcherSmartPoints,
+            gaps: self.gaps,
+            prepationMinutes: self.prepationMinutes,
+            cookingMinute: self.cookingMinute,
+            healthScore: self.healthScore,
+            creditsText: self.creditsText,
+            license: self.license,
+            sourceName: self.sourceName,
+            pricePerServing: self.pricePerServing,
+            extendedIngredients: nil, // Simplified for now
+            summary: self.summary,
+            cuisines: self.cuisines,
+            dishTypes: self.dishTypes,
+            diets: self.diets,
+            occasions: self.occasions,
+            instructions: self.instructions,
+            analyzedInstructions: nil, // Simplified for now
+            spoonacularScore: self.spoonacularScore,
+            spoonacularSourceUrl: self.spoonacularSourceUrl ?? ""
+        )
     }
 }
