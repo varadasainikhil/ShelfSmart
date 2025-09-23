@@ -196,8 +196,8 @@ final class SignUpViewViewModel{
                 let db = Firestore.firestore()
             
                 do{
-                    let user = User(name: userName, email: userEmail)
-                    
+                    let user = User(name: userName, email: userEmail, signupMethod: "apple_signin")
+
                     try db.collection("users").document(userId).setData(from: user)
                     print("User with user id: \(userId) updated to Firebase")
                 }
@@ -227,8 +227,8 @@ final class SignUpViewViewModel{
                 
                 // Create a new user document in Firestore
                 let db = Firestore.firestore()
-                let user = User(name: fullName, email: emailAddress)
-                
+                let user = User(name: fullName, email: emailAddress, signupMethod: "email_password")
+
                 try db.collection("users").document(userId).setData(from: user)
                 print("User with user id: \(userId) updated to Firebase")
                 

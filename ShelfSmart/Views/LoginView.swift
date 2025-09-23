@@ -10,8 +10,9 @@ import AuthenticationServices
 
 struct LoginView: View {
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.dismiss) private var dismiss
     @State var viewModel = LoginViewViewModel()
-    
+    @State var forgotPasswordSheet = false
     var body: some View {
         NavigationStack {
             ZStack {
@@ -85,6 +86,18 @@ struct LoginView: View {
                                 placeholder: "Enter your password",
                                 text: $viewModel.password
                             )
+                            
+                            HStack{
+                                
+                                Spacer()
+                                
+                                Text("Forgot your password?")
+                                    .font(.subheadline)
+                                    .underline()
+                                    .onTapGesture {
+                                        forgotPasswordSheet = true
+                                    }
+                            }
                         }
                         
                         // Sign In Button
@@ -163,6 +176,11 @@ struct LoginView: View {
                 Button("OK") { }
             } message: {
                 Text(viewModel.errorMessage)
+            }
+            .sheet(isPresented: $forgotPasswordSheet) {
+                ForgotPasswordView(viewModel: viewModel) {
+                    dismiss()
+                }
             }
         }
     }

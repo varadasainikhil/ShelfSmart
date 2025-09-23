@@ -7,6 +7,7 @@
 
 import Foundation
 import FirebaseAuth
+import FirebaseFirestore
 import AuthenticationServices
 import CryptoKit
 
@@ -29,6 +30,34 @@ class LoginViewViewModel{
     var showingError : Bool = false
     var nonce : String? = ""
     var hashedNonce : String? = ""
+    
+    // ForgotPasswordView Variables
+    var readyForResetPassword = false
+    var forgotPasswordEmail : String = "" {
+        didSet{
+            forgotPasswordEmailValidation()
+        }
+    }
+    var isResetLoading = false
+    var resetSuccessMessage = ""
+    var resetErrorMessage = ""
+    var showingResetSuccess = false
+    var showingResetError = false
+    var shouldShowSignUpOption = false
+    var shouldShowAppleSignInOptions = false
+
+    func forgotPasswordEmailValidation(){
+        if forgotPasswordEmail.filter({$0 == "@"}).count == 1
+            && forgotPasswordEmail.contains(".")
+            && forgotPasswordEmail.trimmingCharacters(in: .whitespacesAndNewlines).count > 7
+            && forgotPasswordEmail.last?.isLetter ?? false
+            && forgotPasswordEmail.first?.isLetter ?? false{
+            readyForResetPassword = true
+        } else {
+            readyForResetPassword = false
+        }
+    }
+    
     
     func emailAndPasswordValidation(){
         if emailAddress.filter({$0 == "@"}).count == 1
@@ -129,4 +158,93 @@ class LoginViewViewModel{
             
         }
     }
+    
+    private func checkSignupMethod(email: String) async throws -> String? {
+        let db = Firestore.firestore()
+        let querySnapshot = try await db.collection("users")
+            .whereField("email", isEqualTo: email)
+            .getDocuments()
+
+        if let document = querySnapshot.documents.first {
+            let data = document.data()
+            return data["signupMethod"] as? String
+        }
+        return nil
+    }
+
+    func resetPassword() async {
+        await MainActor.run {
+            isResetLoading = true
+            showingResetSuccess = false
+            showingResetError = false
+            shouldShowAppleSignInOptions = false
+        }
+
+        do {
+            let signupMethod = try await checkSignupMethod(email: forgotPasswordEmail)
+
+            if signupMethod == nil {
+                await MainActor.run {
+                    isResetLoading = false
+                    resetErrorMessage = "Email not found. Please sign up to create an account."
+                    shouldShowSignUpOption = true
+                    showingResetError = true
+                }
+                return
+            }
+
+            if signupMethod == "apple_signin" {
+                await MainActor.run {
+                    isResetLoading = false
+                    resetErrorMessage = "This email is registered with Apple Sign-In. Please use the Apple Sign-In button to log in."
+                    shouldShowAppleSignInOptions = true
+                    showingResetError = true
+                }
+                return
+            }
+
+            if signupMethod == "email_password" {
+                let auth = Auth.auth()
+                try await auth.sendPasswordReset(withEmail: forgotPasswordEmail)
+
+                await MainActor.run {
+                    isResetLoading = false
+                    resetSuccessMessage = "Password reset email sent to \(forgotPasswordEmail). Please check your inbox and follow the instructions to reset your password."
+                    showingResetSuccess = true
+                }
+            } else {
+                await MainActor.run {
+                    isResetLoading = false
+                    resetErrorMessage = "This email is registered with a different sign-in method. Please use the same method you used to sign up."
+                    showingResetError = true
+                }
+            }
+        } catch {
+            await MainActor.run {
+                isResetLoading = false
+
+                if let authError = error as NSError? {
+                    switch AuthErrorCode(rawValue: authError.code) {
+                    case .invalidEmail:
+                        resetErrorMessage = "Please enter a valid email address."
+                    case .networkError:
+                        resetErrorMessage = "Network error. Please check your internet connection and try again."
+                    case .tooManyRequests:
+                        resetErrorMessage = "Too many requests. Please wait a moment before trying again."
+                    default:
+                        resetErrorMessage = "An error occurred: \(error.localizedDescription)"
+                    }
+                } else {
+                    resetErrorMessage = "An unexpected error occurred. Please try again."
+                }
+
+                showingResetError = true
+            }
+        }
+    }
 }
+
+
+
+// The functionality of resetting is perfect.
+// UI Changes - Clear the sign up view textfields after the sign up is successfull, check for login View as well.
