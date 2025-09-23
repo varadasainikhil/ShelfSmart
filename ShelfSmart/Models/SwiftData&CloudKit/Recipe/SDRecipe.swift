@@ -10,12 +10,12 @@ import SwiftData
 
 @Model
 class SDRecipe {
-    var id : Int
+    var id : Int?
     var image : String?
-    var title : String
+    var title : String?
     var readyInMinutes : Int?
     var servings : Int?
-    var sourceUrl : String
+    var sourceUrl : String?
     var vegetarian : Bool?
     var glutenFree : Bool?
     var dairyFree : Bool?
@@ -33,16 +33,28 @@ class SDRecipe {
     var license : String?
     var sourceName : String?
     var pricePerServing : Double?
-    var extendedIngredients : [SDIngredients]
+    
+    // One-to-many relationship with SDIngredients
+    @Relationship(deleteRule: .cascade, inverse: \SDIngredients.recipe)
+    var extendedIngredients : [SDIngredients]? = [SDIngredients]()
+    
     var summary : String?
-    var cuisines : [String]?
-    var dishTypes : [String]?
-    var diets : [String]?
-    var occasions : [String]?
+    var cuisines : [String] = [String]()
+    var dishTypes : [String] = [String]()
+    var diets : [String] = [String]()
+    var occasions : [String] = [String]()
     var instructions : String?
-    var analyzedInstructions : [SDAnalyzedInstructions]?
+    
+    // One-to-many relationship with SDAnalyzedInstructions
+    @Relationship(deleteRule: .cascade, inverse: \SDAnalyzedInstructions.recipe)
+    var analyzedInstructions : [SDAnalyzedInstructions]? = [SDAnalyzedInstructions]()
+    
     var spoonacularScore : Double?
-    var spoonacularSourceUrl : String
+    var spoonacularSourceUrl : String?
+    
+    // Relationship back to product
+    var product: Product?
+
     
     init(from recipe : Recipe) {
         self.id = recipe.id
@@ -74,10 +86,10 @@ class SDRecipe {
         self.spoonacularSourceUrl = recipe.spoonacularSourceUrl
         
         // Convert arrays to primitive types
-        self.cuisines = recipe.cuisines
-        self.dishTypes = recipe.dishTypes
-        self.diets = recipe.diets
-        self.occasions = recipe.occasions
+        self.cuisines = recipe.cuisines ?? []
+        self.dishTypes = recipe.dishTypes ?? []
+        self.diets = recipe.diets ?? []
+        self.occasions = recipe.occasions ?? []
         
         // Convert arrays of complex structs to arrays of models
         self.extendedIngredients = recipe.extendedIngredients?.map { SDIngredients(from: $0) } ?? []
@@ -114,10 +126,10 @@ class SDRecipe {
         self.sourceName = nil
         self.pricePerServing = nil
         self.summary = nil
-        self.cuisines = nil
-        self.dishTypes = nil
-        self.diets = nil
-        self.occasions = nil
+        self.cuisines = []
+        self.dishTypes = []
+        self.diets = []
+        self.occasions = []
         self.instructions = nil
         self.analyzedInstructions = nil
         self.spoonacularScore = nil

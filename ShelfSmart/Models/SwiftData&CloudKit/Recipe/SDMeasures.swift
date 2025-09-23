@@ -10,8 +10,14 @@ import SwiftData
 
 @Model
 class SDMeasures {
-    var us: SDMeasure
-    var metric: SDMeasure
+    @Relationship(deleteRule: .cascade, inverse: \SDMeasure.owningMeasures)
+    var us: SDMeasure?
+    
+    @Relationship(deleteRule: .cascade, inverse: \SDMeasure.owningMeasuresMetric)
+    var metric: SDMeasure?
+
+    // Relationship back to ingredients
+    var SDIngredients: SDIngredients?
     
     init(from measures: Measures) {
         self.us = SDMeasure(from: measures.us)

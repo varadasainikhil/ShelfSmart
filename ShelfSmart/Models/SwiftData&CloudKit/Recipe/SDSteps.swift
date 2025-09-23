@@ -10,10 +10,15 @@ import SwiftData
 
 @Model
 class SDSteps {
-    var number: Int
-    var step: String
-    var ingredients: [SDStepIngredient]
-    var equipments: [SDEquipment]
+    var number: Int?
+    var step: String?
+    
+    // Child collections
+    var ingredients : [SDStepIngredient]? = [SDStepIngredient]()
+    var equipments : [SDEquipment]? = [SDEquipment]()
+    
+    // Relationship back to analyzed instructions
+    var SDAnalyzedInstructions: SDAnalyzedInstructions?
     
     init(from steps: Steps) {
         self.number = steps.number

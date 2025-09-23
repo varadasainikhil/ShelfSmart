@@ -10,9 +10,15 @@ import SwiftData
 
 @Model
 class SDAnalyzedInstructions {
-    var name: String
-    var steps: [SDSteps]
-    
+    var name: String?
+
+    // One-to-many relationship with SDSteps
+    @Relationship(deleteRule: .cascade, inverse: \SDSteps.SDAnalyzedInstructions)
+    var steps : [SDSteps]? = [SDSteps]()
+
+    // Relationship back to recipe
+    var recipe: SDRecipe?
+
     init(from analyzedInstructions: AnalyzedInstructions) {
         self.name = analyzedInstructions.name
         // Convert array of Steps structs to array of StepsModel

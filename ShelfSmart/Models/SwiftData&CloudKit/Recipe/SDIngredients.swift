@@ -10,15 +10,20 @@ import SwiftData
 
 @Model
 class SDIngredients {
-    var id: Int
+    var id: Int?
     var image: String?
-    var consistency: String
-    var name: String
-    var original : String
-    var originalName: String
-    var amount: Double
-    var unit: String
-    var measures: SDMeasures
+    var consistency: String?
+    var name: String?
+    var original : String?
+    var originalName: String?
+    var amount: Double?
+    var unit: String?
+    
+    @Relationship(deleteRule: .cascade, inverse: \SDMeasures.SDIngredients)
+    var measures: SDMeasures?
+    
+    // Relationship back to recipe
+    var recipe: SDRecipe?
     
     init(from ingredients: Ingredients) {
         self.id = ingredients.id

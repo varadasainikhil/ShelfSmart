@@ -10,10 +10,13 @@ import SwiftData
 
 @Model
 class SDEquipment {
-    var id: Int
-    var name: String
-    var localizedName: String
-    var image: String
+    var id: Int?
+    var name: String?
+    var localizedName: String?
+    var image: String?
+    
+    // Relationship back to steps
+    var SDSteps: SDSteps?
     
     init(from equipment: Equipment) {
         self.id = equipment.id

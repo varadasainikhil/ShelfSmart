@@ -21,6 +21,7 @@ class AddProductViewViewModel {
     var name : String = ""
     var productDescription : String = ""
     var imageLink : String = ""
+    var recipes : [SDRecipe] = [SDRecipe]()
     var expirationDate : Date = Calendar.current.date(byAdding: .day, value: 7, to: Date.now) ?? Date.now {
         didSet {
             print("🗓️ ExpirationDate changed to: \(expirationDate)")
@@ -325,8 +326,12 @@ class AddProductViewViewModel {
         // Search for recipe IDs
         let recipeIds = await searchForRecipeIds(ingredients: uniqueIngredients)
         
+        // Search for recipe using recipeId
+        await self.searchRecipeByID(recipeIds: recipeIds ?? [Int]())
+        
+        
         // Create product with recipe IDs using the user-selected expiration date
-        let product = Product(id: apiResponse.id, manualId: nil, barcode: productBarcode, title: productTitle, brand: apiResponse.brand ?? "",breadcrumbs: apiResponse.breadcrumbs, badges: apiResponse.badges, importantBadges: apiResponse.importantBadges, spoonacularScore: apiResponse.spoonacularScore, productDescription: apiResponse.description, imageLink: apiResponse.image, moreImageLinks: apiResponse.images, generatedText: apiResponse.generatedText, ingredientCount: apiResponse.ingredientCount, recipeIds: recipeIds, credits: credit, expirationDate: userExpirationDate)
+        let product = Product(id: apiResponse.id, manualId: nil, barcode: productBarcode, title: productTitle, brand: apiResponse.brand ?? "",breadcrumbs: apiResponse.breadcrumbs, badges: apiResponse.badges, importantBadges: apiResponse.importantBadges, spoonacularScore: apiResponse.spoonacularScore, productDescription: apiResponse.description, imageLink: apiResponse.image, moreImageLinks: apiResponse.images, generatedText: apiResponse.generatedText, ingredientCount: apiResponse.ingredientCount, recipeIds: recipeIds,recipes: self.recipes, credits: credit, expirationDate: userExpirationDate)
         
         print("Created a new Item")
         print("🖼️ Product imageLink set to: \(String(describing: product.imageLink))")
@@ -403,7 +408,7 @@ class AddProductViewViewModel {
             // Join ingredients with commas as required by the API
             let ingredientsString = ingredients.joined(separator: ",")
             
-            var queryItems: [URLQueryItem] = [
+            let queryItems: [URLQueryItem] = [
                 URLQueryItem(name: "apiKey", value: apiKey),
                 URLQueryItem(name: "ingredients", value: ingredientsString),
                 URLQueryItem(name: "number", value: "4"), // Limit to 4 recipes as requested
@@ -482,7 +487,6 @@ class AddProductViewViewModel {
         }
     }
     
-    
     // Function to create product manually (without API)
     @MainActor
     func createManualProduct(modelContext: ModelContext) async {
@@ -512,6 +516,9 @@ class AddProductViewViewModel {
         // Search for recipes by ingredients using the name because it is a manual entry
         let recipeIds = await self.searchForRecipeIds(ingredients: ingredients)
         
+        // Searching for recipes from recipeIds
+        await self.searchRecipeByID(recipeIds: recipeIds ?? [Int]())
+        
         // Create Product directly without unnecessary GroceryProduct intermediate step
         // For manual products: id=nil, manualId=UUID to differentiate from API products
         let product = Product(
@@ -530,6 +537,7 @@ class AddProductViewViewModel {
             generatedText: nil,
             ingredientCount: nil,
             recipeIds: recipeIds,
+            recipes: self.recipes,
             credits: credit,
             expirationDate: productExpirationDate
         )
@@ -583,4 +591,96 @@ class AddProductViewViewModel {
             self.errorMessage = "Failed to save product. Please try again."
         }
     }
+    
+    func searchRecipeByID(recipeIds : [Int]) async {
+        for recipeId in recipeIds{
+            do {
+                // Get and validate API key
+                guard let apiKey = getAPIKey(), !apiKey.isEmpty else {
+                    print("❌ Error: API key is nil or empty")
+                    return
+                }
+                
+                // Build URL with query parameters
+                guard var urlComponents = URLComponents(string: "https://api.spoonacular.com/recipes/\(recipeId)/information") else {
+                    print("❌ Error: Failed to create URL components")
+                    return
+                }
+                
+                let queryItems: [URLQueryItem] = [
+                    URLQueryItem(name: "apiKey", value: apiKey)
+                ]
+                
+                urlComponents.queryItems = queryItems
+                
+                guard let url = urlComponents.url else {
+                    print("❌ Error: Failed to create final URL")
+                    return
+                }
+                
+                print("🌐 Making recipe search request to: \(url.absoluteString)")
+                
+                // Make API request
+                let (data, response) = try await URLSession.shared.data(from: url)
+                
+                // Validate HTTP response
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    print("❌ Error: Invalid response type")
+                    return
+                }
+                
+                print("📡 Recipe search response status code: \(httpResponse.statusCode)")
+                
+                // Handle HTTP error status codes
+                switch httpResponse.statusCode {
+                case 200...299:
+                    print("✅ Recipe search successful")
+                case 401:
+                    print("❌ Unauthorized: Invalid API key")
+                    return
+                case 402:
+                    print("❌ Payment required: API quota exceeded")
+                    return
+                case 403:
+                    print("❌ Forbidden: Access denied")
+                    return
+                case 404:
+                    print("❌ Not found: Invalid endpoint")
+                    return
+                case 429:
+                    print("❌ Too many requests: Rate limit exceeded")
+                    return
+                case 500...599:
+                    print("❌ Server error: \(httpResponse.statusCode)")
+                    return
+                default:
+                    print("❌ Unexpected status code: \(httpResponse.statusCode)")
+                    return
+                }
+                
+                // Validate data is not empty
+                guard !data.isEmpty else {
+                    print("❌ Error: Empty response data")
+                    return
+                }
+                
+                // Parse JSON response
+                let decoder = JSONDecoder()
+                let recipe = try decoder.decode(Recipe.self, from: data)
+                
+                print("✅ Successfully decoded recipe information")
+                
+                let sdRecipe = SDRecipe(from : recipe)
+                self.recipes.append(sdRecipe)
+                
+                print("Added recipe to product : \(sdRecipe.title ?? "Unknown Recipe")")
+            } catch {
+                print("❌ Error searching for recipes: \(error.localizedDescription)")
+                return
+            }
+        }
+        
+    }
+    
+    
 }
