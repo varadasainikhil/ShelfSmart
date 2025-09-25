@@ -142,7 +142,7 @@ struct HomeView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-            .sheet(isPresented: $showingAddProduct) {
+            .sheet(isPresented: $showingAddProduct, onDismiss: addProductViewModel.resetAllFields) {
                 AddProductView(viewModel: addProductViewModel)
             }
         }

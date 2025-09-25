@@ -109,7 +109,38 @@ class Product{
     convenience init(barcode: String, title: String, brand: String,breadcrumbs : [String]? = nil, badges: [String]? = nil, importantBadges: [String]? = nil, spoonacularScore: Double? = nil, productDescription: String? = nil, imageLink: String? = nil, moreImageLinks: [String]? = nil, generatedText: String? = nil, ingredientCount: Int? = nil, recipeIds: [Int]? = nil, recipes : [SDRecipe]? = nil, credits: Credit? = nil, expirationDate: Date) {
         self.init(id: nil, manualId: UUID().uuidString, barcode: barcode, title: title, brand: brand,breadcrumbs: breadcrumbs, badges: badges, importantBadges: importantBadges, spoonacularScore: spoonacularScore, productDescription: productDescription, imageLink: imageLink, moreImageLinks: moreImageLinks, generatedText: generatedText, ingredientCount: ingredientCount, recipeIds: recipeIds,recipes: recipes, credits: credits, expirationDate: expirationDate)
     }
-    
+
+    // Convenience initializer for GroceryProduct (from Spoonacular API)
+    convenience init(from groceryProduct: GroceryProduct, expirationDate: Date, recipeIds: [Int]? = nil, recipes: [SDRecipe]? = nil) {
+        // Convert SpoonacularCredit to Credit if available
+        let credit: Credit? = {
+            if let spoonCredit = groceryProduct.credits {
+                return Credit(text: spoonCredit.text, link: spoonCredit.link, image: spoonCredit.image, imageLink: spoonCredit.imageLink)
+            }
+            return nil
+        }()
+
+        self.init(
+            id: groceryProduct.id,
+            manualId: nil, // API products don't have manualId
+            barcode: groceryProduct.upc ?? "",
+            title: groceryProduct.title ?? "Unknown Product",
+            brand: groceryProduct.brand ?? "",
+            breadcrumbs: groceryProduct.breadcrumbs,
+            badges: groceryProduct.badges,
+            importantBadges: groceryProduct.importantBadges,
+            spoonacularScore: groceryProduct.spoonacularScore,
+            productDescription: groceryProduct.description,
+            imageLink: groceryProduct.image,
+            moreImageLinks: groceryProduct.images,
+            generatedText: groceryProduct.generatedText,
+            ingredientCount: groceryProduct.ingredientCount,
+            recipeIds: recipeIds,
+            recipes: recipes,
+            credits: credit,
+            expirationDate: expirationDate
+        )
+    }
 
     func markUsed() {
         withAnimation {

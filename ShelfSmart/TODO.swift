@@ -14,7 +14,7 @@ import Foundation
 // TODO: 6. Adjust the app to look good in the dark mode.
 // TODO: 7. Implement Push Notifications, to remind users that their food is expiring in 3 days.
 // TODO: 8. If the product is not marked used and is expired, then remind the user to throw away the product.
-
+// TODO: If the user searches for a barcode and gets the product, then changes the barcode, we have to remove the product and when the barcode is correct again, we can show the product. I have partially implemented this logic using the lastVerifiedBarcode which stores the last barcode for which user has searched and has gotten successful result. 
 
 
 // TODO: 9. Add a settings menu in the profile section. Allow the user to choose which time she wants her notifications to arrive.
@@ -24,8 +24,7 @@ import Foundation
 // TODO: 3. Add a one parameter at a time sign up process - User first enters email, clicks next, enters password and confirms it.
 // TODO: 4. Try to add a method to share recipes
 // TODO: 5. Make the UI uniform : Button with glass effect.
-
-
+// TODO: Make the UI For adding products like 2 options with half sheet - enter barcode or add yourself? Clicking on add yourself will open a new sheet to add name, description and expiration date.
 
 
 

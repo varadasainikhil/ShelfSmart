@@ -9,12 +9,6 @@ import FirebaseAuth
 import Foundation
 import SwiftData
 
-// Model for API error responses
-struct APIErrorResponse: Codable {
-    let status: String
-    let message: String
-}
-
 @Observable
 class AddProductViewViewModel {
     var barcode : String = ""
@@ -33,13 +27,22 @@ class AddProductViewViewModel {
     }
     var isLoading : Bool = false
     var isSaving : Bool = false
+    
+    // This is to track the errors
     var errorMessage : String?
+    
+    // This variable is for tracking the searchProduct success
     var searchSuccess : Bool = false
+    
+    var lastVerifiedBarcode : String = ""
+    
     var searchAttempted : Bool = false
-    var apiResponse : GroceryProduct? = nil
     
     // Store the groceryProduct - created when saving the product
     var groceryProduct : GroceryProduct? = nil
+    
+    // Product variable to hold the product that is going to be saved to the modelContext
+    var product : Product? = nil
     
     var isSearchButtonDisabled : Bool {
         return barcode.isEmpty || isLoading
@@ -48,18 +51,6 @@ class AddProductViewViewModel {
     var isSaveButtonDisabled : Bool {
         return isSaving || isLoading || (name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !searchSuccess)
     }
-    
-    // Helper function to get current groceryProduct
-    func getCurrentGroceryProduct() -> GroceryProduct? {
-        return groceryProduct
-    }
-    
-    // Helper function to clear groceryProduct
-    func clearGroceryProduct() {
-        groceryProduct = nil
-        print("🗑️ Cleared groceryProduct")
-    }
-    
     // Reset all fields to initial state for clean sheet
     func resetAllFields() {
         barcode = ""
@@ -72,7 +63,7 @@ class AddProductViewViewModel {
         errorMessage = nil
         searchSuccess = false
         searchAttempted = false
-        apiResponse = nil
+        groceryProduct = nil
         groceryProduct = nil
         self.recipes = [SDRecipe]()
         print("🔄 Reset all fields to initial state - clean sheet ready")
@@ -84,10 +75,10 @@ class AddProductViewViewModel {
               let apiKey = plist["API_KEY"] as? String else {
             return nil
         }
-        print(apiKey)
         return apiKey
     }
     
+    // Searches for the product using the barcode
     func searchProduct(modelContext: ModelContext) async throws {
         // Reset state
         await MainActor.run {
@@ -107,6 +98,7 @@ class AddProductViewViewModel {
             await MainActor.run {
                 isLoading = false
                 errorMessage = "API key not configured"
+                searchSuccess = false
             }
             return
         }
@@ -115,6 +107,7 @@ class AddProductViewViewModel {
         
         guard var urlComponents = URLComponents(string:"https://api.spoonacular.com/food/products/upc/\(barcode)") else {
             print("❌ Error: Failed to create URL components")
+            searchSuccess = false
             throw URLError(.badURL)
         }
         
@@ -126,6 +119,7 @@ class AddProductViewViewModel {
         
         guard let url = urlComponents.url else {
             print("❌ Error: Failed to create final URL")
+            searchSuccess = false
             throw URLError(.badURL)
         }
         
@@ -146,6 +140,7 @@ class AddProductViewViewModel {
                     await MainActor.run {
                         isLoading = false
                         errorMessage = "Invalid API key. Please check your configuration."
+                        searchSuccess = false
                     }
                     return
                 case 402:
@@ -153,6 +148,7 @@ class AddProductViewViewModel {
                     await MainActor.run {
                         isLoading = false
                         errorMessage = "API quota exceeded. Please try again later."
+                        searchSuccess = false
                     }
                     return
                 case 404:
@@ -161,6 +157,7 @@ class AddProductViewViewModel {
                         isLoading = false
                         errorMessage = "Product not found for this barcode."
                         self.barcode = ""
+                        searchSuccess = false
                     }
                     return
                 default:
@@ -168,6 +165,7 @@ class AddProductViewViewModel {
                     await MainActor.run {
                         isLoading = false
                         errorMessage = "An unexpected error occurred. Please try again."
+                        searchSuccess = false
                     }
                     return
                 }
@@ -194,33 +192,27 @@ class AddProductViewViewModel {
             print("🖼️ API Response images: \(String(describing: apiResponse.images))")
             print("💳 Credits available: \(apiResponse.credits != nil)")
             print("BreadCrumbs : \(String(describing: apiResponse.breadcrumbs))")
-            // Check if we have essential data to create a product
-            let productTitle = apiResponse.title ?? ""
-            let productUpc = apiResponse.upc ?? ""
-            let productId = apiResponse.id
+            
+            self.groceryProduct = apiResponse
             
             // Validate that we have a meaningful product response
-            // A valid product should have either a non-empty title or a valid ID
-            let hasValidTitle = !productTitle.isEmpty && productTitle != "Unknown Product"
-            let hasValidId = productId != nil && productId != 0
-            let hasValidUPC = !productUpc.isEmpty
-            
+            let hasValidTitle = !(groceryProduct?.title?.isEmpty ?? true)
+            let hasValidId = groceryProduct?.id != nil
+            let hasValidUPC = !(groceryProduct?.upc?.isEmpty ?? true)
+
             if hasValidTitle || hasValidId || hasValidUPC {
                 // Update UI with found product data
                 await MainActor.run {
-                    self.name = productTitle.isEmpty ? "Unknown Product" : productTitle
+                    self.name = groceryProduct?.title ?? "Unknown Product"
+                    self.lastVerifiedBarcode = groceryProduct?.upc ?? ""
                     self.productDescription = apiResponse.description ?? ""
                     self.imageLink = apiResponse.image ?? ""
                     self.searchSuccess = true
                     self.isLoading = false
                     self.errorMessage = nil // Clear any previous errors
                 }
-                
-                // Store the API response for later use when user saves
-                await MainActor.run {
-                    self.apiResponse = apiResponse
-                    print("✅ API product data loaded successfully - ready for user to save")
-                }
+
+                print("✅ API product data loaded successfully - ready for user to save")
                 
             } else {
                 print("⚠️ No valid product data found in response")
@@ -232,7 +224,7 @@ class AddProductViewViewModel {
                     self.name = "" // Clear name field
                     self.productDescription = "" // Clear description field
                     self.imageLink = "" // Clear image link
-                    self.apiResponse = nil // Clear API response
+                    self.groceryProduct = nil // Clear grocery product
                 }
             }
             
@@ -248,7 +240,7 @@ class AddProductViewViewModel {
                 self.name = "" // Clear name field
                 self.productDescription = "" // Clear description field
                 self.imageLink = "" // Clear image link
-                self.apiResponse = nil // Clear API response
+                self.groceryProduct = nil // Clear grocery product
             }
         } catch let urlError as URLError {
             print("❌ Network Error: \(urlError)")
@@ -262,7 +254,7 @@ class AddProductViewViewModel {
                 self.name = "" // Clear name field
                 self.productDescription = "" // Clear description field
                 self.imageLink = "" // Clear image link
-                self.apiResponse = nil // Clear API response
+                self.groceryProduct = nil // Clear grocery product
             }
         } catch {
             print("❌ Unknown Error: \(error)")
@@ -276,54 +268,60 @@ class AddProductViewViewModel {
                 self.name = "" // Clear name field
                 self.productDescription = "" // Clear description field
                 self.imageLink = "" // Clear image link
-                self.apiResponse = nil // Clear API response
+                self.groceryProduct = nil // Clear grocery product
             }
         }
     }
     
     @MainActor
-    func createProductFromAPIResponse(apiResponse : GroceryProduct, modelContext : ModelContext ) async {
+    func createProductFromAPIResponse(modelContext : ModelContext ) async {
         // Set saving state and reset any previous error messages
         isSaving = true
         errorMessage = nil
+        
+        guard groceryProduct != nil else {
+            return
+        }
         
         // Capture the expiration date before any potential reset
         let userSelectedExpirationDate = self.expirationDate
         print("📦 API Product - User selected expiration date: \(userSelectedExpirationDate)")
         
-        // Create groceryProduct from API response
-        self.groceryProduct = apiResponse
-        print("📦 Created groceryProduct from API response: \(String(describing: apiResponse.title))")
-        
-        // Handle optional credits
-        let credit: Credit
-        if let apiCredits = apiResponse.credits {
-            credit = Credit(text: apiCredits.text, link: apiCredits.link, image: apiCredits.image, imageLink: apiCredits.imageLink)
-        } else {
-            // Provide default credits when API doesn't include them
-            credit = Credit(text: "Product information provided by Spoonacular", link: "https://spoonacular.com", image: "Spoonacular", imageLink: "https://spoonacular.com")
+        print("📦 Created groceryProduct from API response: \(String(describing: groceryProduct?.title))")
+    
+        // If there is no productTitle, the function generates an error
+        guard let productTitle = groceryProduct?.title else {
+            print("Title not found from the API Response")
+            errorMessage = "Title not found from API Response"
+            return
         }
         
-        // Use fallback values for essential fields
-        let productTitle = apiResponse.title ?? "Unknown Product"
-        let productBarcode = apiResponse.upc ?? self.barcode
-        
-        // Search for recipes using this product's ingredients and save product
-        await searchAndSaveRecipesForProduct(apiResponse: apiResponse, modelContext: modelContext, credit: credit, productTitle: productTitle, productBarcode: productBarcode, userExpirationDate: userSelectedExpirationDate)
+        // If there is no productBarcode, the function generates an error
+        guard let productBarcode = groceryProduct?.upc else {
+            print("Barcode not found from the API Response")
+            errorMessage = "Barcode not found from API Response"
+            return
+        }
+
+        // Creating the product using our convenience initializer
+        product = Product(from: groceryProduct!, expirationDate: self.expirationDate)
+
+        // Calling the function searchAndSaveRecipesForProduct
+        await searchAndSaveRecipesForProduct(product : self.product!, modelContext: modelContext, userExpirationDate: userSelectedExpirationDate)
     }
     
     /// Searches for recipes and creates the product with recipe IDs
     @MainActor
-    private func searchAndSaveRecipesForProduct(apiResponse: GroceryProduct, modelContext: ModelContext, credit: Credit, productTitle: String, productBarcode: String, userExpirationDate: Date) async {
+    private func searchAndSaveRecipesForProduct(product : Product, modelContext: ModelContext, userExpirationDate: Date) async {
         // Extract ingredients for recipe search
         var ingredients: [String] = []
         
-        // Use breadcrumbs if available, otherwise use title
-        if let breadcrumbs = apiResponse.breadcrumbs, !breadcrumbs.isEmpty {
+        // Use breadcrumbs if available from the product apiResponse, otherwise use title
+        if let breadcrumbs = product.breadcrumbs, !breadcrumbs.isEmpty {
             ingredients.append(contentsOf: breadcrumbs)
         } else {
             // Fallback to using the product title as an ingredient
-            ingredients.append(productTitle)
+            ingredients.append(product.title)
         }
         
         // Remove duplicates and filter out empty strings
@@ -337,9 +335,11 @@ class AddProductViewViewModel {
         // Search for recipe using recipeId
         await self.searchRecipeByID(recipeIds: recipeIds ?? [Int]())
         
+        // Assigning the recipeIDs to the product
+        product.recipeIds = recipeIds
         
-        // Create product with recipe IDs using the user-selected expiration date
-        let product = Product(id: apiResponse.id, manualId: nil, barcode: productBarcode, title: productTitle, brand: apiResponse.brand ?? "",breadcrumbs: apiResponse.breadcrumbs, badges: apiResponse.badges, importantBadges: apiResponse.importantBadges, spoonacularScore: apiResponse.spoonacularScore, productDescription: apiResponse.description, imageLink: apiResponse.image, moreImageLinks: apiResponse.images, generatedText: apiResponse.generatedText, ingredientCount: apiResponse.ingredientCount, recipeIds: recipeIds,recipes: self.recipes, credits: credit, expirationDate: userExpirationDate)
+        // Assigning the recipes to the product
+        product.recipes = self.recipes
         
         print("Created a new Item")
         print("🖼️ Product imageLink set to: \(String(describing: product.imageLink))")
@@ -499,7 +499,7 @@ class AddProductViewViewModel {
     
     // Function to create product manually (without API)
     @MainActor
-    func createManualProduct(modelContext: ModelContext) async {
+    func createAndSaveManualProduct(modelContext: ModelContext) async {
         // Set saving state and reset any previous error messages
         self.isSaving = true
         self.errorMessage = nil
@@ -522,7 +522,7 @@ class AddProductViewViewModel {
         print("📝 Creating manual product directly")
         print("🗓️ User selected expiration date: \(productExpirationDate)")
         
-        // Search for recipes using manual product ingredients
+        // Search for recipes using product name
         let ingredients = productName.components(separatedBy: " ")
         
         // Search for recipes by ingredients using the name because it is a manual entry
@@ -607,6 +607,7 @@ class AddProductViewViewModel {
         }
     }
     
+    // Searches for the recipe using the recipe ID
     func searchRecipeByID(recipeIds : [Int]) async {
         for recipeId in recipeIds{
             do {
@@ -698,6 +699,4 @@ class AddProductViewViewModel {
         }
         
     }
-    
-    
 }

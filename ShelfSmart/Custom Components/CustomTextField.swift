@@ -8,22 +8,19 @@
 import SwiftUI
 
 struct CustomTextField: View {
-    var textToShow : String
-    @Binding var variableToBind : String
+    var textToShow: String
+    @Binding var variableToBind: String
+
     var body: some View {
-        ZStack{
-            RoundedRectangle(cornerRadius: 12)
-                .strokeBorder(lineWidth: 2)
-            TextField(textToShow, text: $variableToBind)
-                .padding(.horizontal)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-        }
-        .frame(maxWidth: .infinity)
-        .frame(height: 50)
+        TextField(textToShow, text: $variableToBind)
+            .textFieldStyle(.roundedBorder)
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            .frame(height: 44)
     }
 }
 
 #Preview {
     CustomTextField(textToShow: "Test", variableToBind: .constant("Test Text"))
+        .padding()
 }

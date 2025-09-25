@@ -12,14 +12,14 @@ struct AddProductView: View {
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) var dismiss
     @State var viewModel: AddProductViewViewModel
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
                 // Background
                 Color(.systemGroupedBackground)
                     .ignoresSafeArea()
-                
+
                 ScrollView {
                     VStack(spacing: 24) {
                         // Header Section
@@ -33,7 +33,7 @@ struct AddProductView: View {
                                     .fontWeight(.bold)
                                     .foregroundStyle(.primary)
                             }
-                            
+
                             Text("Scan a barcode or enter product details manually")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
@@ -41,7 +41,7 @@ struct AddProductView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 20)
                         .padding(.top, 20)
-                        
+
                         // Barcode Search Section
                         VStack(spacing: 16) {
                             ModernSearchCard(
@@ -56,7 +56,7 @@ struct AddProductView: View {
                                     }
                                 }
                             )
-                            
+
                             // Product Preview Card
                             if viewModel.searchSuccess {
                                 ModernProductPreviewCard(
@@ -72,7 +72,7 @@ struct AddProductView: View {
                             }
                         }
                         .padding(.horizontal, 20)
-                        
+
                         // Manual Entry Section
                         VStack(spacing: 16) {
                             ModernManualEntryCard(
@@ -83,28 +83,26 @@ struct AddProductView: View {
                             )
                         }
                         .padding(.horizontal, 20)
-                        
+
                         Spacer(minLength: 100) // Space for floating button
                     }
                 }
-                
+
                 // Floating Save Button
                 VStack {
                     Spacer()
                     ModernSaveButton(
                         searchSuccess: viewModel.searchSuccess,
-                        hasApiResponse: viewModel.apiResponse != nil,
                         isSaving: viewModel.isSaving,
                         isDisabled: viewModel.isSaveButtonDisabled,
                         onSave: {
                             let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                             impactFeedback.impactOccurred()
-                            
-                            if viewModel.searchSuccess, let apiResponse = viewModel.apiResponse {
-                                // For API response, we need to handle reset after async completion (same as manual entry)
+
+                            if viewModel.searchSuccess {
                                 Task {
-                                    await viewModel.createProductFromAPIResponse(apiResponse: apiResponse, modelContext: modelContext)
-                                    
+                                    await viewModel.createProductFromAPIResponse(modelContext: modelContext)
+
                                     await MainActor.run {
                                         if viewModel.errorMessage == nil {
                                             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
@@ -115,10 +113,9 @@ struct AddProductView: View {
                                     }
                                 }
                             } else {
-                                // For manual entry, we need to handle reset after async completion
                                 Task {
-                                    await viewModel.createManualProduct(modelContext: modelContext)
-                                    
+                                    await viewModel.createAndSaveManualProduct(modelContext: modelContext)
+
                                     await MainActor.run {
                                         if viewModel.errorMessage == nil {
                                             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
@@ -135,24 +132,12 @@ struct AddProductView: View {
                 }
             }
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.primary)
-                    }
-                }
-            }
             .onAppear {
                 viewModel.resetAllFields()
             }
         }
     }
 }
-
 // MARK: - Modern Search Card
 struct ModernSearchCard: View {
     @Binding var barcode: String
@@ -161,7 +146,7 @@ struct ModernSearchCard: View {
     let errorMessage: String?
     let searchSuccess: Bool
     let onSearch: () -> Void
-    
+
     var body: some View {
         VStack(spacing: 16) {
             // Header
@@ -174,9 +159,9 @@ struct ModernSearchCard: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 Circle()
                     .fill(.green.opacity(0.2))
                     .frame(width: 40, height: 40)
@@ -186,14 +171,14 @@ struct ModernSearchCard: View {
                             .foregroundStyle(.green)
                     }
             }
-            
+
             // Barcode Input
             VStack(alignment: .leading, spacing: 8) {
                 Text("Barcode")
                     .font(.subheadline)
                     .fontWeight(.medium)
                     .foregroundStyle(.primary)
-                
+
                 HStack {
                     TextField("Enter product barcode", text: $barcode)
                         .keyboardType(.decimalPad)
@@ -204,7 +189,7 @@ struct ModernSearchCard: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(Color(.systemGray6))
                         )
-                    
+
                     Button(action: onSearch) {
                         HStack(spacing: 8) {
                             if isLoading {
@@ -230,7 +215,7 @@ struct ModernSearchCard: View {
                     .disabled(isDisabled)
                 }
             }
-            
+
             // Status Messages
             if let errorMessage = errorMessage {
                 HStack(spacing: 8) {
@@ -281,7 +266,7 @@ struct ModernProductPreviewCard: View {
     let description: String
     let barcode: String
     let imageLink: String
-    
+
     var body: some View {
         VStack(spacing: 16) {
             HStack {
@@ -293,9 +278,9 @@ struct ModernProductPreviewCard: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 Circle()
                     .fill(.green.opacity(0.2))
                     .frame(width: 40, height: 40)
@@ -305,15 +290,15 @@ struct ModernProductPreviewCard: View {
                             .foregroundStyle(.green)
                     }
             }
-            
+
             HStack(spacing: 16) {
                 // Product Image
                 Group {
                     if !imageLink.isEmpty {
-                        let secureImageLink = imageLink.hasPrefix("http://") ? 
-                            imageLink.replacingOccurrences(of: "http://", with: "https://") : 
+                        let secureImageLink = imageLink.hasPrefix("http://") ?
+                            imageLink.replacingOccurrences(of: "http://", with: "https://") :
                             imageLink
-                        
+
                         AsyncImage(url: URL(string: secureImageLink)) { phase in
                             if let image = phase.image {
                                 image
@@ -338,21 +323,21 @@ struct ModernProductPreviewCard: View {
                     RoundedRectangle(cornerRadius: 12)
                         .fill(Color(.systemGray6))
                 )
-                
+
                 VStack(alignment: .leading, spacing: 6) {
                     Text(name)
                         .font(.headline)
                         .fontWeight(.semibold)
                         .lineLimit(2)
                         .foregroundStyle(.primary)
-                    
+
                     if !description.isEmpty {
                         Text(description)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .lineLimit(3)
                     }
-                    
+
                     Text("Barcode: \(barcode)")
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -363,7 +348,7 @@ struct ModernProductPreviewCard: View {
                                 .fill(Color(.systemGray6))
                         )
                 }
-                
+
                 Spacer()
             }
         }
@@ -382,7 +367,7 @@ struct ModernManualEntryCard: View {
     @Binding var description: String
     @Binding var expirationDate: Date
     let errorMessage: String?
-    
+
     var body: some View {
         VStack(spacing: 16) {
             HStack {
@@ -394,9 +379,9 @@ struct ModernManualEntryCard: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                
+
                 Spacer()
-                
+
                 Circle()
                     .fill(.blue.opacity(0.2))
                     .frame(width: 40, height: 40)
@@ -406,7 +391,7 @@ struct ModernManualEntryCard: View {
                             .foregroundStyle(.blue)
                     }
             }
-            
+
             VStack(spacing: 16) {
                 // Product Name
                 VStack(alignment: .leading, spacing: 8) {
@@ -414,7 +399,7 @@ struct ModernManualEntryCard: View {
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundStyle(.primary)
-                    
+
                     TextField("Enter product name", text: $name)
                         .textFieldStyle(PlainTextFieldStyle())
                         .padding(.horizontal, 16)
@@ -424,14 +409,14 @@ struct ModernManualEntryCard: View {
                                 .fill(Color(.systemGray6))
                         )
                 }
-                
+
                 // Description
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Description")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundStyle(.primary)
-                    
+
                     TextField("Enter product description", text: $description, axis: .vertical)
                         .textFieldStyle(PlainTextFieldStyle())
                         .lineLimit(3...6)
@@ -442,14 +427,14 @@ struct ModernManualEntryCard: View {
                                 .fill(Color(.systemGray6))
                         )
                 }
-                
+
                 // Expiration Date
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Expiration Date")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundStyle(.primary)
-                    
+
                     DatePicker(
                         "Select expiration date",
                         selection: $expirationDate,
@@ -464,11 +449,11 @@ struct ModernManualEntryCard: View {
                     )
                 }
             }
-            
+
             // Error Message
-            if let errorMessage = errorMessage, 
-               !errorMessage.contains("API key") && 
-               !errorMessage.contains("Network") && 
+            if let errorMessage = errorMessage,
+               !errorMessage.contains("API key") &&
+               !errorMessage.contains("Network") &&
                !errorMessage.contains("products found") {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
@@ -499,11 +484,10 @@ struct ModernManualEntryCard: View {
 // MARK: - Modern Save Button
 struct ModernSaveButton: View {
     let searchSuccess: Bool
-    let hasApiResponse: Bool
     let isSaving: Bool
     let isDisabled: Bool
     let onSave: () -> Void
-    
+
     var body: some View {
         Button(action: onSave) {
             HStack(spacing: 10) {
@@ -535,7 +519,6 @@ struct ModernSaveButton: View {
         .padding(.horizontal, 20)
     }
 }
-
 
 #Preview {
     AddProductView(viewModel: AddProductViewViewModel())
