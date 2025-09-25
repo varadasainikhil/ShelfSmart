@@ -7,24 +7,11 @@
 
 import SwiftUI
 import SwiftData
-import FirebaseAuth
 
 struct DetailProductView: View {
     @Environment(\.modelContext) private var modelContext
-    @State private var recipeCardViewModel = RecipeCardViewModel()
     @State private var recipeToShow: Recipe?
     var product : Product
-
-    // Query to check liked recipes
-    @Query private var allRecipes: [SDRecipe]
-
-    // Helper function to check if recipe is liked
-    private func isRecipeLiked(_ recipeId: Int) -> Bool {
-        let currentUserId = Auth.auth().currentUser?.uid ?? ""
-        return allRecipes.contains { recipe in
-            recipe.id == recipeId && recipe.isLiked && recipe.userId == currentUserId
-        }
-    }
     var body: some View {
         ZStack{
             // Background Color of the screen
@@ -195,12 +182,12 @@ struct DetailProductView: View {
                         HStack{
                             Text("Recipes Using this Product")
                                 .font(.title2.bold())
-                            
+
                             Spacer()
-                            
+
                             // Recipe count badge
-                            if let recipeIds = product.recipeIds, !recipeIds.isEmpty {
-                                Text("\(recipeIds.count)")
+                            if let recipes = product.recipes, !recipes.isEmpty {
+                                Text("\(recipes.count)")
                                     .font(.caption.bold())
                                     .foregroundColor(.white)
                                     .padding(.horizontal, 8)
@@ -211,78 +198,18 @@ struct DetailProductView: View {
                         }
                         
                         // Recipe Cards Display
-                        if let recipeIds = product.recipeIds, !recipeIds.isEmpty {
-                            if recipeCardViewModel.isLoading && recipeCardViewModel.recipes.isEmpty {
-                                // Loading state
-                                VStack(spacing: 12) {
-                                    ProgressView()
-                                        .scaleEffect(1.2)
-                                    Text("Loading recipes...")
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 40)
-                            } else if recipeCardViewModel.hasRecipes {
-                                // Recipe cards grid - 2x2 layout for 4 recipes
-                                LazyVGrid(columns: [
-                                    GridItem(.flexible(), spacing: 12),
-                                    GridItem(.flexible(), spacing: 12)
-                                ], spacing: 16) {
-                                    ForEach(recipeCardViewModel.recipes, id: \.id) { recipe in
-                                        RecipeCard(recipe: recipe, isLiked: isRecipeLiked(recipe.id)) {
-                                            recipeToShow = recipe
-                                        }
-                                        .id("recipe-\(recipe.id)") // Ensure stable identity
+                        if let recipes = product.recipes, !recipes.isEmpty {
+                            // Recipe cards grid - 2x2 layout for recipes
+                            LazyVGrid(columns: [
+                                GridItem(.flexible(), spacing: 12),
+                                GridItem(.flexible(), spacing: 12)
+                            ], spacing: 16) {
+                                ForEach(recipes, id: \.id) { sdRecipe in
+                                    let recipe = sdRecipe.toRecipe()
+                                    RecipeCardView(recipe: recipe, isLiked: sdRecipe.isLiked) {
+                                        recipeToShow = recipe
                                     }
-                                }
-                            } else if let errorMessage = recipeCardViewModel.errorMessage {
-                                // Error state
-                                VStack(spacing: 12) {
-                                    Image(systemName: "exclamationmark.triangle")
-                                        .font(.title2)
-                                        .foregroundColor(.orange)
-                                    
-                                    Text("Failed to load recipes")
-                                        .font(.headline)
-                                    
-                                    Text(errorMessage)
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                        .multilineTextAlignment(.center)
-                                    
-                                    Button("Try Again") {
-                                        Task {
-                                            await recipeCardViewModel.fetchMultipleRecipeDetails(recipeIds: recipeIds)
-                                        }
-                                    }
-                                    .buttonStyle(.borderedProminent)
-                                    .controlSize(.small)
-                                }
-                                .padding()
-                                .background(Color(.systemGray6))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                            } else {
-                                // No recipes loaded yet - trigger loading
-                                VStack(spacing: 12) {
-                                    Image(systemName: "fork.knife")
-                                        .font(.title2)
-                                        .foregroundColor(.gray)
-                                    
-                                    Text("Loading recipes...")
-                                        .font(.headline)
-                                    
-                                    Text("Fetching recipe details for this product")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                        .multilineTextAlignment(.center)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 40)
-                                .onAppear {
-                                    Task {
-                                        await recipeCardViewModel.fetchMultipleRecipeDetails(recipeIds: recipeIds)
-                                    }
+                                    .id("recipe-\(sdRecipe.id ?? 0)") // Ensure stable identity
                                 }
                             }
                         } else {
@@ -322,9 +249,9 @@ struct DetailProductView: View {
 #Preview {
     let spoonacularCredit = SpoonacularCredit(text: "openfoodfacts.org under (ODbL) v1.0", link: "https://opendatacommons.org/licenses/odbl/1-0/", image: "openfoodfacts.org under CC BY-SA 3.0 DEED", imageLink:  "https://creativecommons.org/licenses/by-sa/3.0/deed.en")
     let groceryProduct = GroceryProduct(id: 9348958, title: "LECHE SIN LACTOSA", breadcrumbs: ["Dairy", "Milk"], upc: "8410128750145", credits: spoonacularCredit)
-    
+
     let newCredit = Credit(text: spoonacularCredit.text, link: spoonacularCredit.link,  image: spoonacularCredit.image, imageLink: spoonacularCredit.imageLink)
-    
+
     let newProduct = Product(id: groceryProduct.id ?? 9348958, barcode: groceryProduct.upc ?? "", title: groceryProduct.title ?? "", brand: groceryProduct.brand ?? "", breadcrumbs: groceryProduct.breadcrumbs, badges: groceryProduct.badges, importantBadges: groceryProduct.importantBadges, spoonacularScore: groceryProduct.spoonacularScore, productDescription: groceryProduct.description, imageLink: groceryProduct.image, moreImageLinks: groceryProduct.images, generatedText: groceryProduct.generatedText, ingredientCount: groceryProduct.ingredientCount, recipeIds: [12345, 67890, 11111], credits: newCredit, expirationDate: Date.now.addingTimeInterval(86400*3))
-    DetailProductView(product: newProduct)
+    return DetailProductView(product: newProduct)
 }

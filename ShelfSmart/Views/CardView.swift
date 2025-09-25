@@ -10,7 +10,6 @@ import SwiftUI
 
 struct CardView: View {
     @Environment(\.modelContext) var modelContext
-    @State private var viewModel = CardViewViewModel()
     var product : Product
     var body: some View {
         
@@ -90,30 +89,6 @@ struct CardView: View {
                     
                     Spacer()
                     
-                    if product.isExpired{
-                        Button {
-                            // delete the product
-                            withAnimation {
-                                viewModel.deleteProduct(modelContext: modelContext, product: product)
-                            }
-                        } label: {
-                            Image(systemName: "trash.circle")
-                                .font(.title)
-                                .foregroundStyle(product.isUsed ? .green : .black)
-                        }
-                    }
-                    else {
-                        Button {
-                            // mark the product as used and completed
-                            product.markUsed()
-                        } label: {
-                            Image(systemName: product.isUsed ? "checkmark.circle.fill" : "checkmark.circle")
-                                .font(.title)
-                                .foregroundStyle(product.isUsed ? .green : .black)
-                        }
-                    }
-                    
-                    Spacer()
                 }
             }
             .frame(height: 100)

@@ -11,18 +11,17 @@ import FirebaseAuth
 struct HomeView: View {
     @Environment(\.modelContext) var modelContext
     @State var showingAddProduct : Bool = false
-    @State var showingDetailProductView : Bool = false
     @State private var addProductViewModel = AddProductViewViewModel()
-    @State private var currentUserId: String = Auth.auth().currentUser?.uid ?? ""
-    
-    // Get all groups and filter in the view - this will be reactive to changes
-    @Query(sort: \GroupedProducts.expirationDate) private var allGroups: [GroupedProducts]
-    
-    // Computed property that filters groups by current user
-    var groups: [GroupedProducts] {
-        return allGroups.filter { group in
+
+    // Optimized query with predicate-based filtering
+    @Query private var groups: [GroupedProducts]
+
+    init() {
+        let currentUserId = Auth.auth().currentUser?.uid ?? ""
+        let predicate = #Predicate<GroupedProducts> { group in
             group.userId == currentUserId
         }
+        self._groups = Query(filter: predicate, sort: \GroupedProducts.expirationDate)
     }
     
     var body: some View {
@@ -146,14 +145,6 @@ struct HomeView: View {
                 AddProductView(viewModel: addProductViewModel)
             }
         }
-        .onAppear {
-            // Update userId when view appears
-            currentUserId = Auth.auth().currentUser?.uid ?? ""
-        }
-        .onChange(of: currentUserId) { oldValue, newValue in
-            // This will trigger a view update when userId changes
-            print("User ID changed from \(oldValue) to \(newValue)")
-        }
     }
 }
 
@@ -213,7 +204,6 @@ struct EnhancedGroupView: View {
 // MARK: - Enhanced Card View Component  
 struct EnhancedCardView: View {
     @Environment(\.modelContext) var modelContext
-    @State private var viewModel = CardViewViewModel()
     var product: Product
     
     var body: some View {
@@ -274,32 +264,6 @@ struct EnhancedCardView: View {
             }
             
             Spacer()
-            
-            // Action Button
-            Button {
-                let impactFeedback = UIImpactFeedbackGenerator(style: .light)
-                impactFeedback.impactOccurred()
-                
-                if product.isExpired {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        viewModel.deleteProduct(modelContext: modelContext, product: product)
-                    }
-                } else {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        product.markUsed()
-                    }
-                }
-            } label: {
-                Circle()
-                    .fill(product.isExpired ? .red.opacity(0.1) : (product.isUsed ? .green.opacity(0.1) : Color(.systemGray6)))
-                    .frame(width: 36, height: 36)
-                    .overlay {
-                        Image(systemName: product.isExpired ? "trash" : (product.isUsed ? "checkmark" : "circle"))
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(product.isExpired ? .red : (product.isUsed ? .green : .secondary))
-                    }
-            }
-            .buttonStyle(PlainButtonStyle())
         }
         .padding(12)
         .background(
@@ -369,3 +333,4 @@ private func getGroupStatus(for group: GroupedProducts) -> (message: String, col
         return Text("Preview Error: \(error.localizedDescription)")
     }
 }
+ 

@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct RecipeCard: View {
+struct RecipeCardView: View {
     let recipe: Recipe
     let isLiked: Bool
     let onTap: () -> Void
@@ -20,9 +20,10 @@ struct RecipeCard: View {
                     SimpleAsyncImage(url: recipe.image) { image in
                         image
                             .resizable()
-                            .aspectRatio(contentMode: .fill)
+                            .scaledToFill()
                     }
                     .frame(height: 120)
+                    .clipped()
                     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
 
                     // Heart indicator overlay (visual only, when liked)
@@ -176,7 +177,7 @@ struct RecipeCardButtonStyle: ButtonStyle {
         spoonacularSourceUrl: "https://spoonacular.com/recipe/12345"
     )
     
-    RecipeCard(recipe: sampleRecipe, isLiked: true) {
+    RecipeCardView(recipe: sampleRecipe, isLiked: true) {
         print("Recipe tapped")
     }
     .padding()
