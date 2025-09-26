@@ -151,42 +151,4 @@ class SDRecipe {
         self.userId = self.isLiked ? userId : nil
     }
 
-    // Convert SDRecipe back to Recipe for UI display
-    func toRecipe() -> Recipe {
-        return Recipe(
-            id: self.id ?? 0,
-            image: self.image,
-            title: self.title ?? "Unknown Recipe",
-            readyInMinutes: self.readyInMinutes,
-            servings: self.servings,
-            sourceUrl: self.sourceUrl ?? "",
-            vegetarian: self.vegetarian,
-            glutenFree: self.glutenFree,
-            dairyFree: self.dairyFree,
-            veryHealthy: self.veryHealthy,
-            cheap: self.cheap,
-            veryPopular: self.veryPopular,
-            sustainable: self.sustainable,
-            lowFodmap: self.lowFodmap,
-            weightWatcherSmartPoints: self.weightWatcherSmartPoints,
-            gaps: self.gaps,
-            prepationMinutes: self.prepationMinutes,
-            cookingMinute: self.cookingMinute,
-            healthScore: self.healthScore,
-            creditsText: self.creditsText,
-            license: self.license,
-            sourceName: self.sourceName,
-            pricePerServing: self.pricePerServing,
-            extendedIngredients: nil, // Simplified for now
-            summary: self.summary,
-            cuisines: self.cuisines,
-            dishTypes: self.dishTypes,
-            diets: self.diets,
-            occasions: self.occasions,
-            instructions: self.instructions,
-            analyzedInstructions: nil, // Simplified for now
-            spoonacularScore: self.spoonacularScore,
-            spoonacularSourceUrl: self.spoonacularSourceUrl ?? ""
-        )
-    }
 }

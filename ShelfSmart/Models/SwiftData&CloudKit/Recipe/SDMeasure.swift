@@ -30,4 +30,5 @@ class SDMeasure {
         self.unitShort = unitShort
         self.unitLong = unitLong
     }
+
 }

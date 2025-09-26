@@ -10,7 +10,7 @@ import SwiftData
 
 struct DetailProductView: View {
     @Environment(\.modelContext) private var modelContext
-    @State private var recipeToShow: Recipe?
+    @State private var recipeToShow: SDRecipe?
     var product : Product
     var body: some View {
         ZStack{
@@ -205,9 +205,8 @@ struct DetailProductView: View {
                                 GridItem(.flexible(), spacing: 12)
                             ], spacing: 16) {
                                 ForEach(recipes, id: \.id) { sdRecipe in
-                                    let recipe = sdRecipe.toRecipe()
-                                    RecipeCardView(recipe: recipe, isLiked: sdRecipe.isLiked) {
-                                        recipeToShow = recipe
+                                    RecipeCardView(sdRecipe: sdRecipe) {
+                                        recipeToShow = sdRecipe
                                     }
                                     .id("recipe-\(sdRecipe.id ?? 0)") // Ensure stable identity
                                 }
@@ -239,8 +238,8 @@ struct DetailProductView: View {
                 }
             }
         }
-        .sheet(item: $recipeToShow) { recipe in
-            RecipeDetailView(recipe: recipe)
+        .sheet(item: $recipeToShow) { sdRecipe in
+            RecipeDetailView(sdRecipe: sdRecipe)
         }
     }
 }

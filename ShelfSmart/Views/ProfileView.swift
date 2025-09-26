@@ -183,7 +183,7 @@ struct ProfileView: View {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 12) {
                                         ForEach(Array(likedRecipes.prefix(5)), id: \.self) { recipe in
-                                            NavigationLink(destination: RecipeDetailView(recipe: recipe.toRecipe())) {
+                                            NavigationLink(destination: RecipeDetailView(sdRecipe: recipe)) {
                                                 LikedRecipeCard(recipe: recipe)
                                             }
                                             .buttonStyle(PlainButtonStyle())

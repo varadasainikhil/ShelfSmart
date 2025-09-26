@@ -49,4 +49,5 @@ class SDIngredients {
         self.unit = unit
         self.measures = measures
     }
+
 }

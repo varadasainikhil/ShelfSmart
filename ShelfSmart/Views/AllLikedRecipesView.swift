@@ -58,7 +58,7 @@ struct AllLikedRecipesView: View {
                 ScrollView {
                     LazyVStack(spacing: 20) {
                         ForEach(likedRecipes, id: \.self) { recipe in
-                            NavigationLink(destination: RecipeDetailView(recipe: recipe.toRecipe())) {
+                            NavigationLink(destination: RecipeDetailView(sdRecipe: recipe)) {
                                 LikedRecipeCardView(recipe: recipe)
                             }
                             .buttonStyle(PlainButtonStyle())

@@ -8,16 +8,17 @@
 import SwiftUI
 
 struct RecipeCardView: View {
-    let recipe: Recipe
-    let isLiked: Bool
+    let sdRecipe: SDRecipe
     let onTap: () -> Void
+
+    private var isLiked: Bool { sdRecipe.isLiked }
 
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 0) {
                 // Recipe Image with Heart Indicator
                 ZStack {
-                    SimpleAsyncImage(url: recipe.image) { image in
+                    SimpleAsyncImage(url: sdRecipe.image) { image in
                         image
                             .resizable()
                             .scaledToFill()
@@ -50,7 +51,7 @@ struct RecipeCardView: View {
                 // Recipe Info - Fixed height container
                 VStack(alignment: .leading, spacing: 8) {
                     // Recipe Title - Fixed height
-                    Text(recipe.title)
+                    Text(sdRecipe.title ?? "Unknown Recipe")
                         .font(.headline)
                         .fontWeight(.semibold)
                         .lineLimit(2)
@@ -61,7 +62,7 @@ struct RecipeCardView: View {
                     // Recipe Meta Info
                     HStack(spacing: 12) {
                         // Ready Time
-                        if let readyInMinutes = recipe.readyInMinutes {
+                        if let readyInMinutes = sdRecipe.readyInMinutes {
                             HStack(spacing: 4) {
                                 Image(systemName: "clock")
                                     .font(.caption)
@@ -73,7 +74,7 @@ struct RecipeCardView: View {
                         }
                         
                         // Servings
-                        if let servings = recipe.servings {
+                        if let servings = sdRecipe.servings {
                             HStack(spacing: 4) {
                                 Image(systemName: "fork.knife")
                                     .font(.caption)
@@ -88,7 +89,7 @@ struct RecipeCardView: View {
                         
                         // Health badges
                         HStack(spacing: 4) {
-                            if recipe.vegetarian == true {
+                            if sdRecipe.vegetarian == true {
                                 Text("V")
                                     .font(.caption2.bold())
                                     .foregroundColor(.green)
@@ -97,7 +98,7 @@ struct RecipeCardView: View {
                                     .clipShape(Circle())
                             }
                             
-                            if recipe.glutenFree == true {
+                            if sdRecipe.glutenFree == true {
                                 Text("GF")
                                     .font(.caption2.bold())
                                     .foregroundColor(.blue)
@@ -106,7 +107,7 @@ struct RecipeCardView: View {
                                     .clipShape(Circle())
                             }
                             
-                            if recipe.dairyFree == true {
+                            if sdRecipe.dairyFree == true {
                                 Text("DF")
                                     .font(.caption2.bold())
                                     .foregroundColor(.purple)
@@ -141,43 +142,23 @@ struct RecipeCardButtonStyle: ButtonStyle {
 }
 
 #Preview {
-    let sampleRecipe = Recipe(
+    let sampleSDRecipe = SDRecipe(
         id: 12345,
-        image: "https://spoonacular.com/recipeImages/12345-312x231.jpg",
         title: "Delicious Pasta with Fresh Tomatoes",
-        readyInMinutes: 30,
-        servings: 4,
         sourceUrl: "https://example.com/recipe",
-        vegetarian: true,
-        glutenFree: false,
-        dairyFree: true,
-        veryHealthy: nil,
-        cheap: nil,
-        veryPopular: nil,
-        sustainable: nil,
-        lowFodmap: nil,
-        weightWatcherSmartPoints: nil,
-        gaps: nil,
-        prepationMinutes: nil,
-        cookingMinute: nil,
-        healthScore: nil,
-        creditsText: "Recipe by Chef John",
-        license: nil,
-        sourceName: "Food Network",
-        pricePerServing: nil,
-        extendedIngredients: nil,
-        summary: "A delicious pasta recipe with fresh tomatoes and herbs.",
-        cuisines: nil,
-        dishTypes: nil,
-        diets: nil,
-        occasions: nil,
-        instructions: "Cook pasta according to package directions...",
-        analyzedInstructions: nil,
-        spoonacularScore: nil,
         spoonacularSourceUrl: "https://spoonacular.com/recipe/12345"
     )
-    
-    RecipeCardView(recipe: sampleRecipe, isLiked: true) {
+
+    // Set additional properties
+    sampleSDRecipe.image = "https://spoonacular.com/recipeImages/12345-312x231.jpg"
+    sampleSDRecipe.readyInMinutes = 30
+    sampleSDRecipe.servings = 4
+    sampleSDRecipe.vegetarian = true
+    sampleSDRecipe.glutenFree = false
+    sampleSDRecipe.dairyFree = true
+    sampleSDRecipe.isLiked = true
+
+    return RecipeCardView(sdRecipe: sampleSDRecipe) {
         print("Recipe tapped")
     }
     .padding()
