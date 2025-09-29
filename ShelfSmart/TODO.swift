@@ -16,6 +16,7 @@ import Foundation
 // TODO: 8. If the product is not marked used and is expired, then remind the user to throw away the product.
 // TODO: If the user searches for a barcode and gets the product, then changes the barcode, we have to remove the product and when the barcode is correct again, we can show the product. I have partially implemented this logic using the lastVerifiedBarcode which stores the last barcode for which user has searched and has gotten successful result. 
 // TODO: Add the functionality to delete a product and mark it used.
+// TODO: Add a share button to the product detail view and the recipe detail view.
 
 // TODO: 9. Add a settings menu in the profile section. Allow the user to choose which time she wants her notifications to arrive.
 // TODO: 10. Add a setting menu to ask the user if the wants notifications with sound or not.
