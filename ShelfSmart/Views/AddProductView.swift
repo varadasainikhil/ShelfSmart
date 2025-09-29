@@ -146,7 +146,8 @@ struct ModernSearchCard: View {
     let errorMessage: String?
     let searchSuccess: Bool
     let onSearch: () -> Void
-
+    @FocusState private var isTextFieldFocused: Bool
+    
     var body: some View {
         VStack(spacing: 16) {
             // Header
@@ -183,6 +184,7 @@ struct ModernSearchCard: View {
                     TextField("Enter product barcode", text: $barcode)
                         .keyboardType(.decimalPad)
                         .textFieldStyle(PlainTextFieldStyle())
+                        .focused($isTextFieldFocused)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
                         .background(
@@ -190,7 +192,10 @@ struct ModernSearchCard: View {
                                 .fill(Color(.systemGray6))
                         )
 
-                    Button(action: onSearch) {
+                    Button(action: {
+                        isTextFieldFocused = false
+                        onSearch()
+                    }) {
                         HStack(spacing: 8) {
                             if isLoading {
                                 ProgressView()

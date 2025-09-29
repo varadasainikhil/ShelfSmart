@@ -9,7 +9,6 @@ import Foundation
 
 // You are in the MAIN branch
 // TODO: The code is fucked up, there is no cloudkit sync. Need to breakdown the app part by part.
-// TODO: When i click on the search button in the addProductView, the keyboard should disappear.
 // TODO: First implement the core functionality of the app, then work on the bugs.
 // TODO: 6. Adjust the app to look good in the dark mode.
 // TODO: 7. Implement Push Notifications, to remind users that their food is expiring in 3 days.
