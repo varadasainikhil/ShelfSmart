@@ -12,6 +12,11 @@ struct AddProductView: View {
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) var dismiss
     @State var viewModel: AddProductViewViewModel
+    @FocusState private var focusedField: FocusedField?
+
+    enum FocusedField {
+        case barcode, name, description
+    }
 
     var body: some View {
         NavigationStack {
@@ -20,8 +25,9 @@ struct AddProductView: View {
                 Color(.systemGroupedBackground)
                     .ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: 24) {
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        VStack(spacing: 24) {
                         // Header Section
                         VStack(alignment: .leading, spacing: 16) {
                             VStack(alignment: .leading, spacing: 8) {
@@ -50,6 +56,7 @@ struct AddProductView: View {
                                 isDisabled: viewModel.isSearchButtonDisabled,
                                 errorMessage: viewModel.errorMessage,
                                 searchSuccess: viewModel.searchSuccess,
+                                focusedField: $focusedField,
                                 onSearch: {
                                     Task {
                                         try await viewModel.searchProduct(modelContext: modelContext)
@@ -71,6 +78,7 @@ struct AddProductView: View {
                                 ))
                             }
                         }
+                        .id("barcodeSearch")
                         .padding(.horizontal, 20)
 
                         // Manual Entry Section
@@ -79,12 +87,27 @@ struct AddProductView: View {
                                 name: $viewModel.name,
                                 description: $viewModel.productDescription,
                                 expirationDate: $viewModel.expirationDate,
-                                errorMessage: viewModel.errorMessage
+                                errorMessage: viewModel.errorMessage,
+                                focusedField: $focusedField
                             )
                         }
+                        .id("manualEntry")
                         .padding(.horizontal, 20)
 
                         Spacer(minLength: 100) // Space for floating button
+                        }
+                        .onChange(of: focusedField) { oldValue, newValue in
+                            if let field = newValue {
+                                withAnimation {
+                                    switch field {
+                                    case .barcode:
+                                        proxy.scrollTo("barcodeSearch", anchor: .top)
+                                    case .name, .description:
+                                        proxy.scrollTo("manualEntry", anchor: .top)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -145,9 +168,9 @@ struct ModernSearchCard: View {
     let isDisabled: Bool
     let errorMessage: String?
     let searchSuccess: Bool
+    @FocusState.Binding var focusedField: AddProductView.FocusedField?
     let onSearch: () -> Void
-    @FocusState private var isTextFieldFocused: Bool
-    
+
     var body: some View {
         VStack(spacing: 16) {
             // Header
@@ -184,7 +207,7 @@ struct ModernSearchCard: View {
                     TextField("Enter product barcode", text: $barcode)
                         .keyboardType(.decimalPad)
                         .textFieldStyle(PlainTextFieldStyle())
-                        .focused($isTextFieldFocused)
+                        .focused($focusedField, equals: .barcode)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
                         .background(
@@ -193,7 +216,7 @@ struct ModernSearchCard: View {
                         )
 
                     Button(action: {
-                        isTextFieldFocused = false
+                        focusedField = nil
                         onSearch()
                     }) {
                         HStack(spacing: 8) {
@@ -372,6 +395,7 @@ struct ModernManualEntryCard: View {
     @Binding var description: String
     @Binding var expirationDate: Date
     let errorMessage: String?
+    @FocusState.Binding var focusedField: AddProductView.FocusedField?
 
     var body: some View {
         VStack(spacing: 16) {
@@ -407,6 +431,7 @@ struct ModernManualEntryCard: View {
 
                     TextField("Enter product name", text: $name)
                         .textFieldStyle(PlainTextFieldStyle())
+                        .focused($focusedField, equals: .name)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
                         .background(
@@ -424,6 +449,7 @@ struct ModernManualEntryCard: View {
 
                     TextField("Enter product description", text: $description, axis: .vertical)
                         .textFieldStyle(PlainTextFieldStyle())
+                        .focused($focusedField, equals: .description)
                         .lineLimit(3...6)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 12)
