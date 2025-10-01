@@ -27,6 +27,5 @@ import Foundation
 // TODO: Make the UI For adding products like 2 options with half sheet - enter barcode or add yourself? Clicking on add yourself will open a new sheet to add name, description and expiration date.
 
 
-
 // Later stages
 // TODO: 1. Add a method to scan barcodes using camera.

@@ -11,6 +11,7 @@ import SwiftUI
 struct AddProductView: View {
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) var dismiss
+    @Environment(NotificationManager.self) var notificationManager
     @State var viewModel: AddProductViewViewModel
     @FocusState private var focusedField: FocusedField?
 
@@ -124,7 +125,7 @@ struct AddProductView: View {
 
                             if viewModel.searchSuccess {
                                 Task {
-                                    await viewModel.createProductFromAPIResponse(modelContext: modelContext)
+                                    await viewModel.createProductFromAPIResponse(modelContext: modelContext, notificationManager: notificationManager)
 
                                     await MainActor.run {
                                         if viewModel.errorMessage == nil {
@@ -137,7 +138,7 @@ struct AddProductView: View {
                                 }
                             } else {
                                 Task {
-                                    await viewModel.createAndSaveManualProduct(modelContext: modelContext)
+                                    await viewModel.createAndSaveManualProduct(modelContext: modelContext, notificationManager: notificationManager)
 
                                     await MainActor.run {
                                         if viewModel.errorMessage == nil {

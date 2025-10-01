@@ -18,7 +18,7 @@ struct GroupView: View {
                 Spacer()
             }
             
-            ForEach(group.products ?? [], id: \.persistentModelID){ product in
+            ForEach(group.products ?? [], id: \.id){ product in
                 NavigationLink(destination: DetailProductView(product: product)) {
                     if group.products?.last == product {
                         CardView(product: product)
@@ -40,8 +40,8 @@ struct GroupView: View {
     // Use empty string to match what HomeView uses when no user is authenticated
     let sampleUserId = ""
     let sampleGroup = GroupedProducts(expirationDate: threeDaysFromNow, products: [
-        Product(id: 123456789, barcode: "123456789", title: "Milk", brand: "Organic Milk", breadcrumbs: ["Dairy", "Milk"], recipeIds: [111, 222, 333], expirationDate: threeDaysFromNow),
-        Product(id: 12345679, barcode: "12345679", title: "Bread", brand: "Whole Wheat Bread", breadcrumbs: ["Bakery", "Bread"], recipeIds: [444, 555, 666], expirationDate: threeDaysFromNow)
+        Product(spoonacularId: 123456789, barcode: "123456789", title: "Milk", brand: "Organic Milk", breadcrumbs: ["Dairy", "Milk"], recipeIds: [111, 222, 333], expirationDate: threeDaysFromNow),
+        Product(spoonacularId: 12345679, barcode: "12345679", title: "Bread", brand: "Whole Wheat Bread", breadcrumbs: ["Bakery", "Bread"], recipeIds: [444, 555, 666], expirationDate: threeDaysFromNow)
     ], userId: sampleUserId)
     
     return GroupView(group: sampleGroup)

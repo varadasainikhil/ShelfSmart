@@ -33,17 +33,26 @@ class ProfileViewViewModel{
         
     }
     
-    func deleteGroups(groups : [GroupedProducts], modelContext : ModelContext){
+    func deleteGroups(groups : [GroupedProducts], modelContext : ModelContext, notificationManager: NotificationManager){
         for group in groups{
+            // Cancel notifications for all products in this group before deletion
+            if let products = group.products {
+                for product in products {
+                    notificationManager.deleteScheduledNotifications(for: product)
+                    print("🗑️ Cancelled notifications for product: \(product.title)")
+                }
+            }
+
             // With .nullify delete rule, liked recipes will automatically be preserved
             // when products are deleted (recipe.product will be set to nil automatically)
             modelContext.delete(group)
         }
         do{
             try modelContext.save()
+            print("✅ Groups and their notifications deleted successfully")
         }
         catch{
-            print("Problem saving the modelContext")
+            print("❌ Problem saving the modelContext: \(error.localizedDescription)")
         }
     }
 

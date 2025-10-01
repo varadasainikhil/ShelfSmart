@@ -11,6 +11,7 @@ import SwiftUI
   
 struct ProfileView: View {
     @Environment(\.modelContext) var modelContext
+    @Environment(NotificationManager.self) var notificationManager
     @State var viewModel = ProfileViewViewModel()
     @State private var currentUserId: String = Auth.auth().currentUser?.uid ?? ""
     @State private var showDeleteConfirmation = false
@@ -313,7 +314,7 @@ struct ProfileView: View {
                 Button("Clear All Items", role: .destructive) {
                     let impactFeedback = UIImpactFeedbackGenerator(style: .heavy)
                     impactFeedback.impactOccurred()
-                    viewModel.deleteGroups(groups: groups, modelContext: modelContext)
+                    viewModel.deleteGroups(groups: groups, modelContext: modelContext, notificationManager: notificationManager)
                 }
                 Button("Cancel", role: .cancel) { }
             } message: {

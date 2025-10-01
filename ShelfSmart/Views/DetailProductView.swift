@@ -95,7 +95,7 @@ struct DetailProductView: View {
                         
                         // Product type tag
                         HStack {
-                            Image(systemName: product.id != nil ? "cloud.fill" : "person.fill")
+                            Image(systemName: product.spoonacularId != nil ? "cloud.fill" : "person.fill")
                                 .font(.caption)
                             Text(product.type)
                                 .font(.caption.bold())
@@ -104,9 +104,9 @@ struct DetailProductView: View {
                         .padding(.vertical, 4)
                         .background(
                             RoundedRectangle(cornerRadius: 16)
-                                .fill(product.id != nil ? Color.blue.opacity(0.2) : Color.green.opacity(0.2))
+                                .fill(product.spoonacularId != nil ? Color.blue.opacity(0.2) : Color.green.opacity(0.2))
                         )
-                        .foregroundColor(product.id != nil ? .blue : .green)
+                        .foregroundColor(product.spoonacularId != nil ? .blue : .green)
                     }
                     
                     
@@ -251,6 +251,6 @@ struct DetailProductView: View {
 
     let newCredit = Credit(text: spoonacularCredit.text, link: spoonacularCredit.link,  image: spoonacularCredit.image, imageLink: spoonacularCredit.imageLink)
 
-    let newProduct = Product(id: groceryProduct.id ?? 9348958, barcode: groceryProduct.upc ?? "", title: groceryProduct.title ?? "", brand: groceryProduct.brand ?? "", breadcrumbs: groceryProduct.breadcrumbs, badges: groceryProduct.badges, importantBadges: groceryProduct.importantBadges, spoonacularScore: groceryProduct.spoonacularScore, productDescription: groceryProduct.description, imageLink: groceryProduct.image, moreImageLinks: groceryProduct.images, generatedText: groceryProduct.generatedText, ingredientCount: groceryProduct.ingredientCount, recipeIds: [12345, 67890, 11111], credits: newCredit, expirationDate: Date.now.addingTimeInterval(86400*3))
+    let newProduct = Product(id: UUID().uuidString, spoonacularId: groceryProduct.id ?? 9348958, barcode: groceryProduct.upc ?? "", title: groceryProduct.title ?? "", brand: groceryProduct.brand ?? "", breadcrumbs: groceryProduct.breadcrumbs, badges: groceryProduct.badges, importantBadges: groceryProduct.importantBadges, spoonacularScore: groceryProduct.spoonacularScore, productDescription: groceryProduct.description, imageLink: groceryProduct.image, moreImageLinks: groceryProduct.images, generatedText: groceryProduct.generatedText, ingredientCount: groceryProduct.ingredientCount, recipeIds: [12345, 67890, 11111], credits: newCredit, expirationDate: Date.now.addingTimeInterval(86400*3))
     return DetailProductView(product: newProduct)
 }

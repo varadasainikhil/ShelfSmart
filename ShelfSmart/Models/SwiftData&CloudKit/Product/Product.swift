@@ -11,8 +11,8 @@ import SwiftUI
 
 @Model
 class Product{
-    var id : Int? // Spoonacular API ID
-    var manualId : String? // UUID for manually created products
+    var id : String = UUID().uuidString // Unique identifier for each product instance
+    var spoonacularId : Int? // Spoonacular API ID (nil for manual products)
     var barcode : String = ""
     var title : String = ""
     var brand : String?
@@ -42,7 +42,14 @@ class Product{
     
     @Relationship(inverse: \GroupedProducts.products)
     var groupedProducts: GroupedProducts?
+    
+    var warningNotificationId: String {
+        return "\(id)_warning_notification_id"
+    }
 
+    var expirationNotificationId: String {
+        return "\(id)_expiration_notification_id"
+    }
     
     var isExpired : Bool{
         let daysTillExpiry = daysTillExpiry().count
@@ -54,18 +61,29 @@ class Product{
     
     // Dynamic property to determine product type
     var type: String {
-        if id != nil {
+        if spoonacularId != nil {
             return "Fetched from Spoonacular"
-        } else if manualId != nil {
-            return "Manual Entry"
         } else {
-            return "Unknown"
+            return "Manual Entry"
         }
     }
     
     
     func LikeProduct(){
         self.isLiked.toggle()
+    }
+    
+    var expiryStatus : ExpiryStatus {
+        if isExpired {
+            return .expired
+        }
+        else {
+            let daysTillExpiryDictionary = daysTillExpiry()
+            if daysTillExpiryDictionary.count >= 7 {
+                return .expiringSoon
+            }
+            return .fresh
+        }
     }
     
     var borderColor : Color {
@@ -81,9 +99,13 @@ class Product{
         }
     }
     
-    init(id: Int?, manualId: String? = nil, barcode: String, title: String, brand: String, breadcrumbs : [String]?, badges: [String]? = nil, importantBadges: [String]? = nil, spoonacularScore: Double? = nil, productDescription: String? = nil, imageLink: String? = nil, moreImageLinks: [String]? = nil, generatedText: String? = nil, ingredientCount: Int? = nil, recipeIds: [Int]? = nil, recipes : [SDRecipe]? = nil, credits: Credit? = nil, expirationDate: Date) {
+    var warningDate: Date? {
+        Calendar.current.date(byAdding: .day, value: -7, to: expirationDate)
+    }
+    
+    init(id: String = UUID().uuidString, spoonacularId: Int? = nil, barcode: String, title: String, brand: String, breadcrumbs : [String]?, badges: [String]? = nil, importantBadges: [String]? = nil, spoonacularScore: Double? = nil, productDescription: String? = nil, imageLink: String? = nil, moreImageLinks: [String]? = nil, generatedText: String? = nil, ingredientCount: Int? = nil, recipeIds: [Int]? = nil, recipes : [SDRecipe]? = nil, credits: Credit? = nil, expirationDate: Date) {
         self.id = id
-        self.manualId = manualId
+        self.spoonacularId = spoonacularId
         self.barcode = barcode
         self.title = title
         self.brand = brand
@@ -107,7 +129,7 @@ class Product{
 
     // Convenience initializer for manual products (no Spoonacular ID required)
     convenience init(barcode: String, title: String, brand: String,breadcrumbs : [String]? = nil, badges: [String]? = nil, importantBadges: [String]? = nil, spoonacularScore: Double? = nil, productDescription: String? = nil, imageLink: String? = nil, moreImageLinks: [String]? = nil, generatedText: String? = nil, ingredientCount: Int? = nil, recipeIds: [Int]? = nil, recipes : [SDRecipe]? = nil, credits: Credit? = nil, expirationDate: Date) {
-        self.init(id: nil, manualId: UUID().uuidString, barcode: barcode, title: title, brand: brand,breadcrumbs: breadcrumbs, badges: badges, importantBadges: importantBadges, spoonacularScore: spoonacularScore, productDescription: productDescription, imageLink: imageLink, moreImageLinks: moreImageLinks, generatedText: generatedText, ingredientCount: ingredientCount, recipeIds: recipeIds,recipes: recipes, credits: credits, expirationDate: expirationDate)
+        self.init(id: UUID().uuidString, spoonacularId: nil, barcode: barcode, title: title, brand: brand,breadcrumbs: breadcrumbs, badges: badges, importantBadges: importantBadges, spoonacularScore: spoonacularScore, productDescription: productDescription, imageLink: imageLink, moreImageLinks: moreImageLinks, generatedText: generatedText, ingredientCount: ingredientCount, recipeIds: recipeIds,recipes: recipes, credits: credits, expirationDate: expirationDate)
     }
 
     // Convenience initializer for GroceryProduct (from Spoonacular API)
@@ -121,8 +143,8 @@ class Product{
         }()
 
         self.init(
-            id: groceryProduct.id,
-            manualId: nil, // API products don't have manualId
+            id: UUID().uuidString,
+            spoonacularId: groceryProduct.id,
             barcode: groceryProduct.upc ?? "",
             title: groceryProduct.title ?? "Unknown Product",
             brand: groceryProduct.brand ?? "",
@@ -167,4 +189,10 @@ class Product{
         }
         return (message : textToShow, count: daysTillExpiration)
     }
+    
+    
+}
+
+enum ExpiryStatus{
+    case expired, expiringSoon, fresh
 }

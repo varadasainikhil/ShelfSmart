@@ -274,28 +274,28 @@ class AddProductViewViewModel {
     }
     
     @MainActor
-    func createProductFromAPIResponse(modelContext : ModelContext ) async {
+    func createProductFromAPIResponse(modelContext : ModelContext, notificationManager: NotificationManager) async {
         // Set saving state and reset any previous error messages
         isSaving = true
         errorMessage = nil
-        
+
         guard groceryProduct != nil else {
             return
         }
-        
+
         // Capture the expiration date before any potential reset
         let userSelectedExpirationDate = self.expirationDate
         print("📦 API Product - User selected expiration date: \(userSelectedExpirationDate)")
-        
+
         print("📦 Created groceryProduct from API response: \(String(describing: groceryProduct?.title))")
-    
+
         // If there is no productTitle, the function generates an error
         guard let productTitle = groceryProduct?.title else {
             print("Title not found from the API Response")
             errorMessage = "Title not found from API Response"
             return
         }
-        
+
         // If there is no productBarcode, the function generates an error
         guard let productBarcode = groceryProduct?.upc else {
             print("Barcode not found from the API Response")
@@ -307,12 +307,12 @@ class AddProductViewViewModel {
         product = Product(from: groceryProduct!, expirationDate: self.expirationDate)
 
         // Calling the function searchAndSaveRecipesForProduct
-        await searchAndSaveRecipesForProduct(product : self.product!, modelContext: modelContext, userExpirationDate: userSelectedExpirationDate)
+        await searchAndSaveRecipesForProduct(product : self.product!, modelContext: modelContext, userExpirationDate: userSelectedExpirationDate, notificationManager: notificationManager)
     }
     
     /// Searches for recipes and creates the product with recipe IDs
     @MainActor
-    private func searchAndSaveRecipesForProduct(product : Product, modelContext: ModelContext, userExpirationDate: Date) async {
+    private func searchAndSaveRecipesForProduct(product : Product, modelContext: ModelContext, userExpirationDate: Date, notificationManager: NotificationManager) async {
         // Extract ingredients for recipe search
         var ingredients: [String] = []
         
@@ -359,6 +359,8 @@ class AddProductViewViewModel {
             print("🗓️ API Product - Original expiration date: \(userExpirationDate)")
             print("🗓️ API Product - Normalized date for grouping: \(normalizedDate)")
             
+            // Setting the expiration Date to the normalizedDate
+            product.expirationDate = normalizedDate
             // Use SwiftData predicate for more efficient querying
             let predicate = #Predicate<GroupedProducts> { group in
                 group.expirationDate == normalizedDate &&
@@ -386,7 +388,11 @@ class AddProductViewViewModel {
             try modelContext.save()
             print("Successfully saved item to database")
             print("✅ API Product created: \(product.title)")
-            
+
+            // Schedule notifications for the product
+            notificationManager.scheduleNotifications(for: product)
+            print("📅 Notifications scheduled for product: \(product.title)")
+
             // Clear error message on success
             self.errorMessage = nil
             self.isSaving = false
@@ -499,7 +505,7 @@ class AddProductViewViewModel {
     
     // Function to create product manually (without API)
     @MainActor
-    func createAndSaveManualProduct(modelContext: ModelContext) async {
+    func createAndSaveManualProduct(modelContext: ModelContext, notificationManager: NotificationManager) async {
         // Set saving state and reset any previous error messages
         self.isSaving = true
         self.errorMessage = nil
@@ -532,10 +538,10 @@ class AddProductViewViewModel {
         await self.searchRecipeByID(recipeIds: recipeIds ?? [Int]())
         
         // Create Product directly without unnecessary GroceryProduct intermediate step
-        // For manual products: id=nil, manualId=UUID to differentiate from API products
+        // For manual products: spoonacularId=nil
         let product = Product(
-            id: nil, // No Spoonacular ID for manual products
-            manualId: UUID().uuidString, // Unique identifier for manual entries
+            id: UUID().uuidString, // Unique identifier for this product instance
+            spoonacularId: nil, // No Spoonacular ID for manual products
             barcode: productBarcode,
             title: productName,
             brand: "",
@@ -570,6 +576,9 @@ class AddProductViewViewModel {
             print("🗓️ Manual product - Original expiration date: \(productExpirationDate)")
             print("🗓️ Manual product - Normalized date for grouping: \(normalizedDate)")
                 
+            // Setting the product expiration date to the normalizedDate
+            product.expirationDate = normalizedDate
+            
                 // Use SwiftData predicate for more efficient querying
                 let predicate = #Predicate<GroupedProducts> { group in
                     group.expirationDate == normalizedDate &&
@@ -595,7 +604,11 @@ class AddProductViewViewModel {
                 try modelContext.save()
                 print("✅ Successfully saved manual product to database")
                 print("✅ Manual Product created: \(product.title)")
-                
+
+                // Schedule notifications for the product
+                notificationManager.scheduleNotifications(for: product)
+                print("📅 Notifications scheduled for product: \(product.title)")
+
             // Clear error message on success
             self.errorMessage = nil
             self.isSaving = false
