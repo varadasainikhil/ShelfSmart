@@ -304,7 +304,8 @@ class AddProductViewViewModel {
         }
 
         // Creating the product using our convenience initializer
-        product = Product(from: groceryProduct!, expirationDate: self.expirationDate)
+        let userId = Auth.auth().currentUser?.uid ?? ""
+        product = Product(from: groceryProduct!, expirationDate: self.expirationDate, userId: userId)
 
         // Calling the function searchAndSaveRecipesForProduct
         await searchAndSaveRecipesForProduct(product : self.product!, modelContext: modelContext, userExpirationDate: userSelectedExpirationDate, notificationManager: notificationManager)
@@ -539,6 +540,7 @@ class AddProductViewViewModel {
         
         // Create Product directly without unnecessary GroceryProduct intermediate step
         // For manual products: spoonacularId=nil
+        let userId = Auth.auth().currentUser?.uid ?? ""
         let product = Product(
             id: UUID().uuidString, // Unique identifier for this product instance
             spoonacularId: nil, // No Spoonacular ID for manual products
@@ -557,7 +559,8 @@ class AddProductViewViewModel {
             recipeIds: recipeIds,
             recipes: self.recipes,
             credits: credit,
-            expirationDate: productExpirationDate
+            expirationDate: productExpirationDate,
+            userId: userId
         )
             
         print("📝 Created manual product with expiration date: \(product.expirationDate)")

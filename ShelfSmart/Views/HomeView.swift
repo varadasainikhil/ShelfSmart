@@ -23,7 +23,7 @@ struct HomeView: View {
         }
         self._groups = Query(filter: predicate, sort: \GroupedProducts.expirationDate)
     }
-    
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -151,20 +151,25 @@ struct HomeView: View {
 // MARK: - Enhanced Group View Component
 struct EnhancedGroupView: View {
     var group: GroupedProducts
-    
+
+    // Computed property to filter out used products
+    private var activeProducts: [Product] {
+        group.products?.filter { !$0.isUsed } ?? []
+    }
+
     var body: some View {
         VStack(spacing: 12) {
             // Group Header
             HStack {
                 let status = getGroupStatus(for: group)
-                
+
                 VStack(alignment: .leading, spacing: 2) {
                     Text(status.message)
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundStyle(status.color)
-                    
-                    Text("\(group.products?.count ?? 0) item\(group.products?.count == 1 ? "" : "s")")
+
+                    Text("\(activeProducts.count) item\(activeProducts.count == 1 ? "" : "s")")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
@@ -182,9 +187,9 @@ struct EnhancedGroupView: View {
                     }
             }
             
-            // Products in group
+            // Products in group (only active/non-used)
             VStack(spacing: 8) {
-                ForEach(group.products ?? [], id: \.id) { product in
+                ForEach(activeProducts, id: \.id) { product in
                     NavigationLink(destination: DetailProductView(product: product)) {
                         EnhancedCardView(product: product)
                     }
@@ -201,11 +206,12 @@ struct EnhancedGroupView: View {
     }
 }
 
-// MARK: - Enhanced Card View Component  
+// MARK: - Enhanced Card View Component
 struct EnhancedCardView: View {
     @Environment(\.modelContext) var modelContext
+    @Environment(NotificationManager.self) var notificationManager
     var product: Product
-    
+
     var body: some View {
         HStack(spacing: 12) {
             // Product Image
@@ -247,6 +253,7 @@ struct EnhancedCardView: View {
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
                     .lineLimit(2)
+                    .strikethrough(product.isUsed, color: .black)
                 
                 if let description = product.productDescription ?? product.generatedText {
                     Text(description)
@@ -262,8 +269,19 @@ struct EnhancedCardView: View {
                         .lineLimit(1)
                 }
             }
-            
+
             Spacer()
+
+            // Mark as Used Button
+            Button(action: {
+                handleMarkAsUsed(product: product, modelContext: modelContext, notificationManager: notificationManager)
+            }) {
+                Image(systemName: product.isUsed ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundStyle(product.isUsed ? .green : .gray)
+            }
+            .buttonStyle(PlainButtonStyle())
+            .padding(.trailing, 4)
         }
         .padding(12)
         .background(
@@ -274,16 +292,59 @@ struct EnhancedCardView: View {
                         .stroke(product.borderColor.opacity(0.3), lineWidth: 1)
                 )
         )
+        .opacity(product.isUsed ? 0.6 : 1.0)
+        .grayscale(product.isUsed ? 0.8 : 0.0)
     }
 }
 
 // MARK: - Helper Functions
+private func handleMarkAsUsed(product: Product, modelContext: ModelContext, notificationManager: NotificationManager) {
+    // 1. Mark as used
+    product.markUsed()
+
+    // 2. Cancel notifications
+    notificationManager.deleteScheduledNotifications(for: product)
+
+    // 3. Delete ALL recipes (including liked ones)
+    if let recipes = product.recipes {
+        for recipe in recipes {
+            modelContext.delete(recipe)
+        }
+    }
+
+    // 4. Remove from GroupedProducts
+    if let group = product.groupedProducts {
+        // Remove product from group's array
+        if let products = group.products,
+           let index = products.firstIndex(where: { $0.id == product.id }) {
+            group.products?.remove(at: index)
+        }
+
+        // Check if group is now empty
+        if let products = group.products, products.isEmpty {
+            modelContext.delete(group)
+        }
+    }
+
+    // 5. Handle product based on liked status
+    if product.isLiked {
+        // Keep as standalone - null out the group relationship
+        product.groupedProducts = nil
+    } else {
+        // Delete the product
+        modelContext.delete(product)
+    }
+
+    // 6. Save
+    try? modelContext.save()
+}
+
 private func getGroupStatus(for group: GroupedProducts) -> (message: String, color: Color, icon: String) {
     let calendar = Calendar.current
     let today = calendar.startOfDay(for: Date())
     let expiry = calendar.startOfDay(for: group.expirationDate)
     let days = calendar.dateComponents([.day], from: today, to: expiry).day ?? 0
-    
+
     if days < 0 {
         return ("Expired \(abs(days)) day\(abs(days) == 1 ? "" : "s") ago", .red, "exclamationmark.triangle.fill")
     } else if days == 0 {

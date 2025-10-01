@@ -35,7 +35,8 @@ class Product{
     var expirationDate : Date = Date.now
     var isUsed : Bool = false
     var isLiked : Bool = false
-    
+    var userId : String = "" // Track which user owns this product
+
     // Relationships
     @Relationship(deleteRule: .cascade)
     var credits: Credit?
@@ -103,7 +104,7 @@ class Product{
         Calendar.current.date(byAdding: .day, value: -7, to: expirationDate)
     }
     
-    init(id: String = UUID().uuidString, spoonacularId: Int? = nil, barcode: String, title: String, brand: String, breadcrumbs : [String]?, badges: [String]? = nil, importantBadges: [String]? = nil, spoonacularScore: Double? = nil, productDescription: String? = nil, imageLink: String? = nil, moreImageLinks: [String]? = nil, generatedText: String? = nil, ingredientCount: Int? = nil, recipeIds: [Int]? = nil, recipes : [SDRecipe]? = nil, credits: Credit? = nil, expirationDate: Date) {
+    init(id: String = UUID().uuidString, spoonacularId: Int? = nil, barcode: String, title: String, brand: String, breadcrumbs : [String]?, badges: [String]? = nil, importantBadges: [String]? = nil, spoonacularScore: Double? = nil, productDescription: String? = nil, imageLink: String? = nil, moreImageLinks: [String]? = nil, generatedText: String? = nil, ingredientCount: Int? = nil, recipeIds: [Int]? = nil, recipes : [SDRecipe]? = nil, credits: Credit? = nil, expirationDate: Date, userId: String = "") {
         self.id = id
         self.spoonacularId = spoonacularId
         self.barcode = barcode
@@ -125,15 +126,16 @@ class Product{
         self.expirationDate = expirationDate
         self.isUsed = false
         self.isLiked = false
+        self.userId = userId
     }
 
     // Convenience initializer for manual products (no Spoonacular ID required)
-    convenience init(barcode: String, title: String, brand: String,breadcrumbs : [String]? = nil, badges: [String]? = nil, importantBadges: [String]? = nil, spoonacularScore: Double? = nil, productDescription: String? = nil, imageLink: String? = nil, moreImageLinks: [String]? = nil, generatedText: String? = nil, ingredientCount: Int? = nil, recipeIds: [Int]? = nil, recipes : [SDRecipe]? = nil, credits: Credit? = nil, expirationDate: Date) {
-        self.init(id: UUID().uuidString, spoonacularId: nil, barcode: barcode, title: title, brand: brand,breadcrumbs: breadcrumbs, badges: badges, importantBadges: importantBadges, spoonacularScore: spoonacularScore, productDescription: productDescription, imageLink: imageLink, moreImageLinks: moreImageLinks, generatedText: generatedText, ingredientCount: ingredientCount, recipeIds: recipeIds,recipes: recipes, credits: credits, expirationDate: expirationDate)
+    convenience init(barcode: String, title: String, brand: String,breadcrumbs : [String]? = nil, badges: [String]? = nil, importantBadges: [String]? = nil, spoonacularScore: Double? = nil, productDescription: String? = nil, imageLink: String? = nil, moreImageLinks: [String]? = nil, generatedText: String? = nil, ingredientCount: Int? = nil, recipeIds: [Int]? = nil, recipes : [SDRecipe]? = nil, credits: Credit? = nil, expirationDate: Date, userId: String = "") {
+        self.init(id: UUID().uuidString, spoonacularId: nil, barcode: barcode, title: title, brand: brand,breadcrumbs: breadcrumbs, badges: badges, importantBadges: importantBadges, spoonacularScore: spoonacularScore, productDescription: productDescription, imageLink: imageLink, moreImageLinks: moreImageLinks, generatedText: generatedText, ingredientCount: ingredientCount, recipeIds: recipeIds,recipes: recipes, credits: credits, expirationDate: expirationDate, userId: userId)
     }
 
     // Convenience initializer for GroceryProduct (from Spoonacular API)
-    convenience init(from groceryProduct: GroceryProduct, expirationDate: Date, recipeIds: [Int]? = nil, recipes: [SDRecipe]? = nil) {
+    convenience init(from groceryProduct: GroceryProduct, expirationDate: Date, recipeIds: [Int]? = nil, recipes: [SDRecipe]? = nil, userId: String = "") {
         // Convert SpoonacularCredit to Credit if available
         let credit: Credit? = {
             if let spoonCredit = groceryProduct.credits {
@@ -160,7 +162,8 @@ class Product{
             recipeIds: recipeIds,
             recipes: recipes,
             credits: credit,
-            expirationDate: expirationDate
+            expirationDate: expirationDate,
+            userId: userId
         )
     }
 

@@ -18,7 +18,7 @@ class GroupedProducts{
     // Relationship: One GroupedProducts has many Products
     @Relationship(deleteRule: .cascade)
     var products : [Product]? = [Product]()
-    
+
     init(expirationDate: Date, products: [Product], userId : String) {
         // Normalize the expiration date to start of day for consistent comparison
         self.userId = userId

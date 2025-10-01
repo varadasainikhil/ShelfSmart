@@ -86,23 +86,9 @@ struct DetailProductView: View {
 
                                 // Like Button
                                 Button {
-                                    // If the product is currently liked and is standalone, disliking it will delete it.
-                                    let willBeDeletedOnDislike = product.isLiked && product.groupedProducts == nil
-
-                                    // Toggle the liked status
+                                    // Like the item and store it
                                     product.LikeProduct()
-
-                                    if willBeDeletedOnDislike {
-                                        // The product was just disliked, and it was a standalone product.
-                                        // So, delete it.
-                                        modelContext.delete(product)
-                                        try? modelContext.save()
-                                        dismiss() // Dismiss the view since the item is gone.
-                                    } else {
-                                        // For all other cases (liking a product, or disliking a grouped product),
-                                        // just save the change in 'isLiked' status.
-                                        try? modelContext.save()
-                                    }
+                                    try? modelContext.save()
                                 } label: {
                                     Image(systemName: product.isLiked ? "heart.fill" : "heart")
                                         .font(.system(size: 24, weight: .semibold))
@@ -352,35 +338,60 @@ struct DetailProductView: View {
         // 1. Cancel scheduled notifications for this product
         notificationManager.deleteScheduledNotifications(for: product)
 
-        // 2. If the product is part of a group, handle group logic first
-        if let groupedProduct = product.groupedProducts {
-            // Remove product from the group's list of products
-            if let index = groupedProduct.products?.firstIndex(where: { $0.id == product.id }) {
+        // 2. Get the grouped product this product belongs to
+        guard let groupedProduct = product.groupedProducts else {
+            // If no group, check if liked before deleting
+            if product.isLiked {
+                // Keep liked standalone products, just dismiss
+                try? modelContext.save()
+                dismiss()
+            } else {
+                // Delete non-liked standalone product
+                modelContext.delete(product)
+                try? modelContext.save()
+                dismiss()
+            }
+            return
+        }
+
+        // 3. Check if product is liked
+        if product.isLiked {
+            // Liked product: Extract as standalone, don't delete
+
+            // Remove product from group's array
+            if let products = groupedProduct.products,
+               let index = products.firstIndex(where: { $0.id == product.id }) {
                 groupedProduct.products?.remove(at: index)
             }
 
-            // If the group is now empty, delete the group
-            if groupedProduct.products?.isEmpty ?? true {
+            // Check if group is now empty
+            if let products = groupedProduct.products, products.isEmpty {
                 modelContext.delete(groupedProduct)
             }
-        }
 
-        // 3. Handle the product itself based on its 'isLiked' status
-        if product.isLiked {
-            // If liked, make it a standalone product by ensuring its group relationship is nil
+            // Make product standalone by nullifying group relationship
             product.groupedProducts = nil
-        } else {
-            // If not liked, delete the product from the model context
-            modelContext.delete(product)
-        }
 
-        // 4. Save changes and dismiss the view
-        do {
-            try modelContext.save()
+            // Save and dismiss (product is preserved)
+            try? modelContext.save()
             dismiss()
-        } catch {
-            // Handle or log the error appropriately
-            print("Failed to save model context after deletion: \(error)")
+        } else {
+            // Not liked: Delete normally
+            let productsInGroup = groupedProduct.products ?? []
+
+            if productsInGroup.count <= 1 {
+                // If this is the only product in the group, delete the entire group
+                modelContext.delete(groupedProduct)
+            } else {
+                // If there are multiple products, just delete this product
+                modelContext.delete(product)
+            }
+
+            // Save the context
+            try? modelContext.save()
+
+            // Dismiss the view
+            dismiss()
         }
     }
 }

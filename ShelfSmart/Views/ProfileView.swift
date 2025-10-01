@@ -36,7 +36,7 @@ struct ProfileView: View {
     // Computed property for liked products by current user
     var likedProducts: [Product] {
         return allProducts.filter { product in
-            product.isLiked && (product.groupedProducts?.userId == currentUserId)
+            product.isLiked && product.userId == currentUserId
         }
     }
 
