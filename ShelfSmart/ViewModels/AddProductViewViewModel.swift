@@ -290,14 +290,14 @@ class AddProductViewViewModel {
         print("📦 Created groceryProduct from API response: \(String(describing: groceryProduct?.title))")
 
         // If there is no productTitle, the function generates an error
-        guard let productTitle = groceryProduct?.title else {
+        guard let _ = groceryProduct?.title else {
             print("Title not found from the API Response")
             errorMessage = "Title not found from API Response"
             return
         }
 
         // If there is no productBarcode, the function generates an error
-        guard let productBarcode = groceryProduct?.upc else {
+        guard let _ = groceryProduct?.upc else {
             print("Barcode not found from the API Response")
             errorMessage = "Barcode not found from API Response"
             return

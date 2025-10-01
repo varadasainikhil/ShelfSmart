@@ -311,10 +311,14 @@ struct DetailProductView: View {
         // 2. Cancel notifications
         notificationManager.deleteScheduledNotifications(for: product)
 
-        // 3. Delete ALL recipes (including liked ones)
+        // 3. Handle recipes: delete non-liked recipes, keep liked ones as standalone
         if let recipes = product.recipes {
             for recipe in recipes {
-                modelContext.delete(recipe)
+                if !recipe.isLiked {
+                    // Delete non-liked recipes
+                    modelContext.delete(recipe)
+                }
+                // Liked recipes will automatically become standalone (product = nil) due to .nullify delete rule
             }
         }
 
@@ -365,7 +369,18 @@ struct DetailProductView: View {
             }
         }
 
-        // 3. Handle the product itself based on its 'isLiked' status
+        // 3. Handle recipes: delete non-liked recipes, keep liked ones as standalone
+        if let recipes = product.recipes {
+            for recipe in recipes {
+                if !recipe.isLiked {
+                    // Delete non-liked recipes
+                    modelContext.delete(recipe)
+                }
+                // Liked recipes will automatically become standalone (product = nil) due to .nullify delete rule
+            }
+        }
+
+        // 4. Handle the product itself based on its 'isLiked' status
         if product.isLiked {
             // If liked, make it a standalone product by ensuring its group relationship is nil
             product.groupedProducts = nil
@@ -374,7 +389,7 @@ struct DetailProductView: View {
             modelContext.delete(product)
         }
 
-        // 4. Save changes and dismiss the view
+        // 5. Save changes and dismiss the view
         do {
             try modelContext.save()
             dismiss()

@@ -305,10 +305,14 @@ private func handleMarkAsUsed(product: Product, modelContext: ModelContext, noti
     // 2. Cancel notifications
     notificationManager.deleteScheduledNotifications(for: product)
 
-    // 3. Delete ALL recipes (including liked ones)
+    // 3. Handle recipes: delete non-liked recipes, keep liked ones as standalone
     if let recipes = product.recipes {
         for recipe in recipes {
-            modelContext.delete(recipe)
+            if !recipe.isLiked {
+                // Delete non-liked recipes
+                modelContext.delete(recipe)
+            }
+            // Liked recipes will automatically become standalone (product = nil) due to .nullify delete rule
         }
     }
 

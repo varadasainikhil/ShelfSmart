@@ -60,7 +60,9 @@ struct ShelfSmartApp: App {
             if granted {
                 print("✅ Notification permission granted")
                 // Set the notification delegate to handle foreground notifications
-                UNUserNotificationCenter.current().delegate = self.delegate
+                DispatchQueue.main.async {
+                    UNUserNotificationCenter.current().delegate = self.delegate
+                }
             } else if let error = error {
                 print("❌ Error requesting notification permission: \(error.localizedDescription)")
             } else {
