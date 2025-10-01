@@ -11,10 +11,9 @@ import Foundation
 // TODO: The code is fucked up, there is no cloudkit sync. Need to breakdown the app part by part.
 // TODO: First implement the core functionality of the app, then work on the bugs.
 // TODO: 6. Adjust the app to look good in the dark mode.
-// TODO: 7. Implement Push Notifications, to remind users that their food is expiring in 3 days.
 // TODO: 8. If the product is not marked used and is expired, then remind the user to throw away the product.
 // TODO: If the user searches for a barcode and gets the product, then changes the barcode, we have to remove the product and when the barcode is correct again, we can show the product. I have partially implemented this logic using the lastVerifiedBarcode which stores the last barcode for which user has searched and has gotten successful result. 
-// TODO: Add the functionality to delete a product and mark it used.
+// TODO: Add the functionality to mark a product as used.
 // TODO: Add a share button to the product detail view and the recipe detail view.
 
 // TODO: 9. Add a settings menu in the profile section. Allow the user to choose which time she wants her notifications to arrive.

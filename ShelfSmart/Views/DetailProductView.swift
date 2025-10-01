@@ -10,7 +10,10 @@ import SwiftData
 
 struct DetailProductView: View {
     @Environment(\.modelContext) private var modelContext
+    @Environment(\.dismiss) private var dismiss
+    @Environment(NotificationManager.self) var notificationManager
     @State private var recipeToShow: SDRecipe?
+    @State private var showDeleteConfirmation = false
     var product : Product
     var body: some View {
         ZStack{
@@ -64,10 +67,8 @@ struct DetailProductView: View {
                                 
                                 Button {
                                     // Like the item and store it
-                                    withAnimation {
-                                        product.LikeProduct()
-                                        try? modelContext.save()
-                                    }
+                                    product.LikeProduct()
+                                    try? modelContext.save()
                                 } label: {
                                     Image(systemName: product.isLiked ? "heart.fill" : "heart")
                                         .font(.system(size: 24, weight: .semibold))
@@ -199,12 +200,15 @@ struct DetailProductView: View {
                         
                         // Recipe Cards Display
                         if let recipes = product.recipes, !recipes.isEmpty {
+                            // Sort recipes by ID to ensure stable order
+                            let sortedRecipes = recipes.sorted { ($0.id ?? 0) < ($1.id ?? 0) }
+
                             // Recipe cards grid - 2x2 layout for recipes
                             LazyVGrid(columns: [
                                 GridItem(.flexible(), spacing: 12),
                                 GridItem(.flexible(), spacing: 12)
                             ], spacing: 16) {
-                                ForEach(recipes, id: \.id) { sdRecipe in
+                                ForEach(sortedRecipes, id: \.id) { sdRecipe in
                                     RecipeCardView(sdRecipe: sdRecipe) {
                                         recipeToShow = sdRecipe
                                     }
@@ -241,6 +245,60 @@ struct DetailProductView: View {
         .sheet(item: $recipeToShow) { sdRecipe in
             RecipeDetailView(sdRecipe: sdRecipe)
         }
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button(action: {
+                    showDeleteConfirmation = true
+                }) {
+                    Image(systemName: "trash")
+                        .foregroundStyle(.red)
+                }
+            }
+        }
+        .confirmationDialog(
+            "Delete Product",
+            isPresented: $showDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                deleteProduct()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Are you sure you want to delete '\(product.title)'? This action cannot be undone.")
+        }
+    }
+
+    // MARK: - Delete Product Function
+    private func deleteProduct() {
+        // 1. Cancel scheduled notifications for this product
+        notificationManager.deleteScheduledNotifications(for: product)
+
+        // 2. Get the grouped product this product belongs to
+        guard let groupedProduct = product.groupedProducts else {
+            // If no group, just delete the product
+            modelContext.delete(product)
+            try? modelContext.save()
+            dismiss()
+            return
+        }
+
+        // 3. Check how many products are in the group
+        let productsInGroup = groupedProduct.products ?? []
+
+        if productsInGroup.count <= 1 {
+            // If this is the only product in the group, delete the entire group
+            modelContext.delete(groupedProduct)
+        } else {
+            // If there are multiple products, just delete this product
+            modelContext.delete(product)
+        }
+
+        // 4. Save the context
+        try? modelContext.save()
+
+        // 5. Dismiss the view
+        dismiss()
     }
 }
 
