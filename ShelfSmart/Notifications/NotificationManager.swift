@@ -57,100 +57,101 @@ class NotificationManager{
 
         // Notification 1 : Warning notification
         if daysLeft >= 7 {
-            // Scheduling the warning notification
-            let warningContent = UNMutableNotificationContent()
-            warningContent.title = "Expiring In a Week"
-            warningContent.body = "\(productTitle) is expiring in a week"
-            warningContent.sound = .default
+            // Schedule warning notification only if it's in the future
+            if let warningDate = product.warningDate {
+                var warningComponents = Calendar.current.dateComponents([.year,.month,.day,.hour,.minute], from: warningDate)
 
-            guard product.warningDate != nil else {
-                print("Could not calculate the warningDate")
-                return
-            }
+                // Setting the time to 3:06 PM
+                warningComponents.hour = 15
+                warningComponents.minute = 06
+                warningComponents.timeZone = TimeZone.current
 
-            var warningComponents = Calendar.current.dateComponents([.year,.month,.day,.hour,.minute], from: product.warningDate!)
+                // Check if warning date is in the future
+                if let scheduledWarningDate = Calendar.current.date(from: warningComponents), scheduledWarningDate > Date.now {
+                    // Scheduling the warning notification
+                    let warningContent = UNMutableNotificationContent()
+                    warningContent.title = "Expiring In a Week"
+                    warningContent.body = "\(productTitle) is expiring in a week"
+                    warningContent.sound = .default
 
-            // Setting the time to 1:40 PM
-            warningComponents.hour = 15
-            warningComponents.minute = 06
-            warningComponents.timeZone = TimeZone.current
+                    let warningTrigger = UNCalendarNotificationTrigger(dateMatching: warningComponents, repeats: false)
+                    let warningRequest = UNNotificationRequest(identifier: productWarningNotificationId, content: warningContent, trigger: warningTrigger)
 
-            let warningTrigger = UNCalendarNotificationTrigger(dateMatching: warningComponents, repeats: false)
-            let warningRequest = UNNotificationRequest(identifier: productWarningNotificationId, content: warningContent, trigger: warningTrigger)
-
-            do {
-                try await UNUserNotificationCenter.current().add(warningRequest)
-                if let warningDate = Calendar.current.date(from: warningComponents) {
-                    if warningDate <= Date.now {
-                        print("⚠️ WARNING: Warning notification time (\(dateFormatter.string(from: warningDate))) is in the past! Notification will NOT fire.")
+                    do {
+                        try await UNUserNotificationCenter.current().add(warningRequest)
+                        print("✅ Warning notification scheduled for \(productTitle) at \(dateFormatter.string(from: scheduledWarningDate))")
+                    } catch {
+                        print("❌ Failed to schedule warning notification for \(productTitle): \(error.localizedDescription)")
                     }
-                    print("✅ Warning notification scheduled for \(productTitle) at \(dateFormatter.string(from: warningDate))")
+                } else if let scheduledWarningDate = Calendar.current.date(from: warningComponents) {
+                    print("⚠️ SKIPPED: Warning notification time (\(dateFormatter.string(from: scheduledWarningDate))) is in the past. Not scheduling.")
                 }
-            } catch {
-                print("❌ Failed to schedule warning notification for \(productTitle): \(error.localizedDescription)")
+            } else {
+                print("⚠️ Could not calculate the warningDate")
             }
 
             // Notification 2 : Expiration Notification
-            let expirationContent = UNMutableNotificationContent()
-            expirationContent.title = "Expired"
-            expirationContent.body = "\(productTitle) is expired"
-            expirationContent.sound = .default
-
             var expirationComponents = Calendar.current.dateComponents([.year,.month,.day,.hour,.minute], from: product.expirationDate)
 
-            // Setting the time to 1:40 PM
+            // Setting the time to 3:06 PM
             expirationComponents.hour = 15
             expirationComponents.minute = 06
             expirationComponents.timeZone = TimeZone.current
 
-            let expirationTrigger = UNCalendarNotificationTrigger(dateMatching: expirationComponents, repeats: false)
-            let expirationRequest = UNNotificationRequest(identifier: productExpirationNotificationId, content: expirationContent, trigger: expirationTrigger)
+            // Check if expiration date is in the future
+            if let scheduledExpirationDate = Calendar.current.date(from: expirationComponents), scheduledExpirationDate > Date.now {
+                let expirationContent = UNMutableNotificationContent()
+                expirationContent.title = "Expired"
+                expirationContent.body = "\(productTitle) is expired"
+                expirationContent.sound = .default
 
-            do {
-                try await UNUserNotificationCenter.current().add(expirationRequest)
-                if let expirationDate = Calendar.current.date(from: expirationComponents) {
-                    if expirationDate <= Date.now {
-                        print("⚠️ WARNING: Expiration notification time (\(dateFormatter.string(from: expirationDate))) is in the past! Notification will NOT fire.")
-                    }
-                    print("✅ Expiration notification scheduled for \(productTitle) at \(dateFormatter.string(from: expirationDate))")
+                let expirationTrigger = UNCalendarNotificationTrigger(dateMatching: expirationComponents, repeats: false)
+                let expirationRequest = UNNotificationRequest(identifier: productExpirationNotificationId, content: expirationContent, trigger: expirationTrigger)
+
+                do {
+                    try await UNUserNotificationCenter.current().add(expirationRequest)
+                    print("✅ Expiration notification scheduled for \(productTitle) at \(dateFormatter.string(from: scheduledExpirationDate))")
+                } catch {
+                    print("❌ Failed to schedule expiration notification for \(productTitle): \(error.localizedDescription)")
                 }
-            } catch {
-                print("❌ Failed to schedule expiration notification for \(productTitle): \(error.localizedDescription)")
+            } else if let scheduledExpirationDate = Calendar.current.date(from: expirationComponents) {
+                print("⚠️ SKIPPED: Expiration notification time (\(dateFormatter.string(from: scheduledExpirationDate))) is in the past. Not scheduling.")
             }
         }
         else {
             // For products expiring in 1-6 days or already expired
             // Expiration Notification
-            let expirationContent = UNMutableNotificationContent()
-            expirationContent.title = "Expired"
-            expirationContent.body = "\(productTitle) is expired"
-            expirationContent.sound = .default
-
             var expirationComponents = Calendar.current.dateComponents([.year,.month,.day,.hour,.minute], from: product.expirationDate)
 
             print("🔍 DEBUG: Original components - Year: \(expirationComponents.year ?? 0), Month: \(expirationComponents.month ?? 0), Day: \(expirationComponents.day ?? 0)")
 
-            // Setting the time to 1:40 PM
+            // Setting the time to 3:06 PM
             expirationComponents.hour = 15
             expirationComponents.minute = 06
             expirationComponents.timeZone = TimeZone.current
 
             print("🔍 DEBUG: Modified components - Year: \(expirationComponents.year ?? 0), Month: \(expirationComponents.month ?? 0), Day: \(expirationComponents.day ?? 0), Hour: \(expirationComponents.hour ?? 0), Minute: \(expirationComponents.minute ?? 0)")
 
-            let expirationTrigger = UNCalendarNotificationTrigger(dateMatching: expirationComponents, repeats: false)
-            let expirationRequest = UNNotificationRequest(identifier: productExpirationNotificationId, content: expirationContent, trigger: expirationTrigger)
+            // Check if expiration date is in the future
+            if let scheduledExpirationDate = Calendar.current.date(from: expirationComponents), scheduledExpirationDate > Date.now {
+                let expirationContent = UNMutableNotificationContent()
+                expirationContent.title = "Expired"
+                expirationContent.body = "\(productTitle) is expired"
+                expirationContent.sound = .default
 
-            do {
-                try await UNUserNotificationCenter.current().add(expirationRequest)
-                if let expirationDate = Calendar.current.date(from: expirationComponents) {
-                    print("🔍 DEBUG: Trigger date will be: \(expirationDate)")
-                    if expirationDate <= Date.now {
-                        print("⚠️ WARNING: Expiration notification time (\(dateFormatter.string(from: expirationDate))) is in the past! Notification will NOT fire.")
-                    }
-                    print("✅ Expiration notification scheduled for \(productTitle) at \(dateFormatter.string(from: expirationDate))")
+                let expirationTrigger = UNCalendarNotificationTrigger(dateMatching: expirationComponents, repeats: false)
+                let expirationRequest = UNNotificationRequest(identifier: productExpirationNotificationId, content: expirationContent, trigger: expirationTrigger)
+
+                do {
+                    try await UNUserNotificationCenter.current().add(expirationRequest)
+                    print("🔍 DEBUG: Trigger date will be: \(scheduledExpirationDate)")
+                    print("✅ Expiration notification scheduled for \(productTitle) at \(dateFormatter.string(from: scheduledExpirationDate))")
+                } catch {
+                    print("❌ Failed to schedule expiration notification for \(productTitle): \(error.localizedDescription)")
                 }
-            } catch {
-                print("❌ Failed to schedule expiration notification for \(productTitle): \(error.localizedDescription)")
+            } else if let scheduledExpirationDate = Calendar.current.date(from: expirationComponents) {
+                print("🔍 DEBUG: Trigger date would be: \(scheduledExpirationDate)")
+                print("⚠️ SKIPPED: Expiration notification time (\(dateFormatter.string(from: scheduledExpirationDate))) is in the past. Not scheduling.")
             }
         }
     }

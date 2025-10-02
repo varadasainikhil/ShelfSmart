@@ -272,13 +272,23 @@ struct EnhancedCardView: View {
 
             Spacer()
 
-            // Mark as Used Button
+            // Action Button - Trash for expired, Mark as Used for others
             Button(action: {
-                handleMarkAsUsed(product: product, modelContext: modelContext, notificationManager: notificationManager)
+                if product.isExpired {
+                    handleDeleteExpiredProduct(product: product, modelContext: modelContext, notificationManager: notificationManager)
+                } else {
+                    handleMarkAsUsed(product: product, modelContext: modelContext, notificationManager: notificationManager)
+                }
             }) {
-                Image(systemName: product.isUsed ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 24, weight: .semibold))
-                    .foregroundStyle(product.isUsed ? .green : .gray)
+                if product.isExpired {
+                    Image(systemName: "trash.fill")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(.red)
+                } else {
+                    Image(systemName: product.isUsed ? "checkmark.circle.fill" : "checkmark.circle")
+                        .font(.system(size: 24, weight: .semibold))
+                        .foregroundStyle(product.isUsed ? .green : .gray)
+                }
             }
             .buttonStyle(PlainButtonStyle())
             .padding(.trailing, 4)
@@ -340,6 +350,48 @@ private func handleMarkAsUsed(product: Product, modelContext: ModelContext, noti
     }
 
     // 6. Save
+    try? modelContext.save()
+}
+
+private func handleDeleteExpiredProduct(product: Product, modelContext: ModelContext, notificationManager: NotificationManager) {
+    // 1. Cancel notifications
+    notificationManager.deleteScheduledNotifications(for: product)
+
+    // 2. Handle recipes: delete non-liked recipes, keep liked ones as standalone
+    if let recipes = product.recipes {
+        for recipe in recipes {
+            if !recipe.isLiked {
+                // Delete non-liked recipes
+                modelContext.delete(recipe)
+            }
+            // Liked recipes will automatically become standalone (product = nil) due to .nullify delete rule
+        }
+    }
+
+    // 3. Remove from GroupedProducts
+    if let group = product.groupedProducts {
+        // Remove product from group's array
+        if let products = group.products,
+           let index = products.firstIndex(where: { $0.id == product.id }) {
+            group.products?.remove(at: index)
+        }
+
+        // Check if group is now empty
+        if let products = group.products, products.isEmpty {
+            modelContext.delete(group)
+        }
+    }
+
+    // 4. Handle product based on liked status
+    if product.isLiked {
+        // Keep as standalone - null out the group relationship
+        product.groupedProducts = nil
+    } else {
+        // Delete the product
+        modelContext.delete(product)
+    }
+
+    // 5. Save
     try? modelContext.save()
 }
 
