@@ -46,6 +46,13 @@ struct ProfileView: View {
             recipe.isLiked && recipe.userId == currentUserId
         }
     }
+
+    // Computed property for used products by current user
+    var usedProducts: [Product] {
+        return allProducts.filter { product in
+            product.isUsed && product.userId == currentUserId
+        }
+    }
     
     
     var body: some View {
@@ -214,6 +221,76 @@ struct ProfileView: View {
                                             .foregroundStyle(.primary)
 
                                         Text("Start liking recipes to see them here")
+                                            .font(.caption)
+                                            .foregroundStyle(.secondary)
+                                            .multilineTextAlignment(.center)
+                                    }
+                                }
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 140)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color(.systemGray6))
+                                )
+                                .padding(.horizontal, 20)
+                            }
+                        }
+
+                        // Used Products Section
+                        VStack(alignment: .leading, spacing: 12) {
+                            // Section Header
+                            NavigationLink(destination: AllUsedProductsView()) {
+                                HStack {
+                                    Text("Used Products")
+                                        .font(.title3)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(.primary)
+
+                                    Spacer()
+
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 14, weight: .medium))
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .padding(.horizontal, 20)
+
+                            // Recent 5 Used Products - Horizontal Scroll
+                            if !usedProducts.isEmpty {
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 12) {
+                                        ForEach(Array(usedProducts.prefix(5)), id: \.self) { product in
+                                            NavigationLink(destination: DetailProductView(product: product)) {
+                                                UsedProductCard(product: product)
+                                            }
+                                            .buttonStyle(PlainButtonStyle())
+                                        }
+                                    }
+                                    .padding(.horizontal, 20)
+                                }
+                                .padding(.bottom, 16)
+                            }
+
+                            if usedProducts.isEmpty {
+                                // Empty State for Used Products
+                                VStack(spacing: 16) {
+                                    Circle()
+                                        .fill(.blue.opacity(0.1))
+                                        .frame(width: 60, height: 60)
+                                        .overlay {
+                                            Image(systemName: "tray")
+                                                .font(.system(size: 24))
+                                                .foregroundStyle(.blue.opacity(0.7))
+                                        }
+
+                                    VStack(spacing: 6) {
+                                        Text("No used products yet")
+                                            .font(.subheadline)
+                                            .fontWeight(.medium)
+                                            .foregroundStyle(.primary)
+
+                                        Text("Products you mark as used will appear here")
                                             .font(.caption)
                                             .foregroundStyle(.secondary)
                                             .multilineTextAlignment(.center)
@@ -490,6 +567,92 @@ struct LikedRecipeCard: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(.orange.opacity(0.3), lineWidth: 1)
+                )
+        )
+        .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 1)
+    }
+}
+
+// MARK: - Used Product Card Component
+struct UsedProductCard: View {
+    let product: Product
+
+    var body: some View {
+        VStack(alignment: .center, spacing: 8) {
+            // Product Image
+            ZStack {
+                if let imageLink = product.imageLink, !imageLink.isEmpty {
+                    let secureImageLink = imageLink.hasPrefix("http://") ? imageLink.replacingOccurrences(of: "http://", with: "https://") : imageLink
+                    AsyncImage(url: URL(string: secureImageLink)) { phase in
+                        if let image = phase.image {
+                            image
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 80, height: 80)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                        } else if phase.error != nil {
+                            Image("placeholder")
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 80, height: 80)
+                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                        } else {
+                            ProgressView()
+                                .frame(width: 80, height: 80)
+                        }
+                    }
+                } else {
+                    Image("placeholder")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 80, height: 80)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+
+                // Checkmark indicator overlay
+                VStack {
+                    HStack {
+                        Spacer()
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .background(
+                                Circle()
+                                    .fill(.green)
+                                    .frame(width: 22, height: 22)
+                            )
+                            .offset(x: -6, y: 6)
+                    }
+                    Spacer()
+                }
+            }
+            .frame(width: 80, height: 80)
+            .background(Color(.systemGray5))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .grayscale(0.5)
+            .opacity(0.8)
+
+            // Product Info
+            VStack(alignment: .center, spacing: 2) {
+                Text(product.title)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .strikethrough(true, color: .primary)
+                    .frame(maxWidth: .infinity)
+            }
+            .frame(height: 28) // Reduced height for text area
+            .padding(.horizontal, 4)
+        }
+        .frame(width: 100, height: 120)
+        .padding(8)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemGray6))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(.blue.opacity(0.3), lineWidth: 1)
                 )
         )
         .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 1)

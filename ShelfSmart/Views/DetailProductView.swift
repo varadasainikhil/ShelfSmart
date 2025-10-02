@@ -216,25 +216,19 @@ struct DetailProductView: View {
             // Like Button (rightmost)
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
-                    // If the product is currently liked and is standalone, disliking it will delete it.
-                    let willBeDeletedOnDislike = product.isLiked && product.groupedProducts == nil
+                    // Check if this will cause deletion
+                    let willBeDeleted = product.isLiked && product.groupedProducts == nil && !product.isUsed
 
-                    // Toggle the liked status
-                    product.LikeProduct()
-
-                    if willBeDeletedOnDislike {
-                        // The product was just disliked, and it was a standalone product.
-                        // So, delete it - use Task to allow current render to complete
-                        Task { @MainActor in
-                            try? await Task.sleep(for: .milliseconds(100))
-                            modelContext.delete(product)
-                            try? modelContext.save()
-                            dismiss() // Dismiss the view since the item is gone.
+                    if willBeDeleted {
+                        // Unlike will delete the product - dismiss view after deletion
+                        ProductHelpers.unlikeProduct(product, modelContext: modelContext) { deleted in
+                            if deleted {
+                                dismiss()
+                            }
                         }
                     } else {
-                        // For all other cases (liking a product, or disliking a grouped product),
-                        // just save the change in 'isLiked' status.
-                        try? modelContext.save()
+                        // Just toggle like status - no deletion
+                        ProductHelpers.unlikeProduct(product, modelContext: modelContext)
                     }
                 } label: {
                     Image(systemName: product.isLiked ? "heart.fill" : "heart")
@@ -275,7 +269,11 @@ struct DetailProductView: View {
             }
             Button("Cancel", role: .cancel) { }
         } message: {
-            Text("Are you sure you want to delete '\(product.title)'? This action cannot be undone.")
+            if product.isLiked {
+                Text("This is a liked item! Are you sure you want to delete '\(product.title)'? This action cannot be undone.")
+            } else {
+                Text("Are you sure you want to delete '\(product.title)'? This action cannot be undone.")
+            }
         }
     }
 
@@ -290,98 +288,16 @@ struct DetailProductView: View {
             isMarkedAsUsed = true
         }
 
-        // Check if product will be deleted (not liked)
-        let willBeDeleted = !product.isLiked
+        // All products are now kept as standalone when marked as used
+        Task { @MainActor in
+            // Small delay for animation
+            try? await Task.sleep(for: .milliseconds(300))
+            dismiss()
 
-        if willBeDeleted {
-            // For products that will be deleted, dismiss immediately after animation
-            // and perform cleanup in detached background task
-            Task { @MainActor in
-                // Small delay for animation
-                try? await Task.sleep(for: .milliseconds(300))
-                dismiss()
-
-                // Cleanup in detached task (no view updates)
-                Task.detached {
-                    await MainActor.run {
-                        // Mark as used
-                        product.isUsed = true
-
-                        // Cancel notifications
-                        notificationManager.deleteScheduledNotifications(for: product)
-
-                        // Handle recipes: delete non-liked recipes
-                        if let recipes = product.recipes {
-                            for recipe in recipes {
-                                if !recipe.isLiked {
-                                    modelContext.delete(recipe)
-                                }
-                            }
-                        }
-
-                        // Remove from GroupedProducts
-                        if let group = product.groupedProducts {
-                            if let products = group.products,
-                               let index = products.firstIndex(where: { $0.id == product.id }) {
-                                group.products?.remove(at: index)
-                            }
-
-                            if let products = group.products, products.isEmpty {
-                                modelContext.delete(group)
-                            }
-                        }
-
-                        // Delete the product
-                        modelContext.delete(product)
-                        try? modelContext.save()
-                    }
-                }
-            }
-        } else {
-            // For liked products that will be kept, dismiss first then cleanup
-            Task { @MainActor in
-                // Small delay for animation
-                try? await Task.sleep(for: .milliseconds(300))
-                dismiss()
-
-                // Cleanup in detached task (no view updates)
-                Task.detached {
-                    await MainActor.run {
-                        // Mark as used
-                        product.isUsed = true
-
-                        // Cancel notifications
-                        notificationManager.deleteScheduledNotifications(for: product)
-
-                        // Handle recipes: delete non-liked recipes, keep liked ones as standalone
-                        if let recipes = product.recipes {
-                            for recipe in recipes {
-                                if !recipe.isLiked {
-                                    // Delete non-liked recipes
-                                    modelContext.delete(recipe)
-                                }
-                                // Liked recipes will automatically become standalone (product = nil) due to .nullify delete rule
-                            }
-                        }
-
-                        // Remove from GroupedProducts
-                        if let group = product.groupedProducts {
-                            // Remove product from group's array
-                            if let products = group.products,
-                               let index = products.firstIndex(where: { $0.id == product.id }) {
-                                group.products?.remove(at: index)
-                            }
-
-                            // Check if group is now empty
-                            if let products = group.products, products.isEmpty {
-                                modelContext.delete(group)
-                            }
-                        }
-
-                        // Keep as standalone - null out the group relationship
-                        product.groupedProducts = nil
-                        try? modelContext.save()
-                    }
+            // Cleanup in detached task (no view updates)
+            Task.detached {
+                await MainActor.run {
+                    ProductHelpers.markProductAsUsed(product: product, modelContext: modelContext, notificationManager: notificationManager)
                 }
             }
         }
@@ -389,49 +305,18 @@ struct DetailProductView: View {
 
     // MARK: - Delete Product Function
     private func deleteProduct() {
-        // 1. Cancel scheduled notifications for this product
-        notificationManager.deleteScheduledNotifications(for: product)
+        // Haptic feedback for tactile response
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
 
-        // 2. If the product is part of a group, handle group logic first
-        if let groupedProduct = product.groupedProducts {
-            // Remove product from the group's list of products
-            if let index = groupedProduct.products?.firstIndex(where: { $0.id == product.id }) {
-                groupedProduct.products?.remove(at: index)
-            }
-
-            // If the group is now empty, delete the group
-            if groupedProduct.products?.isEmpty ?? true {
-                modelContext.delete(groupedProduct)
-            }
-        }
-
-        // 3. Handle recipes: delete non-liked recipes, keep liked ones as standalone
-        if let recipes = product.recipes {
-            for recipe in recipes {
-                if !recipe.isLiked {
-                    // Delete non-liked recipes
-                    modelContext.delete(recipe)
-                }
-                // Liked recipes will automatically become standalone (product = nil) due to .nullify delete rule
-            }
-        }
-
-        // 4. Handle the product itself based on its 'isLiked' status
-        if product.isLiked {
-            // If liked, make it a standalone product by ensuring its group relationship is nil
-            product.groupedProducts = nil
-        } else {
-            // If not liked, delete the product from the model context
-            modelContext.delete(product)
-        }
-
-        // 5. Save changes and dismiss the view
+        // Use shared delete function with proper error handling
         do {
-            try modelContext.save()
+            try ProductHelpers.deleteProduct(product, modelContext: modelContext, notificationManager: notificationManager)
+            // Dismiss after successful deletion
             dismiss()
         } catch {
-            // Handle or log the error appropriately
-            print("Failed to save model context after deletion: \(error)")
+            print("❌ Failed to delete product: \(error)")
+            // Could show an alert to user here if needed
         }
     }
 }

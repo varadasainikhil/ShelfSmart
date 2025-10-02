@@ -1,5 +1,5 @@
 //
-//  AllLikedProductsView.swift
+//  AllUsedProductsView.swift
 //  ShelfSmart
 //
 //  Created by Sai Nikhil Varada on 8/25/25.
@@ -9,57 +9,57 @@ import FirebaseAuth
 import SwiftData
 import SwiftUI
 
-struct AllLikedProductsView: View {
+struct AllUsedProductsView: View {
     @Environment(\.modelContext) var modelContext
     @Query private var allProducts: [Product]
-    
-    // Computed property for liked products by current user
-    var likedProducts: [Product] {
+
+    // Computed property for used products by current user
+    var usedProducts: [Product] {
         let currentUserId = FirebaseAuth.Auth.auth().currentUser?.uid ?? ""
         return allProducts.filter { product in
-            product.isLiked && product.userId == currentUserId
+            product.isUsed && product.userId == currentUserId
         }
     }
-    
+
     var body: some View {
         NavigationStack {
-            if likedProducts.isEmpty {
+            if usedProducts.isEmpty {
                 // Empty State
                 VStack(spacing: 24) {
                     Spacer()
-                    
+
                     VStack(spacing: 16) {
                         Circle()
-                            .fill(.red.opacity(0.1))
+                            .fill(.blue.opacity(0.1))
                             .frame(width: 80, height: 80)
                             .overlay {
-                                Image(systemName: "heart.slash")
+                                Image(systemName: "tray")
                                     .font(.system(size: 32))
-                                    .foregroundStyle(.red.opacity(0.7))
+                                    .foregroundStyle(.blue.opacity(0.7))
                             }
-                        
+
                         VStack(spacing: 8) {
-                            Text("No Liked Products")
+                            Text("No Used Products")
                                 .font(.title2)
                                 .fontWeight(.semibold)
                                 .foregroundStyle(.primary)
-                            
-                            Text("Products you like will appear here")
+
+                            Text("Products you mark as used will appear here")
                                 .font(.subheadline)
                                 .foregroundStyle(.secondary)
                                 .multilineTextAlignment(.center)
                         }
                     }
-                    
+
                     Spacer()
                 }
                 .padding(.horizontal, 20)
             } else {
                 ScrollView {
                     LazyVStack(spacing: 20) {
-                        ForEach(likedProducts, id: \.self) { product in
+                        ForEach(usedProducts, id: \.self) { product in
                             NavigationLink(destination: DetailProductView(product: product)) {
-                                LikedProductCardView(product: product)
+                                UsedProductCardView(product: product)
                             }
                             .buttonStyle(PlainButtonStyle())
                         }
@@ -70,15 +70,15 @@ struct AllLikedProductsView: View {
                 }
             }
         }
-        .navigationTitle("Liked Products")
+        .navigationTitle("Used Products")
         .navigationBarTitleDisplayMode(.large)
     }
 }
 
-// MARK: - Liked Product Card Component (Home View Style)
-struct LikedProductCardView: View {
+// MARK: - Used Product Card Component
+struct UsedProductCardView: View {
     let product: Product
-    
+
     var body: some View {
         HStack(spacing: 16) {
             // Product Image
@@ -112,15 +112,27 @@ struct LikedProductCardView: View {
                 RoundedRectangle(cornerRadius: 14)
                     .fill(Color(.systemGray6))
             )
-            
+            .grayscale(0.8)
+            .opacity(0.7)
+
             // Product Info
             VStack(alignment: .leading, spacing: 6) {
-                Text(product.title)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
-                    .multilineTextAlignment(.leading)
-                
+                HStack(spacing: 8) {
+                    Text(product.title)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                        .strikethrough(true, color: .primary)
+
+                    Spacer()
+
+                    // Used indicator badge
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(.green)
+                }
+
                 if let description = product.productDescription ?? product.generatedText, !description.isEmpty {
                     Text(description)
                         .font(.system(size: 13))
@@ -128,7 +140,7 @@ struct LikedProductCardView: View {
                         .lineLimit(3)
                         .multilineTextAlignment(.leading)
                 }
-                
+
                 if let brand = product.brand, !brand.isEmpty {
                     Text(brand)
                         .font(.system(size: 12, weight: .medium))
@@ -149,11 +161,11 @@ struct LikedProductCardView: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(product.borderColor.opacity(0.2), lineWidth: 1)
+                .stroke(.blue.opacity(0.2), lineWidth: 1)
         )
     }
 }
 
 #Preview {
-    AllLikedProductsView()
+    AllUsedProductsView()
 }

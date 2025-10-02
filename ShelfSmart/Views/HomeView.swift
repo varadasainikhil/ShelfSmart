@@ -253,7 +253,7 @@ struct EnhancedCardView: View {
                     .fontWeight(.semibold)
                     .foregroundStyle(.primary)
                     .lineLimit(2)
-                    .strikethrough(product.isUsed, color: .black)
+                    .strikethrough(product.isUsed, color: .primary)
                 
                 if let description = product.productDescription ?? product.generatedText {
                     Text(description)
@@ -309,90 +309,17 @@ struct EnhancedCardView: View {
 
 // MARK: - Helper Functions
 private func handleMarkAsUsed(product: Product, modelContext: ModelContext, notificationManager: NotificationManager) {
-    // 1. Mark as used
-    product.markUsed()
-
-    // 2. Cancel notifications
-    notificationManager.deleteScheduledNotifications(for: product)
-
-    // 3. Handle recipes: delete non-liked recipes, keep liked ones as standalone
-    if let recipes = product.recipes {
-        for recipe in recipes {
-            if !recipe.isLiked {
-                // Delete non-liked recipes
-                modelContext.delete(recipe)
-            }
-            // Liked recipes will automatically become standalone (product = nil) due to .nullify delete rule
-        }
-    }
-
-    // 4. Remove from GroupedProducts
-    if let group = product.groupedProducts {
-        // Remove product from group's array
-        if let products = group.products,
-           let index = products.firstIndex(where: { $0.id == product.id }) {
-            group.products?.remove(at: index)
-        }
-
-        // Check if group is now empty
-        if let products = group.products, products.isEmpty {
-            modelContext.delete(group)
-        }
-    }
-
-    // 5. Handle product based on liked status
-    if product.isLiked {
-        // Keep as standalone - null out the group relationship
-        product.groupedProducts = nil
-    } else {
-        // Delete the product
-        modelContext.delete(product)
-    }
-
-    // 6. Save
-    try? modelContext.save()
+    ProductHelpers.markProductAsUsed(product: product, modelContext: modelContext, notificationManager: notificationManager)
 }
 
 private func handleDeleteExpiredProduct(product: Product, modelContext: ModelContext, notificationManager: NotificationManager) {
-    // 1. Cancel notifications
-    notificationManager.deleteScheduledNotifications(for: product)
-
-    // 2. Handle recipes: delete non-liked recipes, keep liked ones as standalone
-    if let recipes = product.recipes {
-        for recipe in recipes {
-            if !recipe.isLiked {
-                // Delete non-liked recipes
-                modelContext.delete(recipe)
-            }
-            // Liked recipes will automatically become standalone (product = nil) due to .nullify delete rule
-        }
+    // Use shared delete function with proper error handling
+    do {
+        try ProductHelpers.deleteProduct(product, modelContext: modelContext, notificationManager: notificationManager)
+    } catch {
+        print("❌ Failed to delete expired product: \(error)")
+        // Error is now properly logged instead of being silently swallowed
     }
-
-    // 3. Remove from GroupedProducts
-    if let group = product.groupedProducts {
-        // Remove product from group's array
-        if let products = group.products,
-           let index = products.firstIndex(where: { $0.id == product.id }) {
-            group.products?.remove(at: index)
-        }
-
-        // Check if group is now empty
-        if let products = group.products, products.isEmpty {
-            modelContext.delete(group)
-        }
-    }
-
-    // 4. Handle product based on liked status
-    if product.isLiked {
-        // Keep as standalone - null out the group relationship
-        product.groupedProducts = nil
-    } else {
-        // Delete the product
-        modelContext.delete(product)
-    }
-
-    // 5. Save
-    try? modelContext.save()
 }
 
 private func getGroupStatus(for group: GroupedProducts) -> (message: String, color: Color, icon: String) {

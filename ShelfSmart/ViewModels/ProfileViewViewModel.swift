@@ -79,30 +79,7 @@ class ProfileViewViewModel{
             return
         }
 
-        do {
-            recipe.likeRecipe(userId: userId) // This will toggle to unlike
-
-            // If the recipe is not associated with a product, delete it
-            if recipe.product == nil {
-                modelContext.delete(recipe)
-            }
-
-            try modelContext.save()
-            print("✅ Recipe unliked successfully")
-        } catch {
-            print("❌ Failed to unlike recipe: \(error)")
-        }
-    }
-    
-    // Method to clean up orphaned non-liked recipes (optional maintenance)
-    func cleanupOrphanedRecipes(modelContext: ModelContext) {
-        // This method can be called periodically to clean up recipes that are:
-        // - Not liked by any user (isLiked = false)
-        // - Not associated with any product (product = nil)
-
-        // Note: This is optional and can be called during app startup or periodically
-        // For now, we'll keep orphaned recipes to avoid any data loss
-        print("Cleanup method available for future use if needed")
+        ProductHelpers.unlikeRecipe(recipe, userId: userId, modelContext: modelContext)
     }
 
     // Signing Out

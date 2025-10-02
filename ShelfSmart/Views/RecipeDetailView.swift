@@ -13,6 +13,7 @@ struct RecipeDetailView: View {
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) var dismiss
     let sdRecipe: SDRecipe
+    @State private var isDeleting = false
 
     private var isLiked: Bool {
         sdRecipe.isLiked
@@ -25,31 +26,35 @@ struct RecipeDetailView: View {
                 Color(.systemGroupedBackground)
                     .ignoresSafeArea()
 
-                ScrollView {
-                    VStack(spacing: 0) {
-                        // Hero Image Section
-                        heroImageSection
+                if isDeleting {
+                    ProgressView()
+                } else {
+                    ScrollView {
+                        VStack(spacing: 0) {
+                            // Hero Image Section
+                            heroImageSection
 
-                        VStack(spacing: 24) {
-                            // Combined Recipe Info Card
-                            combinedRecipeInfoCard
+                            VStack(spacing: 24) {
+                                // Combined Recipe Info Card
+                                combinedRecipeInfoCard
 
-                            // Dietary Badges
-                            dietaryBadges
+                                // Dietary Badges
+                                dietaryBadges
 
-                            // Ingredients Section
-                            ingredientsSection
+                                // Ingredients Section
+                                ingredientsSection
 
-                            // Instructions Section
-                            instructionsSection
+                                // Instructions Section
+                                instructionsSection
 
-                            // Credits Section
-                            creditsSection
+                                // Credits Section
+                                creditsSection
 
-                            Spacer(minLength: 40)
+                                Spacer(minLength: 40)
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.top, 20)
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.top, 20)
                     }
                 }
             }
@@ -388,25 +393,29 @@ struct RecipeDetailView: View {
     // MARK: - Helper Methods
 
     private func toggleLikeRecipe() {
-        guard let userId = Auth.auth().currentUser?.uid else {
-            print("❌ No authenticated user found")
-            return
-        }
+        guard let userId = Auth.auth().currentUser?.uid else { return }
 
-        do {
-            // Toggle like status on the existing SDRecipe
-            sdRecipe.likeRecipe(userId: userId)
-            if !sdRecipe.isLiked {
-                // If unliked and not associated with a product, remove it
-                if sdRecipe.product == nil {
-                    modelContext.delete(sdRecipe)
+        // Check if this will cause deletion
+        let willBeDeleted = sdRecipe.isLiked && sdRecipe.product == nil
+
+        if willBeDeleted {
+            // Set state to remove UI that references the object
+            isDeleting = true
+
+            // Perform deletion on the next run loop to allow UI to update
+            Task {
+                ProductHelpers.unlikeRecipe(sdRecipe, userId: userId, modelContext: modelContext) { deleted in
+                    if deleted {
+                        dismiss()
+                    } else {
+                        // Revert state if deletion fails
+                        isDeleting = false
+                    }
                 }
             }
-
-            try modelContext.save()
-            print("✅ Recipe like status updated successfully")
-        } catch {
-            print("❌ Failed to update recipe like status: \(error)")
+        } else {
+            // Just a simple state update, no deletion
+            ProductHelpers.unlikeRecipe(sdRecipe, userId: userId, modelContext: modelContext)
         }
     }
 
