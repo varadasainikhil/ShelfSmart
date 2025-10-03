@@ -167,19 +167,29 @@ struct MealTypeCard: View {
     let mealType: MealType
     let isSelected: Bool
     let action: () -> Void
-    
+    @State private var uiImage: UIImage?
+
     var body: some View {
         Button(action: action) {
             VStack(spacing: 12) {
                 // Image Container
                 ZStack {
                     // Background image
-                    Image(mealType.apiValue)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: 110, height: 110)
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                    
+                    if let uiImage = uiImage {
+                        Image(uiImage: uiImage)
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 110, height: 110)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                    } else {
+                        Rectangle()
+                            .foregroundStyle(.gray.opacity(0.3))
+                            .frame(width: 110, height: 110)
+                            .clipShape(RoundedRectangle(cornerRadius: 16))
+                            .overlay {
+                                ProgressView()
+                            }
+                    }
                     
                     // Selection indicator
                     if isSelected {
@@ -218,6 +228,17 @@ struct MealTypeCard: View {
         .buttonStyle(PlainButtonStyle())
         .scaleEffect(isSelected ? 1.05 : 1.0)
         .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+        .onAppear(perform: loadImage)
+    }
+
+    private func loadImage() {
+        DispatchQueue.global().async {
+            if let loadedImage = UIImage(named: mealType.apiValue) {
+                DispatchQueue.main.async {
+                    self.uiImage = loadedImage
+                }
+            }
+        }
     }
 }
 

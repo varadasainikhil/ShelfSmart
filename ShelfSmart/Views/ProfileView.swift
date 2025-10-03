@@ -367,11 +367,19 @@ struct ProfileView: View {
                         Rectangle()
                             .fill(
                                 LinearGradient(
-                                    colors: [.clear, Color(.systemBackground)],
+                                    colors: [
+                                        .clear,
+                                        Color(.systemBackground).opacity(0.5),
+                                        Color(.systemBackground).opacity(0.7),
+                                        Color(.systemBackground).opacity(0.9),
+                                        Color(.systemBackground).opacity(0.98),
+                                        Color(.systemBackground)
+                                    ],
                                     startPoint: .top,
                                     endPoint: .bottom
                                 )
                             )
+                            .frame(height: 200, alignment: .bottom)
                     }
                     .ignoresSafeArea(.container, edges: .bottom)
                 )
