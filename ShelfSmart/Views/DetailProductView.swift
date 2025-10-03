@@ -243,7 +243,9 @@ struct DetailProductView: View {
             }
         }
         .sheet(item: $recipeToShow) { sdRecipe in
-            RecipeDetailView(sdRecipe: sdRecipe)
+            NavigationStack {
+                RecipeDetailView(sdRecipe: sdRecipe)
+            }
         }
         .confirmationDialog(
             "Delete Product",

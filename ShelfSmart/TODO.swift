@@ -11,7 +11,6 @@ import Foundation
 // TODO: The code is fucked up, there is no cloudkit sync. Need to breakdown the app part by part.
 // TODO: First implement the core functionality of the app, then work on the bugs.
 // TODO: 6. Adjust the app to look good in the dark mode.
-// TODO: Add a share button to the product detail view and the recipe detail view.
 
 // TODO: 9. Add a settings menu in the profile section. Allow the user to choose which time she wants her notifications to arrive.
 // TODO: 10. Add a setting menu to ask the user if the wants notifications with sound or not.
