@@ -27,22 +27,10 @@ struct CardView: View {
                         if let imageLink = product.imageLink, !imageLink.isEmpty{
                             let _ = print("🖼️ CardView - Attempting to load image: \(imageLink)")
                             let _ = print("🖼️ CardView - URL validation: \(URL(string: imageLink) != nil)")
-                            // Convert HTTP to HTTPS if needed for App Transport Security
-                            let secureImageLink = imageLink.hasPrefix("http://") ? imageLink.replacingOccurrences(of: "http://", with: "https://") : imageLink
-                            AsyncImage(url: URL(string: secureImageLink)){phase in
-                                if let image = phase.image{
-                                    image
-                                        .resizable()
-                                        .scaledToFill()
-                                }
-                                else  if phase.error != nil {
-                                    let _ = print("🚨 CardView - Image loading error: \(String(describing: phase.error))")
-                                    let _ = print("🚨 CardView - Failed URL: \(imageLink)")
-                                    Text("There was an error loading the image")
-                                }
-                                else {
-                                    ProgressView()
-                                }
+                            SimpleAsyncImage(url: imageLink) { image in
+                                image
+                                    .resizable()
+                                    .scaledToFill()
                             }
                         }
                         else {
@@ -76,12 +64,8 @@ struct CardView: View {
                                 .font(.subheadline)
                                 .lineLimit(1)
                         }
-                        
+
                         Spacer()
-                        
-                        if product.productDescription == nil && ((product.productDescription?.isEmpty) != nil) && product.generatedText == nil && ((product.generatedText?.isEmpty) != nil) {
-                            Spacer()
-                        }
                         
                         
                     }

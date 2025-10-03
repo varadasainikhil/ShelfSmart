@@ -84,21 +84,10 @@ struct UsedProductCardView: View {
             // Product Image
             Group {
                 if let imageLink = product.imageLink, !imageLink.isEmpty {
-                    // Convert HTTP to HTTPS if needed for App Transport Security
-                    let secureImageLink = imageLink.hasPrefix("http://") ? imageLink.replacingOccurrences(of: "http://", with: "https://") : imageLink
-                    AsyncImage(url: URL(string: secureImageLink)) { phase in
-                        if let image = phase.image {
-                            image
-                                .resizable()
-                                .scaledToFill()
-                        } else if phase.error != nil {
-                            Image("placeholder")
-                                .resizable()
-                                .scaledToFill()
-                        } else {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                        }
+                    SimpleAsyncImage(url: imageLink) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
                     }
                 } else {
                     Image("placeholder")

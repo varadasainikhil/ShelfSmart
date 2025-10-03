@@ -154,7 +154,7 @@ struct IntolerancesView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(isPresented: $navigateToRandomRecipe) {
-                CustomRandomRecipeView(viewModel: viewModel)
+                RandomRecipeView(viewModel: viewModel)
             }
         }
     }

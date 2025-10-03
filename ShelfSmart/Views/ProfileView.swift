@@ -404,30 +404,18 @@ struct ProfileView: View {
 // MARK: - Liked Product Card Component
 struct LikedProductCard: View {
     let product: Product
-    
+
     var body: some View {
         VStack(alignment: .center, spacing: 8) {
             // Product Image
             ZStack {
                 if let imageLink = product.imageLink, !imageLink.isEmpty {
-                    let secureImageLink = imageLink.hasPrefix("http://") ? imageLink.replacingOccurrences(of: "http://", with: "https://") : imageLink
-                    AsyncImage(url: URL(string: secureImageLink)) { phase in
-                        if let image = phase.image {
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 80, height: 80)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                        } else if phase.error != nil {
-                            Image("placeholder")
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 80, height: 80)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                        } else {
-                            ProgressView()
-                                .frame(width: 80, height: 80)
-                        }
+                    SimpleAsyncImage(url: imageLink) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 80, height: 80)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
                 } else {
                     Image("placeholder")
@@ -493,24 +481,12 @@ struct LikedRecipeCard: View {
             // Recipe Image
             ZStack {
                 if let imageLink = recipe.image, !imageLink.isEmpty {
-                    let secureImageLink = imageLink.hasPrefix("http://") ? imageLink.replacingOccurrences(of: "http://", with: "https://") : imageLink
-                    AsyncImage(url: URL(string: secureImageLink)) { phase in
-                        if let image = phase.image {
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 80, height: 80)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                        } else if phase.error != nil {
-                            Image("placeholder")
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 80, height: 80)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                        } else {
-                            ProgressView()
-                                .frame(width: 80, height: 80)
-                        }
+                    SimpleAsyncImage(url: imageLink) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 80, height: 80)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
                 } else {
                     Image("placeholder")
@@ -582,24 +558,12 @@ struct UsedProductCard: View {
             // Product Image
             ZStack {
                 if let imageLink = product.imageLink, !imageLink.isEmpty {
-                    let secureImageLink = imageLink.hasPrefix("http://") ? imageLink.replacingOccurrences(of: "http://", with: "https://") : imageLink
-                    AsyncImage(url: URL(string: secureImageLink)) { phase in
-                        if let image = phase.image {
-                            image
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 80, height: 80)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                        } else if phase.error != nil {
-                            Image("placeholder")
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 80, height: 80)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
-                        } else {
-                            ProgressView()
-                                .frame(width: 80, height: 80)
-                        }
+                    SimpleAsyncImage(url: imageLink) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                            .frame(width: 80, height: 80)
+                            .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
                 } else {
                     Image("placeholder")

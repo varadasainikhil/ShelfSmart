@@ -324,22 +324,10 @@ struct ModernProductPreviewCard: View {
                 // Product Image
                 Group {
                     if !imageLink.isEmpty {
-                        let secureImageLink = imageLink.hasPrefix("http://") ?
-                            imageLink.replacingOccurrences(of: "http://", with: "https://") :
-                            imageLink
-
-                        AsyncImage(url: URL(string: secureImageLink)) { phase in
-                            if let image = phase.image {
-                                image
-                                    .resizable()
-                                    .scaledToFill()
-                            } else if phase.error != nil {
-                                Image(systemName: "photo")
-                                    .foregroundStyle(.gray)
-                            } else {
-                                ProgressView()
-                                    .scaleEffect(0.8)
-                            }
+                        SimpleAsyncImage(url: imageLink) { image in
+                            image
+                                .resizable()
+                                .scaledToFill()
                         }
                     } else {
                         Image(systemName: "photo")

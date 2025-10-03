@@ -28,26 +28,12 @@ struct DetailProductView: View {
                     ZStack{
                         if let imageLink = product.imageLink, !imageLink.isEmpty {
                             let _ = print("🖼️ DetailProductView - Attempting to load image: \(imageLink)")
-                            // Convert HTTP to HTTPS if needed for App Transport Security
-                            let secureImageLink = imageLink.hasPrefix("http://") ? imageLink.replacingOccurrences(of: "http://", with: "https://") : imageLink
-                            AsyncImage(url: URL(string: secureImageLink)){phase in
-                                
-                                if let image = phase.image{
-                                    image
-                                        .resizable()
-                                        .scaledToFit()
-                                        .frame(width: 300, height: 300)
-                                        .clipped()
-                                }
-                                else if phase.error != nil{
-                                    let _ = print("🚨 DetailProductView - Image loading error: \(String(describing: phase.error))")
-                                    Text("There was an issue loading the image")
-                                }
-                                else {
-                                    ProgressView()
-                                        .frame(width: 300, height: 300)
-                                        .clipped()
-                                }
+                            SimpleAsyncImage(url: imageLink) { image in
+                                image
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 300, height: 300)
+                                    .clipped()
                             }
                         }
                         else{

@@ -14,154 +14,105 @@ struct RecipeDetailView: View {
     @Environment(\.dismiss) var dismiss
     let sdRecipe: SDRecipe
     @State private var isDeleting = false
+    @State private var shareURL: IdentifiableURL?
 
     private var isLiked: Bool {
         sdRecipe.isLiked
     }
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                // Background
-                Color(.systemGroupedBackground)
-                    .ignoresSafeArea()
+        if isDeleting {
+            // Show loading state during deletion to prevent accessing deleted object
+            VStack(spacing: 16) {
+                ProgressView()
+                    .scaleEffect(1.5)
+                Text("Removing recipe...")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    // Hero Image Section
+                    heroImageSection
 
-                if isDeleting {
-                    ProgressView()
-                } else {
-                    ScrollView {
-                        VStack(spacing: 0) {
-                            // Hero Image Section
-                            heroImageSection
+                    VStack(spacing: 24) {
+                        // Combined Recipe Info Card
+                        combinedRecipeInfoCard
 
-                            VStack(spacing: 24) {
-                                // Combined Recipe Info Card
-                                combinedRecipeInfoCard
+                        // Dietary Badges
+                        dietaryBadges
 
-                                // Dietary Badges
-                                dietaryBadges
+                        // Description Section
+                        descriptionSection
 
-                                // Ingredients Section
-                                ingredientsSection
+                        // Ingredients Section
+                        ingredientsSection
 
-                                // Instructions Section
-                                instructionsSection
+                        // Instructions Section
+                        instructionsSection
 
-                                // Credits Section
-                                creditsSection
+                        // Credits Section
+                        creditsSection
 
-                                Spacer(minLength: 40)
-                            }
-                            .padding(.horizontal, 20)
-                            .padding(.top, 20)
+                        Spacer(minLength: 40)
+                    }
+                }
+                .padding()
+            }
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: {
+                        toggleLikeRecipe()
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                        impactFeedback.impactOccurred()
+                    }) {
+                        Image(systemName: isLiked ? "heart.fill" : "heart")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(isLiked ? .red : .black)
+                    }
+                }
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(action: {
+                        if let sourceUrl = sdRecipe.sourceUrl,
+                           let url = URL(string: sourceUrl) {
+                            shareURL = IdentifiableURL(url: url)
+                            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                            impactFeedback.impactOccurred()
                         }
+                    }) {
+                        Image(systemName: "square.and.arrow.up")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundStyle(.black)
                     }
                 }
             }
+            .sheet(item: $shareURL) { identifiableURL in
+                ShareSheet(items: [identifiableURL.url])
+            }
         }
-        .navigationBarBackButtonHidden(true)
     }
 
     // MARK: - Modern Recipe Detail Sections
 
     // Hero Image Section
     private var heroImageSection: some View {
-        ZStack {
-            if let imageUrl = sdRecipe.image, !imageUrl.isEmpty {
+        Group {
+            if let imageUrl = sdRecipe.image {
                 SimpleAsyncImage(url: imageUrl) { image in
                     image
                         .resizable()
-                        .scaledToFill()
+                        .aspectRatio(contentMode: .fill)
                 }
-                .frame(height: 280)
-                .clipShape(
-                    UnevenRoundedRectangle(
-                        topLeadingRadius: 0,
-                        bottomLeadingRadius: 20,
-                        bottomTrailingRadius: 20,
-                        topTrailingRadius: 0
-                    )
-                )
-                .background(
-                    UnevenRoundedRectangle(
-                        topLeadingRadius: 0,
-                        bottomLeadingRadius: 20,
-                        bottomTrailingRadius: 20,
-                        topTrailingRadius: 0
-                    )
-                    .fill(.gray.opacity(0.1))
-                )
-
-                // Back Button (Top-Left)
-                VStack {
-                    HStack {
-                        Button(action: {
-                            dismiss()
-                        }) {
-                            Image(systemName: "chevron.left")
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundStyle(.white)
-                                .frame(width: 44, height: 44)
-                                .background(
-                                    Circle()
-                                        .fill(.black.opacity(0.4))
-                                        .blur(radius: 0.5)
-                                )
-                                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .padding(.leading, 16)
-                        .padding(.top, 16)
-                        Spacer()
-                    }
-                    Spacer()
-                }
-
-                // Floating Heart Button (Bottom-Right)
-                VStack {
-                    Spacer()
-                    HStack {
-                        Spacer()
-                        Button(action: {
-                            toggleLikeRecipe()
-                            let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                            impactFeedback.impactOccurred()
-                        }) {
-                            Image(systemName: isLiked ? "heart.fill" : "heart")
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundStyle(isLiked ? .red : .white)
-                                .frame(width: 44, height: 44)
-                                .background(
-                                    Circle()
-                                        .fill(.black.opacity(0.4))
-                                        .blur(radius: 0.5)
-                                )
-                                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
-                        }
-                        .buttonStyle(PlainButtonStyle())
-                        .padding(.trailing, 16)
-                        .padding(.bottom, 16)
-                    }
-                }
+                .frame(height: 200)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
             } else {
-                UnevenRoundedRectangle(
-                    topLeadingRadius: 0,
-                    bottomLeadingRadius: 20,
-                    bottomTrailingRadius: 20,
-                    topTrailingRadius: 0
-                )
-                .fill(.gray.opacity(0.2))
-                .frame(height: 280)
-                .overlay {
-                    VStack(spacing: 8) {
-                        Image(systemName: "photo")
-                            .font(.system(size: 40))
-                            .foregroundStyle(.gray)
-                        Text("No Image Available")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
+                Rectangle()
+                    .foregroundColor(.gray.opacity(0.3))
+                    .frame(height: 200)
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
             }
         }
     }
@@ -245,6 +196,37 @@ struct RecipeDetailView: View {
                         }
                     }
                 }
+            }
+        }
+    }
+
+    // Description Section
+    private var descriptionSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            // Description
+            if let summary = sdRecipe.summary {
+                let cleanSummary = summary.replacingOccurrences(of: "<[^>]+>", with: "", options: .regularExpression, range: nil)
+                Text(String(cleanSummary.prefix(200)) + (cleanSummary.count > 200 ? "..." : ""))
+                    .font(.body)
+                    .foregroundColor(.secondary)
+                    .lineLimit(4)
+            }
+
+            // Recipe Source Link
+            if let sourceUrl = sdRecipe.sourceUrl,
+               !sourceUrl.isEmpty &&
+               sourceUrl != "https://spoonacular.com/recipe/\(sdRecipe.id ?? 0)" {
+                Link(destination: URL(string: sourceUrl)!) {
+                    HStack(spacing: 8) {
+                        Image(systemName: "link")
+                            .font(.caption)
+                        Text("View Original Recipe")
+                            .font(.subheadline)
+                            .underline()
+                    }
+                    .foregroundColor(.blue)
+                }
+                .padding(.top, 8)
             }
         }
     }
@@ -352,23 +334,6 @@ struct RecipeDetailView: View {
                                     .font(.body)
                                     .foregroundStyle(.secondary)
                             }
-                        }
-
-                        // Source Link
-                        if let sourceUrl = sdRecipe.sourceUrl,
-                           !sourceUrl.isEmpty &&
-                           sourceUrl != "https://spoonacular.com/recipe/\(sdRecipe.id ?? 0)" {
-                            Link(destination: URL(string: sourceUrl)!) {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "link")
-                                        .font(.caption)
-                                    Text("View Original Recipe")
-                                        .font(.subheadline)
-                                        .underline()
-                                }
-                                .foregroundStyle(.blue)
-                            }
-                            .padding(.top, 4)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -562,13 +527,10 @@ struct ModernIngredientRow: View {
             // Ingredient Image
             Group {
                 if let imageFilename = sdIngredient.image {
-                    AsyncImage(url: URL(string: "https://spoonacular.com/cdn/ingredients_100x100/\(imageFilename)")) { image in
+                    SimpleAsyncImage(url: "https://spoonacular.com/cdn/ingredients_100x100/\(imageFilename)") { image in
                         image
                             .resizable()
                             .scaledToFill()
-                    } placeholder: {
-                        Image(systemName: "photo")
-                            .foregroundStyle(.gray)
                     }
                 } else {
                     Image(systemName: "photo")
