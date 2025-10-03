@@ -47,12 +47,34 @@ struct ShelfSmartApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
 
     @State private var notificationManager = NotificationManager()
+
+    // Configure ModelContainer with explicit CloudKit settings
+    private var modelContainer: ModelContainer = {
+        let schema = Schema([
+            GroupedProducts.self,
+            SDRecipe.self
+        ])
+
+        let modelConfiguration = ModelConfiguration(
+            schema: schema,
+            isStoredInMemoryOnly: false,
+            allowsSave: true,
+            cloudKitDatabase: .automatic
+        )
+
+        do {
+            return try ModelContainer(for: schema, configurations: [modelConfiguration])
+        } catch {
+            fatalError("Failed to create ModelContainer: \(error)")
+        }
+    }()
+
     var body: some Scene {
         WindowGroup {
             EntryView()
                 .environment(notificationManager)
         }
-        .modelContainer(for: [GroupedProducts.self, SDRecipe.self])
+        .modelContainer(modelContainer)
     }
 
     private func requestNotificationAuthorization() {

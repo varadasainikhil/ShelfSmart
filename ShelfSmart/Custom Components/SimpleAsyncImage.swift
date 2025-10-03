@@ -54,6 +54,8 @@ struct SimpleAsyncImage<Content: View>: View {
                     }
             }
         }
+        .transaction { $0.animation = nil }
+        .id(urlString)
     }
     
     /// Simple helper to create secure URLs
