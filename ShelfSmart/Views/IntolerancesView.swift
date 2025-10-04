@@ -107,14 +107,14 @@ struct IntolerancesView: View {
                                             .scaleEffect(0.8)
                                             .tint(.white)
                                         Text("Loading...")
-                                            .foregroundStyle(.white)
+                                            .foregroundStyle(Color(.systemBackground))
                                     }
                                 } else {
                                     HStack {
                                         Text("Get Recipes")
                                         Image(systemName: "arrow.right")
                                     }
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(Color(.systemBackground))
                                 }
                             }
                             .frame(maxWidth: .infinity)
@@ -201,7 +201,7 @@ struct IntoleranceCard: View {
                                 Spacer()
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.system(size: 20, weight: .semibold))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(Color(.systemBackground))
                                     .background(
                                         Circle()
                                             .fill(.green)

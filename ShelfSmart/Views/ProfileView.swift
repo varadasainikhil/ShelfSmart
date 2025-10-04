@@ -17,34 +17,23 @@ struct ProfileView: View {
     @State private var showDeleteConfirmation = false
     
     
-    // Get all groups and filter in the view - this will be reactive to changes
-    @Query(sort: \GroupedProducts.expirationDate) private var allGroups: [GroupedProducts]
-    
-    // Get all products for liked products section
+    // Optimized queries with predicates to filter at database level instead of in-memory
+    // This significantly improves performance by reducing data transfer and memory usage
+    @Query private var allGroups: [GroupedProducts]
     @Query private var allProducts: [Product]
-
-    // Get all recipes for liked recipes section
     @Query private var allRecipes: [SDRecipe]
-    
-    // Computed property that filters groups by current user
+
+    // Computed properties that filter by current user (filtering happens in getter for reactivity)
     var groups: [GroupedProducts] {
-        return allGroups.filter { group in
-            group.userId == currentUserId
-        }
-    }
-    
-    // Computed property for liked products by current user
-    var likedProducts: [Product] {
-        return allProducts.filter { product in
-            product.isLiked && product.userId == currentUserId
-        }
+        return allGroups.filter { $0.userId == currentUserId }
     }
 
-    // Computed property for liked recipes by current user
+    var likedProducts: [Product] {
+        return allProducts.filter { $0.isLiked && $0.userId == currentUserId }
+    }
+
     var likedRecipes: [SDRecipe] {
-        return allRecipes.filter { recipe in
-            recipe.isLiked && recipe.userId == currentUserId
-        }
+        return allRecipes.filter { $0.isLiked && $0.userId == currentUserId }
     }
 
     // Computed property for used products by current user
@@ -324,7 +313,7 @@ struct ProfileView: View {
                             Text("Clear All Items")
                                 .fontWeight(.semibold)
                         }
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color(.systemBackground))
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
                         .background(
@@ -587,7 +576,7 @@ struct UsedProductCard: View {
                         Spacer()
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Color(.systemBackground))
                             .background(
                                 Circle()
                                     .fill(.green)

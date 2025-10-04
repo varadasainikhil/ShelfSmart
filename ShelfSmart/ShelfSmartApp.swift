@@ -47,6 +47,7 @@ struct ShelfSmartApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
 
     @State private var notificationManager = NotificationManager()
+    @State private var modelContainerError: Error?
 
     // Configure ModelContainer with explicit CloudKit settings
     private var modelContainer: ModelContainer = {
@@ -65,7 +66,20 @@ struct ShelfSmartApp: App {
         do {
             return try ModelContainer(for: schema, configurations: [modelConfiguration])
         } catch {
-            fatalError("Failed to create ModelContainer: \(error)")
+            // Fallback: Create in-memory container to prevent app crash
+            print("❌ Failed to create persistent ModelContainer: \(error)")
+            print("⚠️ Falling back to in-memory storage - data will not persist!")
+
+            do {
+                let inMemoryConfiguration = ModelConfiguration(
+                    schema: schema,
+                    isStoredInMemoryOnly: true
+                )
+                return try ModelContainer(for: schema, configurations: [inMemoryConfiguration])
+            } catch {
+                // This should never happen, but provide ultimate fallback
+                preconditionFailure("Failed to create even in-memory ModelContainer: \(error)")
+            }
         }
     }()
 

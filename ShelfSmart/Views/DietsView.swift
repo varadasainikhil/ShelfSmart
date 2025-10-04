@@ -105,16 +105,16 @@ struct DietsView: View {
                                         ProgressView()
                                             .progressViewStyle(CircularProgressViewStyle())
                                             .scaleEffect(0.8)
-                                            .tint(.white)
+                                            .tint(Color(.systemBackground))
                                         Text("Loading...")
-                                            .foregroundStyle(.white)
+                                            .foregroundStyle(Color(.systemBackground))
                                     }
                                 } else {
                                     HStack {
                                         Image(systemName: "sparkles")
                                         Text("Surprise Me!")
                                     }
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(Color(.systemBackground))
                                 }
                             }
                             .frame(maxWidth: .infinity)
@@ -134,7 +134,7 @@ struct DietsView: View {
                                     Text("Next")
                                     Image(systemName: "arrow.right")
                                 }
-                                .foregroundStyle(.white)
+                                .foregroundStyle(Color(.systemBackground))
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
@@ -221,7 +221,7 @@ struct DietCard: View {
                                 Spacer()
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.system(size: 20, weight: .semibold))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(Color(.systemBackground))
                                     .background(
                                         Circle()
                                             .fill(.green)

@@ -70,7 +70,7 @@ struct RecipeDetailView: View {
                     }) {
                         Image(systemName: isLiked ? "heart.fill" : "heart")
                             .font(.system(size: 20, weight: .semibold))
-                            .foregroundStyle(isLiked ? .red : .black)
+                            .foregroundStyle(isLiked ? .red : .primary)
                     }
                 }
 
@@ -85,7 +85,7 @@ struct RecipeDetailView: View {
                     }) {
                         Image(systemName: "square.and.arrow.up")
                             .font(.system(size: 20, weight: .semibold))
-                            .foregroundStyle(.black)
+                            .foregroundStyle(.primary)
                     }
                 }
             }
@@ -513,8 +513,8 @@ struct ModernCardContainer<Content: View>: View {
             .padding(20)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(.white)
-                    .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                    .fill(Color(.secondarySystemBackground))
+                    .shadow(color: Color(.label).opacity(0.05), radius: 8, x: 0, y: 2)
             )
     }
 }
@@ -571,7 +571,7 @@ struct InstructionStepView: View {
             Text("\(step.number ?? 0)")
                 .font(.title3)
                 .fontWeight(.bold)
-                .foregroundStyle(.white)
+                .foregroundStyle(Color(.systemBackground))
                 .frame(width: 32, height: 32)
                 .background(
                     Circle()

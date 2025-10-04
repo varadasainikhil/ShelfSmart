@@ -9,8 +9,9 @@ import AuthenticationServices
 import SwiftUI
 
 struct SignUpView: View {
+    @Environment(\.colorScheme) var colorScheme
     @State var viewModel: SignUpViewViewModel
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -149,7 +150,7 @@ struct SignUpView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 48)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
-                        .signInWithAppleButtonStyle(.black)
+                        .signInWithAppleButtonStyle(colorScheme == .dark ? .whiteOutline : .black)
                         
                         // Navigation to Login
                         HStack(spacing: 4) {
@@ -169,8 +170,8 @@ struct SignUpView: View {
                     .padding(20)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(.white)
-                            .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                            .fill(Color(.systemBackground))
+                            .shadow(color: Color(.label).opacity(0.05), radius: 8, x: 0, y: 2)
                     )
                     .padding(.horizontal, 20)
                     

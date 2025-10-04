@@ -26,11 +26,11 @@ class Product{
     var generatedText : String?
     var ingredientCount : Int?
     var recipeIds : [Int]? = [Int]() // Array of recipe IDs found for this product
-    
+
     // One-to-many relationship with SDRecipe
     @Relationship(deleteRule: .nullify, inverse: \SDRecipe.product)
     var recipes : [SDRecipe]? = [SDRecipe]()
-    
+
     var dateAdded : Date = Date.now
     var expirationDate : Date = Date.now
     var isUsed : Bool = false
@@ -40,7 +40,7 @@ class Product{
     // Relationships
     @Relationship(deleteRule: .cascade)
     var credits: Credit?
-    
+
     @Relationship(inverse: \GroupedProducts.products)
     var groupedProducts: GroupedProducts?
     

@@ -100,25 +100,25 @@ struct CuisinesView: View {
                                     Image(systemName: "arrow.left")
                                     Text("Back")
                                 }
-                                .foregroundStyle(.white)
+                                .foregroundStyle(Color(.systemBackground))
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
                             .shadow(radius: 5)
                         }
                         .padding(.trailing, 3)
-                        
+
                         // Next Button
                         NavigationLink(destination: IntolerancesView(viewModel: viewModel)) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 12)
                                     .foregroundStyle(.green)
-                                
+
                                 HStack {
                                     Text("Next")
                                     Image(systemName: "arrow.right")
                                 }
-                                .foregroundStyle(.white)
+                                .foregroundStyle(Color(.systemBackground))
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
@@ -202,7 +202,7 @@ struct CuisineCard: View {
                                 Spacer()
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.system(size: 20, weight: .semibold))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(Color(.systemBackground))
                                     .background(
                                         Circle()
                                             .fill(.green)

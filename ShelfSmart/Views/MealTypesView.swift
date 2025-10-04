@@ -101,7 +101,7 @@ struct MealTypesView: View {
                                     Image(systemName: "arrow.left")
                                     Text("Back")
                                 }
-                                .foregroundStyle(.white)
+                                .foregroundStyle(Color(.systemBackground))
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
@@ -119,7 +119,7 @@ struct MealTypesView: View {
                                     Text("Next")
                                     Image(systemName: "arrow.right")
                                 }
-                                .foregroundStyle(.white)
+                                .foregroundStyle(Color(.systemBackground))
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
@@ -203,7 +203,7 @@ struct MealTypeCard: View {
                                 Spacer()
                                 Image(systemName: "checkmark.circle.fill")
                                     .font(.system(size: 20, weight: .semibold))
-                                    .foregroundStyle(.white)
+                                    .foregroundStyle(Color(.systemBackground))
                                     .background(
                                         Circle()
                                             .fill(.green)

@@ -164,8 +164,8 @@ struct LoginView: View {
                     .padding(20)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
-                            .fill(.white)
-                            .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                            .fill(Color(.systemBackground))
+                            .shadow(color: Color(.label).opacity(0.05), radius: 8, x: 0, y: 2)
                     )
                     .padding(.horizontal, 20)
                     
@@ -266,7 +266,7 @@ struct CompactButton: View {
                     .font(.subheadline)
                     .fontWeight(.semibold)
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(Color(.systemBackground))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
             .background(

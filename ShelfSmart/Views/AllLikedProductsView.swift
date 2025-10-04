@@ -11,14 +11,14 @@ import SwiftUI
 
 struct AllLikedProductsView: View {
     @Environment(\.modelContext) var modelContext
-    @Query private var allProducts: [Product]
-    
+    @Query(sort: \Product.dateAdded, order: .reverse) private var allProducts: [Product]
+    @State private var currentUserId: String = Auth.auth().currentUser?.uid ?? ""
+
     // Computed property for liked products by current user
+    // Note: Filtering at app level for now since @Query predicates don't support dynamic user IDs well
+    // For better performance with large datasets, consider implementing custom init with FetchDescriptor
     var likedProducts: [Product] {
-        let currentUserId = FirebaseAuth.Auth.auth().currentUser?.uid ?? ""
-        return allProducts.filter { product in
-            product.isLiked && product.userId == currentUserId
-        }
+        return allProducts.filter { $0.isLiked && $0.userId == currentUserId }
     }
     
     var body: some View {
@@ -133,8 +133,8 @@ struct LikedProductCardView: View {
         .padding(.vertical, 16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(.white)
-                .shadow(color: .black.opacity(0.08), radius: 8, x: 0, y: 2)
+                .fill(Color(.secondarySystemBackground))
+                .shadow(color: Color(.label).opacity(0.08), radius: 8, x: 0, y: 2)
         )
         .overlay(
             RoundedRectangle(cornerRadius: 16)

@@ -88,24 +88,24 @@ final class SignUpViewViewModel{
     }
     
     // Generating randomNonceString
-    private func randomNonceString(length: Int = 32) -> String {
+    private func randomNonceString(length: Int = 32) -> String? {
         precondition(length > 0)
         var randomBytes = [UInt8](repeating: 0, count: length)
         let errorCode = SecRandomCopyBytes(kSecRandomDefault, randomBytes.count, &randomBytes)
         if errorCode != errSecSuccess {
-            fatalError(
-                "Unable to generate nonce. SecRandomCopyBytes failed with OSStatus \(errorCode)"
-            )
+            print("❌ Unable to generate nonce. SecRandomCopyBytes failed with OSStatus \(errorCode)")
+            // Return nil instead of crashing - caller will handle the error
+            return nil
         }
-        
+
         let charset: [Character] =
         Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
-        
+
         let nonce = randomBytes.map { byte in
             // Pick a random character from the set, wrapping around if needed.
             charset[Int(byte) % charset.count]
         }
-        
+
         return String(nonce)
     }
     
@@ -120,10 +120,23 @@ final class SignUpViewViewModel{
         return hashString
     }
     
-    // Generating Random Nonce and Hashed Nonce
+    // Generating Random Nonce and Hashed Nonce with retry logic
     func generateNonce(){
-        nonce = self.randomNonceString()
-        hashedNonce = self.sha256(nonce!)
+        // Retry up to 3 times if nonce generation fails
+        for attempt in 1...3 {
+            if let generatedNonce = self.randomNonceString() {
+                nonce = generatedNonce
+                hashedNonce = self.sha256(generatedNonce)
+                print("✅ Nonce generated successfully on attempt \(attempt)")
+                return
+            }
+            print("⚠️ Nonce generation failed, attempt \(attempt) of 3")
+        }
+
+        // All attempts failed
+        print("❌ Failed to generate nonce for Apple Sign-In after 3 attempts")
+        errorMessage = "Unable to initialize secure sign-in. Please try again."
+        showingError = true
     }
     
     
@@ -194,14 +207,18 @@ final class SignUpViewViewModel{
                 
                 print("Processing user: \(userName), email: \(userEmail), uid: \(userId)")
                 
-                // Check if user document already exists
+                // Create/update user document in Firestore
                 let db = Firestore.firestore()
-            
-                do{
+
+                do {
                     let user = User(name: userName, email: userEmail, signupMethod: "apple_signin", isEmailVerified: true, emailVerificationSentAt: Date())
 
-                    try db.collection("users").document(userId).setData(from: user)
-                    print("User with user id: \(userId) updated to Firebase")
+                    // Use merge: true to avoid overwriting existing data
+                    try db.collection("users").document(userId).setData(from: user, merge: true)
+                    print("✅ User with user id: \(userId) saved/updated to Firestore")
+                } catch {
+                    print("❌ Failed to save user to Firestore: \(error.localizedDescription)")
+                    // Don't fail the sign-in if Firestore write fails - user is already authenticated
                 }
                 
             } catch {

@@ -233,7 +233,7 @@ struct ModernSearchCard: View {
                                 .font(.subheadline)
                                 .fontWeight(.semibold)
                         }
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color(.systemBackground))
                         .padding(.horizontal, 20)
                         .padding(.vertical, 12)
                         .background(
@@ -283,8 +283,8 @@ struct ModernSearchCard: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(.white)
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                .fill(Color(.secondarySystemBackground))
+                .shadow(color: Color(.label).opacity(0.05), radius: 8, x: 0, y: 2)
         )
     }
 }
@@ -372,8 +372,8 @@ struct ModernProductPreviewCard: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(.white)
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                .fill(Color(.secondarySystemBackground))
+                .shadow(color: Color(.label).opacity(0.05), radius: 8, x: 0, y: 2)
         )
     }
 }
@@ -495,8 +495,8 @@ struct ModernManualEntryCard: View {
         .padding(20)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(.white)
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                .fill(Color(.secondarySystemBackground))
+                .shadow(color: Color(.label).opacity(0.05), radius: 8, x: 0, y: 2)
         )
     }
 }
@@ -523,7 +523,7 @@ struct ModernSaveButton: View {
                     .font(.headline)
                     .fontWeight(.bold)
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(Color(.systemBackground))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 18)
             .background(

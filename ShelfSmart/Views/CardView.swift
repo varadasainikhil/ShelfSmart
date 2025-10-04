@@ -49,7 +49,7 @@ struct CardView: View {
                     VStack(alignment: .leading){
                         Spacer()
                         Text(product.title)
-                            .foregroundStyle(.black)
+                            .foregroundStyle(.primary)
                             .font(.title3.bold())
                             .lineLimit(2)
                         

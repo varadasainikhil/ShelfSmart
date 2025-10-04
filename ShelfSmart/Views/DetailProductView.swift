@@ -146,7 +146,7 @@ struct DetailProductView: View {
                             if let recipes = product.recipes, !recipes.isEmpty {
                                 Text("\(recipes.count)")
                                     .font(.caption.bold())
-                                    .foregroundColor(.white)
+                                    .foregroundColor(Color(.systemBackground))
                                     .padding(.horizontal, 8)
                                     .padding(.vertical, 4)
                                     .background(Color.green)

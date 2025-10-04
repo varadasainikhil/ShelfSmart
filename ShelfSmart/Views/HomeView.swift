@@ -130,7 +130,7 @@ struct HomeView: View {
                                     .overlay {
                                         Image(systemName: "plus")
                                             .font(.system(size: 24, weight: .semibold))
-                                            .foregroundStyle(.white)
+                                            .foregroundStyle(Color(.systemBackground))
                                     }
                                     .shadow(color: .green.opacity(0.3), radius: 8, x: 0, y: 4)
                             }
@@ -200,8 +200,8 @@ struct EnhancedGroupView: View {
         .padding(16)
         .background(
             RoundedRectangle(cornerRadius: 16)
-                .fill(.white)
-                .shadow(color: .black.opacity(0.05), radius: 8, x: 0, y: 2)
+                .fill(Color(.systemBackground))
+                .shadow(color: Color(.label).opacity(0.05), radius: 8, x: 0, y: 2)
         )
     }
 }

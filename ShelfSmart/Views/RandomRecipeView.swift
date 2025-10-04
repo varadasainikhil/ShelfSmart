@@ -141,7 +141,7 @@ struct RandomRecipeView: View {
                         }) {
                             Image(systemName: "square.and.arrow.up")
                                 .font(.system(size: 20, weight: .semibold))
-                                .foregroundStyle(.black)
+                                .foregroundStyle(.primary)
                         }
                     }
                 }
@@ -388,7 +388,7 @@ struct RandomRecipeView: View {
                     if let analyzedInstructions = recipe.analyzedInstructions,
                        !analyzedInstructions.isEmpty,
                        let steps = analyzedInstructions.first?.steps {
-                        let sortedSteps = steps.sorted { ($0.number ?? 0) < ($1.number ?? 0) }
+                        let sortedSteps = steps.sorted { $0.number < $1.number }
                         ForEach(Array(sortedSteps.enumerated()), id: \.offset) { index, step in
                             RecipeInstructionStepView(step: step)
                         }
@@ -553,10 +553,10 @@ struct RecipeInstructionStepView: View {
     var body: some View {
         HStack(alignment: .top, spacing: 16) {
             // Step Number
-            Text("\(step.number ?? 0)")
+            Text("\(step.number)")
                 .font(.title3)
                 .fontWeight(.bold)
-                .foregroundStyle(.white)
+                .foregroundStyle(Color(.systemBackground))
                 .frame(width: 32, height: 32)
                 .background(
                     Circle()
@@ -564,7 +564,7 @@ struct RecipeInstructionStepView: View {
                 )
 
             // Step Description
-            Text(step.step ?? "No instruction available")
+            Text(step.step)
                 .font(.body)
                 .foregroundStyle(.primary)
                 .multilineTextAlignment(.leading)
