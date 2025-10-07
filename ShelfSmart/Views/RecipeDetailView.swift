@@ -241,7 +241,7 @@ struct RecipeDetailView: View {
             ModernCardContainer {
                 if let ingredients = sdRecipe.extendedIngredients, !ingredients.isEmpty {
                     let _ = print("🥕 Found \(ingredients.count) ingredients for recipe: \(sdRecipe.title ?? "Unknown")")
-                    LazyVStack(spacing: 16) {
+                    VStack(spacing: 16) {
                         ForEach(Array(ingredients.enumerated()), id: \.offset) { index, sdIngredient in
                             let _ = print("🥕 Ingredient \(index): name='\(sdIngredient.name ?? "")', original='\(sdIngredient.original ?? "")'")
                             ModernIngredientRow(sdIngredient: sdIngredient)

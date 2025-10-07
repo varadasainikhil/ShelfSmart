@@ -102,7 +102,7 @@ struct HomeView: View {
                         // Products List
                         ScrollViewReader { proxy in
                             ScrollView {
-                                LazyVStack(spacing: 16) {
+                                VStack(spacing: 16) {
                                     ForEach(groups) { group in
                                         EnhancedGroupView(group: group)
                                     }

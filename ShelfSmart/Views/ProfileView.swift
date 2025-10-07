@@ -84,7 +84,7 @@ struct ProfileView: View {
                 
                 // Content Sections
                 ScrollView {
-                    LazyVStack(spacing: 24) {
+                    VStack(spacing: 24) {
                         // Liked Products Section
                         VStack(alignment: .leading, spacing: 12) {
                             // Section Header
@@ -411,9 +411,9 @@ struct LikedProductCard: View {
                         image
                             .resizable()
                             .scaledToFill()
-                            .frame(width: 80, height: 80)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
+                    .frame(width: 80, height: 80)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
                 } else {
                     Image("placeholder")
                         .resizable()
@@ -482,9 +482,9 @@ struct LikedRecipeCard: View {
                         image
                             .resizable()
                             .scaledToFill()
-                            .frame(width: 80, height: 80)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
+                    .frame(width: 80, height: 80)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
                 } else {
                     Image("placeholder")
                         .resizable()
@@ -559,9 +559,9 @@ struct UsedProductCard: View {
                         image
                             .resizable()
                             .scaledToFill()
-                            .frame(width: 80, height: 80)
-                            .clipShape(RoundedRectangle(cornerRadius: 10))
                     }
+                    .frame(width: 80, height: 80)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
                 } else {
                     Image("placeholder")
                         .resizable()

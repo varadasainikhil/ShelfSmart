@@ -160,15 +160,32 @@ struct DetailProductView: View {
                             let sortedRecipes = recipes.sorted { ($0.id ?? 0) < ($1.id ?? 0) }
 
                             // Recipe cards grid - 2x2 layout for recipes
-                            LazyVGrid(columns: [
-                                GridItem(.flexible(), spacing: 12),
-                                GridItem(.flexible(), spacing: 12)
-                            ], spacing: 16) {
-                                ForEach(sortedRecipes, id: \.id) { sdRecipe in
-                                    RecipeCardView(sdRecipe: sdRecipe) {
-                                        recipeToShow = sdRecipe
+                            // Using VStack with HStack instead of LazyVGrid to ensure all images load immediately
+                            VStack(spacing: 16) {
+                                ForEach(0..<(sortedRecipes.count + 1) / 2, id: \.self) { rowIndex in
+                                    HStack(spacing: 12) {
+                                        let startIndex = rowIndex * 2
+                                        if startIndex < sortedRecipes.count {
+                                            RecipeCardView(sdRecipe: sortedRecipes[startIndex]) {
+                                                recipeToShow = sortedRecipes[startIndex]
+                                            }
+                                            .id("recipe-\(sortedRecipes[startIndex].id ?? 0)")
+                                            .frame(maxWidth: .infinity)
+                                        }
+
+                                        let nextIndex = startIndex + 1
+                                        if nextIndex < sortedRecipes.count {
+                                            RecipeCardView(sdRecipe: sortedRecipes[nextIndex]) {
+                                                recipeToShow = sortedRecipes[nextIndex]
+                                            }
+                                            .id("recipe-\(sortedRecipes[nextIndex].id ?? 0)")
+                                            .frame(maxWidth: .infinity)
+                                        } else if startIndex < sortedRecipes.count {
+                                            // Empty space to maintain grid alignment for odd number of recipes
+                                            Color.clear
+                                                .frame(maxWidth: .infinity)
+                                        }
                                     }
-                                    .id("recipe-\(sdRecipe.id ?? 0)") // Ensure stable identity
                                 }
                             }
                         } else {

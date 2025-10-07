@@ -56,7 +56,7 @@ struct AllLikedProductsView: View {
                 .padding(.horizontal, 20)
             } else {
                 ScrollView {
-                    LazyVStack(spacing: 20) {
+                    VStack(spacing: 20) {
                         ForEach(likedProducts, id: \.self) { product in
                             NavigationLink(destination: DetailProductView(product: product)) {
                                 LikedProductCardView(product: product)

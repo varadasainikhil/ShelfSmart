@@ -56,7 +56,7 @@ struct AllLikedRecipesView: View {
                 .padding(.horizontal, 20)
             } else {
                 ScrollView {
-                    LazyVStack(spacing: 20) {
+                    VStack(spacing: 20) {
                         ForEach(likedRecipes, id: \.self) { recipe in
                             NavigationLink(destination: RecipeDetailView(sdRecipe: recipe)) {
                                 LikedRecipeCardView(recipe: recipe)

@@ -126,7 +126,7 @@ struct RandomRecipeView: View {
                         }) {
                             Image(systemName: currentSavedRecipe?.isLiked == true ? "heart.fill" : "heart")
                                 .font(.system(size: 20, weight: .semibold))
-                                .foregroundStyle(currentSavedRecipe?.isLiked == true ? .red : .black)
+                                .foregroundStyle(currentSavedRecipe?.isLiked == true ? .red : .primary)
                         }
                     }
 
@@ -352,7 +352,7 @@ struct RandomRecipeView: View {
 
             ModernCardContainer {
                 if let ingredients = recipe.extendedIngredients, !ingredients.isEmpty {
-                    LazyVStack(spacing: 16) {
+                    VStack(spacing: 16) {
                         ForEach(Array(ingredients.enumerated()), id: \.offset) { index, ingredient in
                             RecipeIngredientRow(ingredient: ingredient)
                         }
