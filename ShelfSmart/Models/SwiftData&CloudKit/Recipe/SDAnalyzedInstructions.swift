@@ -13,7 +13,7 @@ class SDAnalyzedInstructions {
     var name: String?
 
     // One-to-many relationship with SDSteps
-    @Relationship(deleteRule: .cascade, inverse: \SDSteps.SDAnalyzedInstructions)
+    @Relationship(deleteRule: .cascade, inverse: \SDSteps.analyzedInstruction)
     var steps : [SDSteps]? = [SDSteps]()
 
     // Relationship back to recipe

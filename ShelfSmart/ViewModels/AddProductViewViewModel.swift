@@ -306,6 +306,8 @@ class AddProductViewViewModel {
         // Creating the product using our convenience initializer
         let userId = Auth.auth().currentUser?.uid ?? ""
         product = Product(from: groceryProduct!, expirationDate: self.expirationDate, userId: userId)
+        product?.title = name
+        product?.productDescription = productDescription
 
         // Calling the function searchAndSaveRecipesForProduct
         await searchAndSaveRecipesForProduct(product : self.product!, modelContext: modelContext, userExpirationDate: userSelectedExpirationDate, notificationManager: notificationManager)

@@ -12,13 +12,16 @@ import SwiftData
 class SDSteps {
     var number: Int?
     var step: String?
-    
+
     // Child collections
+    @Relationship(deleteRule: .cascade, inverse: \SDStepIngredient.step)
     var ingredients : [SDStepIngredient]? = [SDStepIngredient]()
+
+    @Relationship(deleteRule: .cascade, inverse: \SDEquipment.step)
     var equipments : [SDEquipment]? = [SDEquipment]()
-    
+
     // Relationship back to analyzed instructions
-    var SDAnalyzedInstructions: SDAnalyzedInstructions?
+    var analyzedInstruction: SDAnalyzedInstructions?
     
     init(from steps: Steps) {
         self.number = steps.number

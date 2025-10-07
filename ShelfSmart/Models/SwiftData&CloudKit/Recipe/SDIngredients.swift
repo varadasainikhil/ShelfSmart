@@ -21,7 +21,7 @@ class SDIngredients {
     
     @Relationship(deleteRule: .cascade, inverse: \SDMeasures.SDIngredients)
     var measures: SDMeasures?
-    
+
     // Relationship back to recipe
     var recipe: SDRecipe?
     

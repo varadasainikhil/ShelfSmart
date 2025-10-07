@@ -14,9 +14,9 @@ class SDStepIngredient {
     var name: String?
     var localizedName: String?
     var image: String?
-    
+
     // Relationship back to steps
-    var SDSteps: SDSteps?
+    var step: SDSteps?
     
     init(from stepIngredient: StepIngredient) {
         self.id = stepIngredient.id

@@ -49,6 +49,7 @@ struct DetailProductView: View {
                     VStack(spacing: 8) {
                         Text(product.title)
                             .font(.title.bold())
+                            .padding(.horizontal)
                         
                         // Product type tag
                         HStack {

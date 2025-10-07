@@ -12,7 +12,7 @@ import SwiftData
 class SDMeasures {
     @Relationship(deleteRule: .cascade, inverse: \SDMeasure.owningMeasures)
     var us: SDMeasure?
-    
+
     @Relationship(deleteRule: .cascade, inverse: \SDMeasure.owningMeasuresMetric)
     var metric: SDMeasure?
 

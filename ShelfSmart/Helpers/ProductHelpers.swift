@@ -57,7 +57,6 @@ struct ProductHelpers {
     /// - Throws: An error if the save operation fails
     static func deleteProduct(_ product: Product, modelContext: ModelContext, notificationManager: NotificationManager) throws {
         // IMPORTANT: Perform ALL deletion work in the correct order
-        // This ensures all SwiftData relationships are valid during access
 
         // 1. Cancel scheduled notifications for this product
         notificationManager.deleteScheduledNotifications(for: product)
@@ -73,22 +72,27 @@ struct ProductHelpers {
             if group.products?.isEmpty ?? true {
                 modelContext.delete(group)
             }
+            
+            // Break the relationship from the product side
+            product.groupedProducts = nil
+            
+            // Save the changes to the group
+            try modelContext.save()
         }
 
-        // 3. Handle recipes: IMPORTANT - Make a copy of the array to avoid mutation during iteration
+        // 3. Handle recipes: IMPORTANT - Separate recipes to delete and recipes to keep
         if let recipes = product.recipes {
-            // Create a copy of the recipes array to avoid accessing modified backing data
-            let recipesCopy = Array(recipes)
+            let recipesToDelete = recipes.filter { !$0.isLiked }
+            let recipesToKeep = recipes.filter { $0.isLiked }
 
-            for recipe in recipesCopy {
-                if recipe.isLiked {
-                    // Explicitly break the relationship for liked recipes BEFORE deleting product
-                    // This prevents SwiftData from accessing deleted/invalid backing data
-                    recipe.product = nil
-                } else {
-                    // Delete non-liked recipes
-                    modelContext.delete(recipe)
-                }
+            // Delete non-liked recipes
+            for recipe in recipesToDelete {
+                modelContext.delete(recipe)
+            }
+
+            // Nullify the product relationship for liked recipes
+            for recipe in recipesToKeep {
+                recipe.product = nil
             }
         }
 
