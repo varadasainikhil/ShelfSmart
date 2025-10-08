@@ -98,8 +98,9 @@ struct IntolerancesView: View {
                         }) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 12)
-                                    .foregroundStyle(.green)
-                                
+                                    .fill(.green)
+                                    .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
+
                                 if viewModel.isLoading {
                                     HStack {
                                         ProgressView()
@@ -112,6 +113,7 @@ struct IntolerancesView: View {
                                 } else {
                                     HStack {
                                         Text("Get Recipes")
+                                            .fontWeight(.bold)
                                         Image(systemName: "arrow.right")
                                     }
                                     .foregroundStyle(Color(.systemBackground))
@@ -119,7 +121,7 @@ struct IntolerancesView: View {
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
-                            .shadow(radius: 5)
+                            .shadow(color: .green.opacity(0.3), radius: 5, x: 0, y: 2)
                         }
                         .disabled(viewModel.isLoading)
                     }

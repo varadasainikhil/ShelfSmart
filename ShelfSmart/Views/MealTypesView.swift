@@ -95,17 +95,19 @@ struct MealTypesView: View {
                         }) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 12)
-                                    .foregroundStyle(.green)
-                                
+                                    .fill(.green)
+                                    .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
+
                                 HStack {
                                     Image(systemName: "arrow.left")
                                     Text("Back")
+                                        .fontWeight(.bold)
                                 }
                                 .foregroundStyle(Color(.systemBackground))
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
-                            .shadow(radius: 5)
+                            .shadow(color: .green.opacity(0.3), radius: 5, x: 0, y: 2)
                         }
                         .padding(.trailing, 3)
                         
@@ -113,17 +115,19 @@ struct MealTypesView: View {
                         NavigationLink(destination: CuisinesView(viewModel: viewModel)) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 12)
-                                    .foregroundStyle(.green)
-                                
+                                    .fill(.green)
+                                    .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
+
                                 HStack {
                                     Text("Next")
+                                        .fontWeight(.bold)
                                     Image(systemName: "arrow.right")
                                 }
                                 .foregroundStyle(Color(.systemBackground))
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
-                            .shadow(radius: 5)
+                            .shadow(color: .green.opacity(0.3), radius: 5, x: 0, y: 2)
                         }
                         .padding(.leading, 3)
                     }

@@ -18,7 +18,7 @@ struct RecipeCardView: View {
             VStack(alignment: .leading, spacing: 0) {
                 // Recipe Image with Heart Indicator
                 ZStack {
-                    SimpleAsyncImage(url: sdRecipe.image) { image in
+                    RobustAsyncImage(url: sdRecipe.image) { image in
                         image
                             .resizable()
                             .scaledToFill()

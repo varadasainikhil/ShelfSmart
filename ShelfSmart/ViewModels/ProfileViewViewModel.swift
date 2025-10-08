@@ -33,25 +33,50 @@ class ProfileViewViewModel{
         
     }
     
-    func deleteGroups(groups : [GroupedProducts], modelContext : ModelContext, notificationManager: NotificationManager){
-        for group in groups{
-            // Cancel notifications for all products in this group before deletion
-            if let products = group.products {
-                for product in products {
+    func deleteAllData(groups: [GroupedProducts], products: [Product], recipes: [SDRecipe], modelContext: ModelContext, notificationManager: NotificationManager) {
+        var deletedCount = 0
+
+        // 1. Cancel notifications for all products (in groups and standalone)
+        for group in groups {
+            if let groupProducts = group.products {
+                for product in groupProducts {
                     notificationManager.deleteScheduledNotifications(for: product)
                     print("🗑️ Cancelled notifications for product: \(product.title)")
                 }
             }
+        }
 
-            // With .nullify delete rule, liked recipes will automatically be preserved
-            // when products are deleted (recipe.product will be set to nil automatically)
+        for product in products {
+            notificationManager.deleteScheduledNotifications(for: product)
+            print("🗑️ Cancelled notifications for standalone product: \(product.title)")
+        }
+
+        // 2. Delete all groups (cascade will delete contained products)
+        for group in groups {
             modelContext.delete(group)
+            deletedCount += 1
         }
-        do{
+
+        // 3. Delete all standalone products (used, liked, etc.)
+        for product in products {
+            // Only delete if not already part of a group (to avoid double deletion)
+            if product.groupedProducts == nil {
+                modelContext.delete(product)
+                deletedCount += 1
+            }
+        }
+
+        // 4. Delete all recipes (including liked ones)
+        for recipe in recipes {
+            modelContext.delete(recipe)
+            deletedCount += 1
+        }
+
+        // 5. Save changes
+        do {
             try modelContext.save()
-            print("✅ Groups and their notifications deleted successfully")
-        }
-        catch{
+            print("✅ Successfully deleted \(deletedCount) items and cancelled all notifications")
+        } catch {
             print("❌ Problem saving the modelContext: \(error.localizedDescription)")
         }
     }

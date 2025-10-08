@@ -141,7 +141,7 @@ struct LoginView: View {
                                 break
                             }
                         }
-                        .frame(maxWidth: .infinity)
+                        .frame(maxWidth: 375)
                         .frame(height: 48)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
@@ -162,6 +162,7 @@ struct LoginView: View {
                         }
                         .padding(.top, 8)
                     }
+                    .frame(maxWidth: 400)
                     .padding(20)
                     .background(
                         RoundedRectangle(cornerRadius: 16)
@@ -277,6 +278,7 @@ struct CompactButton: View {
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(isEnabled ? .green : Color(.systemGray4))
+                    .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
                     .shadow(color: isEnabled ? .green.opacity(0.3) : .clear, radius: 6, x: 0, y: 3)
             )
         }

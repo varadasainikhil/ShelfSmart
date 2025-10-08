@@ -57,11 +57,12 @@ struct ProductHelpers {
     /// - Throws: An error if the save operation fails
     static func deleteProduct(_ product: Product, modelContext: ModelContext, notificationManager: NotificationManager) throws {
         // IMPORTANT: Perform ALL deletion work in the correct order
+        // All changes are made in-memory, then saved atomically at the end
 
         // 1. Cancel scheduled notifications for this product
         notificationManager.deleteScheduledNotifications(for: product)
 
-        // 2. If the product is part of a group, handle group logic first
+        // 2. If the product is part of a group, handle group logic
         if let group = product.groupedProducts {
             // Remove product from the group's list of products
             if let index = group.products?.firstIndex(where: { $0.id == product.id }) {
@@ -72,34 +73,29 @@ struct ProductHelpers {
             if group.products?.isEmpty ?? true {
                 modelContext.delete(group)
             }
-            
+
             // Break the relationship from the product side
             product.groupedProducts = nil
-            
-            // Save the changes to the group
-            try modelContext.save()
         }
 
-        // 3. Handle recipes: IMPORTANT - Separate recipes to delete and recipes to keep
+        // 3. Handle recipes: Delete non-liked recipes only
+        // Note: The @Relationship(deleteRule: .nullify) will automatically
+        // set recipe.product = nil for liked recipes when product is deleted
         if let recipes = product.recipes {
             let recipesToDelete = recipes.filter { !$0.isLiked }
-            let recipesToKeep = recipes.filter { $0.isLiked }
 
             // Delete non-liked recipes
             for recipe in recipesToDelete {
                 modelContext.delete(recipe)
             }
 
-            // Nullify the product relationship for liked recipes
-            for recipe in recipesToKeep {
-                recipe.product = nil
-            }
+            // Liked recipes are handled automatically by the .nullify delete rule
         }
 
-        // 4. Delete the product entirely
+        // 4. Delete the product (this triggers .nullify rule for remaining recipes)
         modelContext.delete(product)
 
-        // 5. Save changes
+        // 5. Save all changes atomically
         try modelContext.save()
     }
 

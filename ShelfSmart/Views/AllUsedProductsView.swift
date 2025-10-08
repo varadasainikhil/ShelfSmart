@@ -84,7 +84,7 @@ struct UsedProductCardView: View {
             // Product Image
             Group {
                 if let imageLink = product.imageLink, !imageLink.isEmpty {
-                    SimpleAsyncImage(url: imageLink) { image in
+                    RobustAsyncImage(url: imageLink) { image in
                         image
                             .resizable()
                             .scaledToFill()

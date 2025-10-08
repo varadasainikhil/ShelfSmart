@@ -147,7 +147,7 @@ struct SignUpView: View {
                                 break
                             }
                         }
-                        .frame(maxWidth: .infinity)
+                        .frame(maxWidth: 375)
                         .frame(height: 48)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .signInWithAppleButtonStyle(colorScheme == .dark ? .white : .black)
@@ -168,6 +168,7 @@ struct SignUpView: View {
                         }
                         .padding(.top, 8)
                     }
+                    .frame(maxWidth: 400)
                     .padding(20)
                     .background(
                         RoundedRectangle(cornerRadius: 16)

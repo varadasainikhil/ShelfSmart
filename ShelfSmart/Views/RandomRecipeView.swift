@@ -215,7 +215,7 @@ struct RandomRecipeView: View {
     private func heroImageSection(for recipe: Recipe) -> some View {
         Group {
             if let imageUrl = recipe.image {
-                SimpleAsyncImage(url: imageUrl) { image in
+                RobustAsyncImage(url: imageUrl) { image in
                     image
                         .resizable()
                         .aspectRatio(contentMode: .fill)
@@ -512,7 +512,7 @@ struct RecipeIngredientRow: View {
             // Ingredient Image
             Group {
                 if let imageFilename = ingredient.image {
-                    SimpleAsyncImage(url: "https://spoonacular.com/cdn/ingredients_100x100/\(imageFilename)") { image in
+                    RobustAsyncImage(url: "https://spoonacular.com/cdn/ingredients_100x100/\(imageFilename)") { image in
                         image
                             .resizable()
                             .scaledToFill()

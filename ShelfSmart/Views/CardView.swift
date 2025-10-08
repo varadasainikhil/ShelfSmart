@@ -27,7 +27,7 @@ struct CardView: View {
                         if let imageLink = product.imageLink, !imageLink.isEmpty{
                             let _ = print("🖼️ CardView - Attempting to load image: \(imageLink)")
                             let _ = print("🖼️ CardView - URL validation: \(URL(string: imageLink) != nil)")
-                            SimpleAsyncImage(url: imageLink) { image in
+                            RobustAsyncImage(url: imageLink) { image in
                                 image
                                     .resizable()
                                     .scaledToFill()

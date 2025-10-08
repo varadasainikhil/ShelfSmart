@@ -324,7 +324,7 @@ struct ModernProductPreviewCard: View {
                 // Product Image
                 Group {
                     if !imageLink.isEmpty {
-                        SimpleAsyncImage(url: imageLink) { image in
+                        RobustAsyncImage(url: imageLink) { image in
                             image
                                 .resizable()
                                 .scaledToFill()
@@ -529,6 +529,7 @@ struct ModernSaveButton: View {
             .background(
                 RoundedRectangle(cornerRadius: 16)
                     .fill(isDisabled ? Color(.systemGray4) : .green)
+                    .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 16))
                     .shadow(color: isDisabled ? .clear : .green.opacity(0.4), radius: 12, x: 0, y: 6)
             )
         }

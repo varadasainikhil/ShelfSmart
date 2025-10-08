@@ -40,19 +40,6 @@ struct HomeView: View {
                                 .foregroundStyle(.primary)
                         }
                         Spacer()
-                        
-                        // Product count indicator
-                        if !groups.isEmpty {
-                            VStack(spacing: 2) {
-                                Text("\(groups.count)")
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                    .foregroundStyle(.green)
-                                Text("groups")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 10)
@@ -217,7 +204,7 @@ struct EnhancedCardView: View {
             // Product Image
             Group {
                 if let imageLink = product.imageLink, !imageLink.isEmpty {
-                    SimpleAsyncImage(url: imageLink) { image in
+                    RobustAsyncImage(url: imageLink) { image in
                         image
                             .resizable()
                             .scaledToFill()

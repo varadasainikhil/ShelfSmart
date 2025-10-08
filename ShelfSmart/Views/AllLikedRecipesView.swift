@@ -84,7 +84,7 @@ struct LikedRecipeCardView: View {
             // Recipe Image
             Group {
                 if let imageLink = recipe.image, !imageLink.isEmpty {
-                    SimpleAsyncImage(url: imageLink) { image in
+                    RobustAsyncImage(url: imageLink) { image in
                         image
                             .resizable()
                             .scaledToFill()

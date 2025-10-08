@@ -28,7 +28,7 @@ struct DetailProductView: View {
                     ZStack{
                         if let imageLink = product.imageLink, !imageLink.isEmpty {
                             let _ = print("🖼️ DetailProductView - Attempting to load image: \(imageLink)")
-                            SimpleAsyncImage(url: imageLink) { image in
+                            RobustAsyncImage(url: imageLink) { image in
                                 image
                                     .resizable()
                                     .scaledToFit()

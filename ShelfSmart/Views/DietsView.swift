@@ -91,15 +91,16 @@ struct DietsView: View {
                             Task {
                                 let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                                 impactFeedback.impactOccurred()
-                                
+
                                 await viewModel.completelyRandomRecipe()
                                 navigateToRandomRecipe = true
                             }
                         }) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 12)
-                                    .foregroundStyle(.green)
-                                
+                                    .fill(.green)
+                                    .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
+
                                 if viewModel.isLoading {
                                     HStack {
                                         ProgressView()
@@ -113,13 +114,14 @@ struct DietsView: View {
                                     HStack {
                                         Image(systemName: "sparkles")
                                         Text("Surprise Me!")
+                                            .fontWeight(.semibold)
                                     }
                                     .foregroundStyle(Color(.systemBackground))
                                 }
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
-                            .shadow(radius: 5)
+                            .shadow(color: .green.opacity(0.3), radius: 5, x: 0, y: 2)
                         }
                         .disabled(viewModel.isLoading)
                         .padding(.trailing, 3)
@@ -128,17 +130,19 @@ struct DietsView: View {
                         NavigationLink(destination: MealTypesView(viewModel: viewModel)) {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 12)
-                                    .foregroundStyle(.green)
-                                
+                                    .fill(.green)
+                                    .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
+
                                 HStack {
                                     Text("Next")
+                                        .fontWeight(.semibold)
                                     Image(systemName: "arrow.right")
                                 }
                                 .foregroundStyle(Color(.systemBackground))
                             }
                             .frame(maxWidth: .infinity)
                             .frame(height: 50)
-                            .shadow(radius: 5)
+                            .shadow(color: .green.opacity(0.3), radius: 5, x: 0, y: 2)
                         }
                         .padding(.leading, 3)
                     }

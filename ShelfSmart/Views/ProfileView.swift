@@ -322,8 +322,8 @@ struct ProfileView: View {
                         )
                         .shadow(color: .red.opacity(0.3), radius: 5, x: 0, y: 2)
                     }
-                    .disabled(groups.isEmpty)
-                    .opacity(groups.isEmpty ? 0.6 : 1.0)
+                    .disabled(groups.isEmpty && likedProducts.isEmpty && likedRecipes.isEmpty && usedProducts.isEmpty)
+                    .opacity((groups.isEmpty && likedProducts.isEmpty && likedRecipes.isEmpty && usedProducts.isEmpty) ? 0.6 : 1.0)
                     
                     // Sign Out Button
                     Button(action: {
@@ -388,11 +388,12 @@ struct ProfileView: View {
                 Button("Clear All Items", role: .destructive) {
                     let impactFeedback = UIImpactFeedbackGenerator(style: .heavy)
                     impactFeedback.impactOccurred()
-                    viewModel.deleteGroups(groups: groups, modelContext: modelContext, notificationManager: notificationManager)
+                    viewModel.deleteAllData(groups: groups, products: allProducts, recipes: allRecipes, modelContext: modelContext, notificationManager: notificationManager)
                 }
                 Button("Cancel", role: .cancel) { }
             } message: {
-                Text("This will permanently delete all \(groups.count) items from your shelf. This action cannot be undone.")
+                let totalItems = groups.count + allProducts.count + allRecipes.count
+                Text("This will permanently delete ALL data: \(groups.count) groups, \(allProducts.count) products, and \(allRecipes.count) recipes (total: \(totalItems) items). This action cannot be undone.")
             }
         }
     }
@@ -407,7 +408,7 @@ struct LikedProductCard: View {
             // Product Image
             ZStack {
                 if let imageLink = product.imageLink, !imageLink.isEmpty {
-                    SimpleAsyncImage(url: imageLink) { image in
+                    RobustAsyncImage(url: imageLink) { image in
                         image
                             .resizable()
                             .scaledToFill()
@@ -478,7 +479,7 @@ struct LikedRecipeCard: View {
             // Recipe Image
             ZStack {
                 if let imageLink = recipe.image, !imageLink.isEmpty {
-                    SimpleAsyncImage(url: imageLink) { image in
+                    RobustAsyncImage(url: imageLink) { image in
                         image
                             .resizable()
                             .scaledToFill()
@@ -555,7 +556,7 @@ struct UsedProductCard: View {
             // Product Image
             ZStack {
                 if let imageLink = product.imageLink, !imageLink.isEmpty {
-                    SimpleAsyncImage(url: imageLink) { image in
+                    RobustAsyncImage(url: imageLink) { image in
                         image
                             .resizable()
                             .scaledToFill()
