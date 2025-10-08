@@ -215,8 +215,9 @@ struct RecipeDetailView: View {
             // Recipe Source Link
             if let sourceUrl = sdRecipe.sourceUrl,
                !sourceUrl.isEmpty &&
-               sourceUrl != "https://spoonacular.com/recipe/\(sdRecipe.id ?? 0)" {
-                Link(destination: URL(string: sourceUrl)!) {
+               sourceUrl != "https://spoonacular.com/recipe/\(sdRecipe.id ?? 0)",
+               let url = URL(string: sourceUrl) {
+                Link(destination: url) {
                     HStack(spacing: 8) {
                         Image(systemName: "link")
                             .font(.caption)

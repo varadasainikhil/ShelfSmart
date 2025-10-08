@@ -64,7 +64,6 @@ class AddProductViewViewModel {
         searchSuccess = false
         searchAttempted = false
         groceryProduct = nil
-        groceryProduct = nil
         self.recipes = [SDRecipe]()
         print("🔄 Reset all fields to initial state - clean sheet ready")
     }

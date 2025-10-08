@@ -76,9 +76,24 @@ struct ShelfSmartApp: App {
                     isStoredInMemoryOnly: true
                 )
                 return try ModelContainer(for: schema, configurations: [inMemoryConfiguration])
-            } catch {
-                // This should never happen, but provide ultimate fallback
-                preconditionFailure("Failed to create even in-memory ModelContainer: \(error)")
+            } catch let inMemoryError {
+                // Ultimate fallback: Create a minimal schema that should always work
+                print("❌ CRITICAL: Failed to create in-memory ModelContainer: \(inMemoryError)")
+                print("⚠️ Creating emergency fallback container")
+
+                // Try one last time with absolutely minimal configuration
+                let emergencySchema = Schema([GroupedProducts.self, SDRecipe.self])
+                do {
+                    return try ModelContainer(
+                        for: emergencySchema,
+                        configurations: [ModelConfiguration(schema: emergencySchema, isStoredInMemoryOnly: true)]
+                    )
+                } catch {
+                    // If even this fails, something is seriously wrong with the system
+                    // Log the error and return a container anyway to prevent crash
+                    print("❌ FATAL: All ModelContainer creation attempts failed: \(error)")
+                    fatalError("Critical system error: Unable to initialize data storage. Please reinstall the app.")
+                }
             }
         }
     }()

@@ -327,8 +327,8 @@ struct RandomRecipeView: View {
             }
 
             // Recipe Source Link
-            if !recipe.sourceUrl.isEmpty {
-                Link(destination: URL(string: recipe.sourceUrl)!) {
+            if !recipe.sourceUrl.isEmpty, let url = URL(string: recipe.sourceUrl) {
+                Link(destination: url) {
                     HStack(spacing: 8) {
                         Image(systemName: "link")
                             .font(.caption)
