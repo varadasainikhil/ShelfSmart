@@ -184,23 +184,34 @@ class RandomRecipeViewModel {
             print("⚠️ Already loading recipe, skipping duplicate call")
             return
         }
-        
+
         await setLoadingState(true)
-        print("🔍 Searching for random recipe")
-        
+        print("🔍 Searching for completely random recipe (no filters)")
+
         do {
             guard let apiKey = getAPIKey(), !apiKey.isEmpty else {
                 await setError("API key not configured. Please check your configuration.")
                 return
             }
-            
-            guard let url = buildRandomRecipeURL(apiKey: apiKey) else {
+
+            // Build URL directly without any tags/filters for truly random recipe
+            guard var urlComponents = URLComponents(string: "https://api.spoonacular.com/recipes/random") else {
                 await setError("Failed to construct API request URL")
                 return
             }
-            
+
+            urlComponents.queryItems = [
+                URLQueryItem(name: "apiKey", value: apiKey),
+                URLQueryItem(name: "number", value: "1")
+            ]
+
+            guard let url = urlComponents.url else {
+                await setError("Failed to construct API request URL")
+                return
+            }
+
             print("🌐 Making request to: \(url.absoluteString)")
-            
+
             let (data, _) = try await makeAPIRequest(url: url)
             
             // Parse and validate response
@@ -374,10 +385,13 @@ class RandomRecipeViewModel {
             }
             
             print("✅ Found recipe: \(searchResult.title) (ID: \(searchResult.id))")
-            
+
             // Fetch complete recipe details
             await fetchCompleteRecipeById(id: searchResult.id)
-            
+
+            // Clear all selections after successfully generating custom recipe
+            clearAllSelections()
+
         } catch {
             await handleError(error)
         }
