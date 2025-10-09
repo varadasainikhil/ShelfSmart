@@ -15,6 +15,13 @@ struct ProfileView: View {
     @State var viewModel = ProfileViewViewModel()
     @State private var currentUserId: String = Auth.auth().currentUser?.uid ?? ""
     @State private var showDeleteConfirmation = false
+    @State private var showDeleteAccountConfirmation = false
+    @State private var showReauthAlert = false
+    @State private var showReauthSheet = false
+    @State private var isReauthenticated = false
+    @State private var deletionInProgress = false
+    @State private var deletionError: String?
+    @State private var showDeletionError = false
     
     
     // Optimized queries with predicates to filter at database level instead of in-memory
@@ -347,6 +354,17 @@ struct ProfileView: View {
                                 .stroke(.green, lineWidth: 2)
                         )
                     }
+
+                    // Subtle Delete Account Link
+                    Button(action: {
+                        showDeleteAccountConfirmation = true
+                    }) {
+                        Text("Delete Account")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .underline()
+                    }
+                    .padding(.top, 8)
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 34)
@@ -394,6 +412,86 @@ struct ProfileView: View {
             } message: {
                 let totalItems = groups.count + allProducts.count + allRecipes.count
                 Text("This will permanently delete ALL data: \(groups.count) groups, \(allProducts.count) products, and \(allRecipes.count) recipes (total: \(totalItems) items). This action cannot be undone.")
+            }
+            .confirmationDialog(
+                "Delete Account",
+                isPresented: $showDeleteAccountConfirmation,
+                titleVisibility: .visible
+            ) {
+                Button("Delete Account", role: .destructive) {
+                    let impactFeedback = UIImpactFeedbackGenerator(style: .heavy)
+                    impactFeedback.impactOccurred()
+                    Task {
+                        await performAccountDeletion()
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("This will permanently delete your account and all associated data including your profile, groups, products, recipes, and notifications. This action CANNOT be undone.")
+            }
+            .sheet(isPresented: $showReauthSheet) {
+                ReauthenticationView(isReauthenticated: $isReauthenticated, viewModel: viewModel)
+            }
+            .alert("Deletion Failed", isPresented: $showDeletionError) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                if let error = deletionError {
+                    Text(error)
+                }
+            }
+            .alert("Login Required", isPresented: $showReauthAlert) {
+                Button("Continue") {
+                    showReauthSheet = true
+                }
+                Button("Cancel", role: .cancel) {
+                    // User cancelled, reset state
+                    deletionInProgress = false
+                }
+            } message: {
+                Text("To delete your account, you need to log in again for security reasons. Would you like to continue?")
+            }
+            .onChange(of: isReauthenticated) { _, newValue in
+                if newValue {
+                    // Re-authentication successful, try deletion again
+                    Task {
+                        await performAccountDeletion()
+                    }
+                }
+            }
+        }
+    }
+
+    // MARK: - Account Deletion Helper
+    private func performAccountDeletion() async {
+        deletionInProgress = true
+
+        do {
+            try await viewModel.deleteAccount(
+                groups: groups,
+                products: allProducts,
+                recipes: allRecipes,
+                modelContext: modelContext,
+                notificationManager: notificationManager
+            )
+
+            // Account deleted successfully - user will be automatically signed out
+            await MainActor.run {
+                deletionInProgress = false
+            }
+
+        } catch let error as NSError {
+            await MainActor.run {
+                deletionInProgress = false
+
+                // Check if re-authentication is required
+                if error.code == AuthErrorCode.requiresRecentLogin.rawValue {
+                    // Show explanation alert before re-authentication
+                    showReauthAlert = true
+                } else {
+                    // Show error alert
+                    deletionError = error.localizedDescription
+                    showDeletionError = true
+                }
             }
         }
     }

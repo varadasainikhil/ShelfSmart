@@ -117,4 +117,90 @@ class ProfileViewViewModel{
             print(error.localizedDescription)
         }
     }
+
+    // MARK: - Account Deletion
+
+    /// Deletes the user's account completely from all systems
+    /// This includes: Firebase Auth, Firestore, SwiftData, and all notifications
+    func deleteAccount(groups: [GroupedProducts], products: [Product], recipes: [SDRecipe], modelContext: ModelContext, notificationManager: NotificationManager) async throws {
+        guard let user = Auth.auth().currentUser else {
+            throw NSError(domain: "ProfileViewViewModel", code: -1, userInfo: [NSLocalizedDescriptionKey: "No user is currently logged in"])
+        }
+
+        let userId = user.uid
+        let db = Firestore.firestore()
+
+        print("🗑️ Starting account deletion for user: \(userId)")
+
+        // Step 1: Delete Firebase Auth account FIRST
+        // This ensures that if re-authentication is required, no data is deleted yet
+        print("🗑️ Step 1: Deleting Firebase Auth account...")
+        do {
+            try await user.delete()
+            print("✅ Firebase Auth account deleted successfully")
+        } catch let error as NSError {
+            // Check if re-authentication is required
+            if error.code == AuthErrorCode.requiresRecentLogin.rawValue {
+                print("⚠️ Re-authentication required for account deletion")
+                throw NSError(domain: "ProfileViewViewModel", code: AuthErrorCode.requiresRecentLogin.rawValue, userInfo: [NSLocalizedDescriptionKey: "Recent login required. Please re-authenticate to delete your account."])
+            } else {
+                print("❌ Failed to delete Firebase Auth account: \(error.localizedDescription)")
+                throw error
+            }
+        }
+
+        // Step 2: Delete Firestore user document
+        // Only reached if Firebase Auth deletion succeeded
+        print("🗑️ Step 2: Deleting Firestore user document...")
+        do {
+            try await db.collection("users").document(userId).delete()
+            print("✅ Firestore user document deleted successfully")
+        } catch {
+            print("⚠️ Failed to delete Firestore document: \(error.localizedDescription)")
+            // Continue even if Firestore fails - account is already deleted
+        }
+
+        // Step 3: Delete all local SwiftData (products, groups, recipes)
+        // Only reached if Firebase Auth deletion succeeded
+        print("🗑️ Step 3: Deleting local SwiftData...")
+        deleteAllData(groups: groups, products: products, recipes: recipes, modelContext: modelContext, notificationManager: notificationManager)
+
+        print("✅ Account deletion completed successfully")
+    }
+
+    /// Re-authenticates the user with email/password
+    /// Required by Firebase before account deletion for security
+    func reauthenticateWithEmail(email: String, password: String) async throws {
+        guard let user = Auth.auth().currentUser else {
+            throw NSError(domain: "ProfileViewViewModel", code: -1, userInfo: [NSLocalizedDescriptionKey: "No user is currently logged in"])
+        }
+
+        let credential = EmailAuthProvider.credential(withEmail: email, password: password)
+
+        do {
+            try await user.reauthenticate(with: credential)
+            print("✅ User re-authenticated successfully")
+        } catch {
+            print("❌ Re-authentication failed: \(error.localizedDescription)")
+            throw error
+        }
+    }
+
+    /// Re-authenticates the user with Apple Sign-In
+    /// Required by Firebase before account deletion for security
+    func reauthenticateWithApple(idToken: String, nonce: String) async throws {
+        guard let user = Auth.auth().currentUser else {
+            throw NSError(domain: "ProfileViewViewModel", code: -1, userInfo: [NSLocalizedDescriptionKey: "No user is currently logged in"])
+        }
+
+        let credential = OAuthProvider.appleCredential(withIDToken: idToken, rawNonce: nonce, fullName: nil)
+
+        do {
+            try await user.reauthenticate(with: credential)
+            print("✅ User re-authenticated with Apple Sign-In successfully")
+        } catch {
+            print("❌ Re-authentication with Apple failed: \(error.localizedDescription)")
+            throw error
+        }
+    }
 }
