@@ -22,8 +22,9 @@ struct ProfileView: View {
     @State private var deletionInProgress = false
     @State private var deletionError: String?
     @State private var showDeletionError = false
-    
-    
+    @State private var showProfileInfo = false
+
+
     // Optimized queries with predicates to filter at database level instead of in-memory
     // This significantly improves performance by reducing data transfer and memory usage
     @Query private var allGroups: [GroupedProducts]
@@ -67,16 +68,21 @@ struct ProfileView: View {
                                 .foregroundStyle(.primary)
                         }
                         Spacer()
-                        
+
                         // Profile Icon
-                        Circle()
-                            .fill(.green.opacity(0.2))
-                            .frame(width: 60, height: 60)
-                            .overlay {
-                                Image(systemName: "person.fill")
-                                    .font(.system(size: 24))
-                                    .foregroundStyle(.green)
-                            }
+                        Button(action: {
+                            showProfileInfo = true
+                        }) {
+                            Circle()
+                                .fill(.green.opacity(0.2))
+                                .frame(width: 60, height: 60)
+                                .overlay {
+                                    Image(systemName: "person.fill")
+                                        .font(.system(size: 24))
+                                        .foregroundStyle(.green)
+                                }
+                        }
+                        .buttonStyle(PlainButtonStyle())
                     }
                     .padding(.horizontal, 20)
                     .padding(.top, 10)
@@ -331,40 +337,6 @@ struct ProfileView: View {
                     }
                     .disabled(groups.isEmpty && likedProducts.isEmpty && likedRecipes.isEmpty && usedProducts.isEmpty)
                     .opacity((groups.isEmpty && likedProducts.isEmpty && likedRecipes.isEmpty && usedProducts.isEmpty) ? 0.6 : 1.0)
-                    
-                    // Sign Out Button
-                    Button(action: {
-                        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                        impactFeedback.impactOccurred()
-                        Task {
-                            viewModel.signOut()
-                        }
-                    }) {
-                        HStack {
-                            Image(systemName: "rectangle.portrait.and.arrow.right")
-                                .font(.system(size: 16, weight: .semibold))
-                            Text("Sign Out")
-                                .fontWeight(.semibold)
-                        }
-                        .foregroundStyle(.green)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 50)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(.green, lineWidth: 2)
-                        )
-                    }
-
-                    // Subtle Delete Account Link
-                    Button(action: {
-                        showDeleteAccountConfirmation = true
-                    }) {
-                        Text("Delete Account")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .underline()
-                    }
-                    .padding(.top, 8)
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 34)
@@ -432,6 +404,20 @@ struct ProfileView: View {
             .sheet(isPresented: $showReauthSheet) {
                 ReauthenticationView(isReauthenticated: $isReauthenticated, viewModel: viewModel)
             }
+            .sheet(isPresented: $showProfileInfo) {
+                ProfileInfoView(
+                    userName: viewModel.userName,
+                    userEmail: Auth.auth().currentUser?.email ?? "No email",
+                    onSignOut: {
+                        Task {
+                            viewModel.signOut()
+                        }
+                    },
+                    onDeleteAccount: {
+                        showDeleteAccountConfirmation = true
+                    }
+                )
+            }
             .alert("Deletion Failed", isPresented: $showDeletionError) {
                 Button("OK", role: .cancel) { }
             } message: {
@@ -491,6 +477,135 @@ struct ProfileView: View {
                     // Show error alert
                     deletionError = error.localizedDescription
                     showDeletionError = true
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Profile Info View
+struct ProfileInfoView: View {
+    @Environment(\.dismiss) var dismiss
+    let userName: String
+    let userEmail: String
+    let onSignOut: () -> Void
+    let onDeleteAccount: () -> Void
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 24) {
+                // Profile Icon
+                Circle()
+                    .fill(.green.opacity(0.2))
+                    .frame(width: 100, height: 100)
+                    .overlay {
+                        Image(systemName: "person.fill")
+                            .font(.system(size: 44))
+                            .foregroundStyle(.green)
+                    }
+                    .padding(.top, 20)
+
+                // User Information
+                VStack(spacing: 16) {
+                    // Name Section
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Name")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .textCase(.uppercase)
+
+                        Text(userName.isEmpty ? "User" : userName)
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .foregroundStyle(.primary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.systemGray6))
+                    )
+
+                    // Email Section
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Email")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .textCase(.uppercase)
+
+                        Text(userEmail)
+                            .font(.body)
+                            .foregroundStyle(.primary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(16)
+                    .background(
+                        RoundedRectangle(cornerRadius: 12)
+                            .fill(Color(.systemGray6))
+                    )
+                }
+                .padding(.horizontal, 20)
+
+                Spacer()
+
+                // Action Buttons
+                VStack(spacing: 16) {
+                    // Sign Out Button
+                    Button(action: {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
+                        impactFeedback.impactOccurred()
+                        dismiss() // Dismiss the sheet first
+                        onSignOut() // Then trigger sign out
+                    }) {
+                        HStack {
+                            Image(systemName: "rectangle.portrait.and.arrow.right")
+                                .font(.system(size: 16, weight: .semibold))
+                            Text("Sign Out")
+                                .fontWeight(.semibold)
+                        }
+                        .foregroundStyle(.green)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(.green, lineWidth: 2)
+                        )
+                    }
+
+                    // Delete Account Button
+                    Button(action: {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                        impactFeedback.impactOccurred()
+                        dismiss() // Dismiss the sheet first
+                        onDeleteAccount() // Then trigger deletion
+                    }) {
+                        HStack {
+                            Image(systemName: "trash.fill")
+                                .font(.system(size: 14, weight: .semibold))
+                            Text("Delete Account")
+                                .fontWeight(.semibold)
+                        }
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 50)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(.red)
+                        )
+                        .shadow(color: .red.opacity(0.3), radius: 5, x: 0, y: 2)
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 34)
+            }
+            .navigationTitle("Account Info")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                    .foregroundStyle(.green)
                 }
             }
         }
