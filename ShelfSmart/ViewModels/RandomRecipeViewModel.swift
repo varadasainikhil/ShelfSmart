@@ -7,6 +7,8 @@
 
 import Foundation
 import SwiftData
+import FirebaseAuth
+import FirebaseFirestore
 
 // MARK: - API Response Models
 struct RandomRecipeResponse: Codable {
@@ -15,6 +17,9 @@ struct RandomRecipeResponse: Codable {
 
 @Observable
 class RandomRecipeViewModel {
+    // MARK: - User Allergies (Auto-fetched from Firebase)
+    var userAllergies: [String] = []
+
     // MARK: - Selection State
     var selectedMealTypes: [String] = []
     var selectedCuisines: [String] = []
@@ -35,10 +40,51 @@ class RandomRecipeViewModel {
     var foundRecipeIds: [Int] = []
     var foundRecipeSummaries: [FindByIngredientsRecipe] = []
     var ingredientsSearchSuccess = false
-    
+
+    // MARK: - Initialization
+    init() {
+        // Fetch user allergies on initialization
+        Task {
+            await fetchUserAllergies()
+        }
+    }
+
     // MARK: - Computed Properties
     var allSelectedTags: [String] {
         return selectedMealTypes + selectedCuisines + selectedDiets + selectedIntolerances
+    }
+
+    // MARK: - User Allergies Management
+
+    /// Fetches user's saved allergies from Firestore and pre-populates selectedIntolerances
+    func fetchUserAllergies() async {
+        guard let userId = Auth.auth().currentUser?.uid else {
+            print("⚠️ No user ID found - cannot fetch allergies")
+            return
+        }
+
+        do {
+            let db = Firestore.firestore()
+            let userDoc = try await db.collection("users").document(userId).getDocument()
+
+            await MainActor.run {
+                if let data = userDoc.data(),
+                   let allergies = data["allergies"] as? [String] {
+                    self.userAllergies = allergies
+                    // Pre-populate selectedIntolerances with user's saved allergies
+                    self.selectedIntolerances = allergies
+                    print("✅ User allergies fetched and pre-populated: \(allergies)")
+                } else {
+                    self.userAllergies = []
+                    print("ℹ️ No allergies found for user")
+                }
+            }
+        } catch {
+            print("❌ Error fetching user allergies: \(error.localizedDescription)")
+            await MainActor.run {
+                self.userAllergies = []
+            }
+        }
     }
     
     // MARK: - Cuisine Management
@@ -178,7 +224,7 @@ class RandomRecipeViewModel {
     
     // MARK: - Recipe Fetching Methods
     
-    /// Fetches a completely random recipe
+    /// Fetches a completely random recipe (with user allergies automatically applied)
     func completelyRandomRecipe() async {
         guard !isLoading else {
             print("⚠️ Already loading recipe, skipping duplicate call")
@@ -186,7 +232,10 @@ class RandomRecipeViewModel {
         }
 
         await setLoadingState(true)
-        print("🔍 Searching for completely random recipe (no filters)")
+        print("🔍 Searching for completely random recipe")
+        if !userAllergies.isEmpty {
+            print("🚫 Excluding user allergies: \(userAllergies)")
+        }
 
         do {
             guard let apiKey = getAPIKey(), !apiKey.isEmpty else {
@@ -194,16 +243,25 @@ class RandomRecipeViewModel {
                 return
             }
 
-            // Build URL directly without any tags/filters for truly random recipe
+            // Build URL with user allergies automatically included
             guard var urlComponents = URLComponents(string: "https://api.spoonacular.com/recipes/random") else {
                 await setError("Failed to construct API request URL")
                 return
             }
 
-            urlComponents.queryItems = [
+            var queryItems: [URLQueryItem] = [
                 URLQueryItem(name: "apiKey", value: apiKey),
                 URLQueryItem(name: "number", value: "1")
             ]
+
+            // Add user allergies as intolerances to exclude from random recipes
+            if !userAllergies.isEmpty {
+                let intolerancesString = userAllergies.joined(separator: ",")
+                queryItems.append(URLQueryItem(name: "intolerances", value: intolerancesString))
+                print("🔗 Adding intolerances to URL: \(intolerancesString)")
+            }
+
+            urlComponents.queryItems = queryItems
 
             guard let url = urlComponents.url else {
                 await setError("Failed to construct API request URL")
@@ -213,15 +271,15 @@ class RandomRecipeViewModel {
             print("🌐 Making request to: \(url.absoluteString)")
 
             let (data, _) = try await makeAPIRequest(url: url)
-            
+
             // Parse and validate response
             let apiResponse = try JSONDecoder().decode(RandomRecipeResponse.self, from: data)
-            
+
             guard let recipe = apiResponse.recipes.first else {
                 await setError("No recipes found matching your criteria. Please try different filters.")
                 return
             }
-            
+
             // Store raw recipe data (NO SwiftData conversion yet)
             await MainActor.run {
                 currentRecipe = recipe
@@ -231,7 +289,7 @@ class RandomRecipeViewModel {
                 errorMessage = nil
                 print("🎉 Recipe fetch completed successfully!")
             }
-            
+
         } catch {
             await handleError(error)
         }
@@ -392,6 +450,10 @@ class RandomRecipeViewModel {
             // Clear all selections after successfully generating custom recipe
             clearAllSelections()
 
+            // Re-populate user allergies so they remain selected for next search
+            selectedIntolerances = userAllergies
+            print("♻️ Re-populated user allergies: \(userAllergies)")
+
         } catch {
             await handleError(error)
         }
@@ -420,7 +482,7 @@ class RandomRecipeViewModel {
             queryItems.append(URLQueryItem(name: "diet", value: selectedDiets.joined(separator: ",")))
         }
         if !selectedIntolerances.isEmpty {
-            queryItems.append(URLQueryItem(name: "excludeIngredients", value: selectedIntolerances.joined(separator: ",")))
+            queryItems.append(URLQueryItem(name: "intolerances", value: selectedIntolerances.joined(separator: ",")))
         }
         
         urlComponents.queryItems = queryItems

@@ -1,74 +1,82 @@
 //
-//  DietsView.swift
+//  AllergiesOnboardingView.swift
 //  ShelfSmart
 //
-//  Created by Sai Nikhil Varada on 9/15/25.
+//  Created by Sai Nikhil Varada on 10/13/25.
 //
 
 import SwiftUI
 
-struct DietsView: View {
-    @State private var viewModel = RandomRecipeViewModel()
-    @State private var navigateToMealTypes = false
-    @State private var navigateToRandomRecipe = false
-    
+struct AllergiesOnboardingView: View {
+    @State private var viewModel = AllergiesOnboardingViewModel()
+    var onComplete: () async -> Void
+
     // Adaptive grid with better spacing
     private let columns = [
         GridItem(.adaptive(minimum: 100, maximum: 120), spacing: 16)
     ]
-    
+
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 // Header Section
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 16) {
+                    // Welcome Section
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Welcome to")
+                            .font(.title2)
+                            .foregroundStyle(.secondary)
+                        Text("ShelfSmart")
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundStyle(.green)
+                    }
+                    .padding(.horizontal, 20)
+                    .padding(.top, 20)
+
+                    // Question Section
                     HStack {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Select Your")
+                            Text("Do you have any")
+                                .font(.title3)
+                                .foregroundStyle(.primary)
+                            Text("Food Intolerances?")
                                 .font(.title2)
-                                .foregroundStyle(.secondary)
-                            Text("Diets")
-                                .font(.largeTitle)
-                                .fontWeight(.bold)
+                                .fontWeight(.semibold)
                                 .foregroundStyle(.primary)
                         }
                         Spacer()
-                        
+
                         // Selection counter
-                        if !viewModel.selectedDiets.isEmpty {
-                            Text("\(viewModel.selectedDiets.count) selected")
+                        if !viewModel.selectedIntolerances.isEmpty {
+                            Text("\(viewModel.selectedIntolerances.count) selected")
                                 .font(.subheadline)
                                 .fontWeight(.medium)
                                 .foregroundStyle(.green)
                         }
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 10)
-                    
+
                     // Subtitle
-                    Text("Choose dietary preferences that match your lifestyle")
+                    Text("Select any allergies or intolerances. We'll use this to personalize your recipes.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 20)
                         .padding(.bottom, 20)
                 }
-                
-                // Diets Grid
+
+                // Intolerances Grid
                 ScrollView {
                     LazyVGrid(columns: columns, spacing: 20) {
-                        ForEach(Diet.allCases, id: \.self) { diet in
-                            DietCard(
-                                diet: diet,
-                                isSelected: viewModel.selectedDiets.contains(diet.apiValue)
+                        ForEach(Intolerances.allCases, id: \.self) { intolerance in
+                            OnboardingIntoleranceCard(
+                                intolerance: intolerance,
+                                isSelected: viewModel.isSelected(intolerance)
                             ) {
                                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                                    if viewModel.selectedDiets.contains(diet.apiValue) {
-                                        viewModel.removeDiet(diet: diet)
-                                    } else {
-                                        viewModel.addDiet(diet: diet)
-                                    }
+                                    viewModel.toggleIntolerance(intolerance)
                                 }
-                                
+
                                 // Haptic feedback
                                 let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                                 impactFeedback.impactOccurred()
@@ -79,27 +87,32 @@ struct DietsView: View {
                     .padding(.top, 10)
                     .padding(.bottom, 100) // Extra space for bottom buttons
                 }
-                
+
                 Spacer()
             }
             .overlay(alignment: .bottom) {
-                // Bottom Action Buttons
+                // Bottom Action Button
                 VStack(spacing: 12) {
+                    // Error message if any
+                    if let errorMessage = viewModel.errorMessage {
+                        Text(errorMessage)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 20)
+                    }
+
                     HStack(spacing: 12) {
-                        // Surprise Me Button
+                        // Continue Button
                         Button(action: {
                             Task {
-                                let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
-                                impactFeedback.impactOccurred()
-
-                                // If user has allergies, use customRandomRecipe (Complex Search with intolerances)
-                                // Otherwise use completelyRandomRecipe (Random endpoint, no filters)
-                                if !viewModel.userAllergies.isEmpty {
-                                    await viewModel.customRandomRecipe()
-                                } else {
-                                    await viewModel.completelyRandomRecipe()
+                                do {
+                                    try await viewModel.saveAllergiesAndCompleteOnboarding()
+                                    // Call completion handler to refresh entry view
+                                    await onComplete()
+                                } catch {
+                                    print("❌ Failed to complete onboarding: \(error)")
                                 }
-                                navigateToRandomRecipe = true
                             }
                         }) {
                             ZStack {
@@ -107,20 +120,21 @@ struct DietsView: View {
                                     .fill(.green)
                                     .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
 
-                                if viewModel.isLoading {
+                                if viewModel.isSaving {
                                     HStack {
                                         ProgressView()
                                             .progressViewStyle(CircularProgressViewStyle())
                                             .scaleEffect(0.8)
-                                            .tint(Color(.systemBackground))
-                                        Text("Loading...")
+                                            .tint(.white)
+                                        Text("Saving...")
                                             .foregroundStyle(Color(.systemBackground))
+                                            .fontWeight(.semibold)
                                     }
                                 } else {
                                     HStack {
-                                        Image(systemName: "sparkles")
-                                        Text("Surprise Me!")
-                                            .fontWeight(.semibold)
+                                        Text("Continue")
+                                            .fontWeight(.bold)
+                                        Image(systemName: "arrow.right")
                                     }
                                     .foregroundStyle(Color(.systemBackground))
                                 }
@@ -129,28 +143,7 @@ struct DietsView: View {
                             .frame(height: 50)
                             .shadow(color: .green.opacity(0.3), radius: 5, x: 0, y: 2)
                         }
-                        .disabled(viewModel.isLoading)
-                        .padding(.trailing, 3)
-                        
-                        // Next Button
-                        NavigationLink(destination: MealTypesView(viewModel: viewModel)) {
-                            ZStack {
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(.green)
-                                    .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
-
-                                HStack {
-                                    Text("Next")
-                                        .fontWeight(.semibold)
-                                    Image(systemName: "arrow.right")
-                                }
-                                .foregroundStyle(Color(.systemBackground))
-                            }
-                            .frame(maxWidth: .infinity)
-                            .frame(height: 50)
-                            .shadow(color: .green.opacity(0.3), radius: 5, x: 0, y: 2)
-                        }
-                        .padding(.leading, 3)
+                        .disabled(viewModel.isSaving)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -167,7 +160,7 @@ struct DietsView: View {
                                     endPoint: .bottom
                                 )
                             )
-                        
+
                         // Solid color gradient (white/black based on color scheme)
                         Rectangle()
                             .fill(
@@ -182,49 +175,46 @@ struct DietsView: View {
                 )
             }
             .navigationBarTitleDisplayMode(.inline)
-            .navigationDestination(isPresented: $navigateToRandomRecipe) {
-                RandomRecipeView(viewModel: viewModel)
-            }
+            .navigationBarBackButtonHidden(true) // Prevent going back
         }
     }
 }
 
-// MARK: - Diet Card Component
-struct DietCard: View {
-    let diet: Diet
+// MARK: - Onboarding Intolerance Card Component
+struct OnboardingIntoleranceCard: View {
+    let intolerance: Intolerances
     let isSelected: Bool
     let action: () -> Void
-    
+
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 8) {
-                // Content Container
+            VStack(spacing: 12) {
+                // Emoji and Content Container
                 ZStack {
                     // Background
                     RoundedRectangle(cornerRadius: 16)
                         .fill(Color(.systemGray6))
                         .frame(width: 110, height: 110)
-                    
+
                     // Content
-                    VStack(spacing: 6) {
-                        // Diet icon/emoji based on type
-                        Text(diet.emoji)
-                            .font(.system(size: 28))
-                        
-                        Text(diet.displayName)
-                            .font(.system(size: 11, weight: .medium))
+                    VStack(spacing: 8) {
+                        Text(intolerance.emoji)
+                            .font(.system(size: 32))
+
+                        Text(intolerance.displayName)
+                            .font(.system(size: 12, weight: .medium))
                             .foregroundStyle(.primary)
                             .multilineTextAlignment(.center)
                             .lineLimit(2)
                     }
                     .frame(width: 110, height: 110)
-                    
+
                     // Selection indicator
                     if isSelected {
                         RoundedRectangle(cornerRadius: 16)
                             .stroke(.green, lineWidth: 3)
                             .frame(width: 110, height: 110)
-                        
+
                         // Checkmark
                         VStack {
                             HStack {
@@ -244,17 +234,6 @@ struct DietCard: View {
                         .frame(width: 110, height: 110)
                     }
                 }
-                
-                // Optional: Brief description (can be shown on tap or as tooltip)
-                if isSelected {
-                    Text(diet.description)
-                        .font(.system(size: 10))
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                        .lineLimit(3)
-                        .padding(.horizontal, 4)
-                        .transition(.opacity.combined(with: .scale(scale: 0.8)))
-                }
             }
         }
         .buttonStyle(PlainButtonStyle())
@@ -264,5 +243,7 @@ struct DietCard: View {
 }
 
 #Preview {
-    DietsView()
+    AllergiesOnboardingView(onComplete: {
+        print("Onboarding completed!")
+    })
 }

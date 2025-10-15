@@ -14,4 +14,6 @@ struct User : Codable{
     var signupMethod : String
     var isEmailVerified : Bool = false
     var emailVerificationSentAt : Date? = nil
+    var allergies : [String] = []
+    var hasCompletedOnboarding : Bool = false
 }

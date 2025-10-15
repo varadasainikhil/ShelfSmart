@@ -15,7 +15,17 @@ struct EntryView: View {
             if viewModel.isLoggedIn && !viewModel.currentUserId.isEmpty {
                 if viewModel.isEmailVerified {
                     // User is authenticated and email is verified
-                    AuthenticatedView(authManager: authManager)
+                    if viewModel.hasCompletedOnboarding {
+                        // User has completed onboarding - show main app
+                        AuthenticatedView(authManager: authManager)
+                    } else {
+                        // User needs to complete onboarding
+                        AllergiesOnboardingView(
+                            onComplete: {
+                                await viewModel.refreshUserStatus()
+                            }
+                        )
+                    }
                 } else {
                     // User is authenticated but email is not verified
                     EmailVerificationView(

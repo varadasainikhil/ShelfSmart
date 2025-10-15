@@ -7,11 +7,13 @@
 
 import Foundation
 import FirebaseAuth
+import FirebaseFirestore
 
 @Observable
 class EntryViewViewModel{
     var isLoggedIn : Bool = false
     var isEmailVerified : Bool = false
+    var hasCompletedOnboarding : Bool = false
     var currentUserId : String = ""
     var currentUserEmail : String = ""
 
@@ -46,11 +48,30 @@ class EntryViewViewModel{
             // Reload user to get latest verification status
             try await currentUser.reload()
 
+            // Fetch onboarding status from Firestore
+            let db = Firestore.firestore()
+            let userDoc = try await db.collection("users").document(currentUser.uid).getDocument()
+
             await MainActor.run {
                 self.isEmailVerified = currentUser.isEmailVerified
+
+                // Get hasCompletedOnboarding from Firestore
+                // If field doesn't exist (existing users), default to false
+                if let data = userDoc.data(),
+                   let hasCompleted = data["hasCompletedOnboarding"] as? Bool {
+                    self.hasCompletedOnboarding = hasCompleted
+                    print("✅ Onboarding status fetched: \(hasCompleted)")
+                } else {
+                    self.hasCompletedOnboarding = false
+                    print("⚠️ Onboarding status not found - treating as incomplete (existing user migration)")
+                }
             }
         } catch {
-            print("Error refreshing user status: \(error.localizedDescription)")
+            print("❌ Error refreshing user status: \(error.localizedDescription)")
+            // On error, default to requiring onboarding
+            await MainActor.run {
+                self.hasCompletedOnboarding = false
+            }
         }
     }
     
