@@ -1,0 +1,4 @@
+module GoogleAppMeasurementTarget {
+umbrella "/Users/sainikhilvarada/Library/Developer/Xcode/DerivedData/ShelfSmart-bzuykouzlbawryghaaqbzhikmfil/SourcePackages/checkouts/GoogleAppMeasurement/GoogleAppMeasurementWrapper/include"
+export *
+}

@@ -1,0 +1,21 @@
+{
+  "" : {
+    "const-values" : "/Users/sainikhilvarada/Library/Developer/Xcode/DerivedData/ShelfSmart-bzuykouzlbawryghaaqbzhikmfil/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseSharedSwift-primary.swiftconstvalues",
+    "dependencies" : "/Users/sainikhilvarada/Library/Developer/Xcode/DerivedData/ShelfSmart-bzuykouzlbawryghaaqbzhikmfil/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseSharedSwift-primary.d",
+    "diagnostics" : "/Users/sainikhilvarada/Library/Developer/Xcode/DerivedData/ShelfSmart-bzuykouzlbawryghaaqbzhikmfil/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseSharedSwift-primary.dia",
+    "emit-module-dependencies" : "/Users/sainikhilvarada/Library/Developer/Xcode/DerivedData/ShelfSmart-bzuykouzlbawryghaaqbzhikmfil/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseSharedSwift-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/sainikhilvarada/Library/Developer/Xcode/DerivedData/ShelfSmart-bzuykouzlbawryghaaqbzhikmfil/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseSharedSwift-primary-emit-module.dia",
+    "pch" : "/Users/sainikhilvarada/Library/Developer/Xcode/DerivedData/ShelfSmart-bzuykouzlbawryghaaqbzhikmfil/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseSharedSwift-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/sainikhilvarada/Library/Developer/Xcode/DerivedData/ShelfSmart-bzuykouzlbawryghaaqbzhikmfil/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseSharedSwift-primary.swiftdeps"
+  },
+  "/Users/sainikhilvarada/Library/Developer/Xcode/DerivedData/ShelfSmart-bzuykouzlbawryghaaqbzhikmfil/SourcePackages/checkouts/firebase-ios-sdk/FirebaseSharedSwift/Sources/FirebaseRemoteConfigValueDecoding.swift" : {
+    "index-unit-output-path" : "/Firebase.build/Release-iphoneos/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseRemoteConfigValueDecoding.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Library/Developer/Xcode/DerivedData/ShelfSmart-bzuykouzlbawryghaaqbzhikmfil/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseRemoteConfigValueDecoding.bc",
+    "object" : "/Users/sainikhilvarada/Library/Developer/Xcode/DerivedData/ShelfSmart-bzuykouzlbawryghaaqbzhikmfil/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseRemoteConfigValueDecoding.o"
+  },
+  "/Users/sainikhilvarada/Library/Developer/Xcode/DerivedData/ShelfSmart-bzuykouzlbawryghaaqbzhikmfil/SourcePackages/checkouts/firebase-ios-sdk/FirebaseSharedSwift/Sources/third_party/FirebaseDataEncoder/FirebaseDataEncoder.swift" : {
+    "index-unit-output-path" : "/Firebase.build/Release-iphoneos/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseDataEncoder.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Library/Developer/Xcode/DerivedData/ShelfSmart-bzuykouzlbawryghaaqbzhikmfil/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseDataEncoder.bc",
+    "object" : "/Users/sainikhilvarada/Library/Developer/Xcode/DerivedData/ShelfSmart-bzuykouzlbawryghaaqbzhikmfil/SourcePackages/checkouts/firebase-ios-sdk/build/Firebase.build/Release-iphoneos/FirebaseSharedSwift.build/Objects-normal/arm64/FirebaseDataEncoder.o"
+  }
+}

@@ -1,0 +1,4 @@
+module GTMSessionFetcherCore {
+umbrella "/Users/sainikhilvarada/Library/Developer/Xcode/DerivedData/ShelfSmart-bzuykouzlbawryghaaqbzhikmfil/SourcePackages/checkouts/gtm-session-fetcher/Sources/Core/Public"
+export *
+}

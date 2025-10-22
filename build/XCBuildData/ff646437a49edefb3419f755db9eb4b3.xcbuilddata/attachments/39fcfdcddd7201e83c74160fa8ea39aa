@@ -1,0 +1,4 @@
+module leveldb {
+umbrella "/Users/sainikhilvarada/Library/Developer/Xcode/DerivedData/ShelfSmart-bzuykouzlbawryghaaqbzhikmfil/SourcePackages/checkouts/leveldb/include"
+export *
+}

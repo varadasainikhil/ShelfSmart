@@ -1,0 +1,351 @@
+{
+  "" : {
+    "const-values" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ShelfSmart-primary.swiftconstvalues",
+    "dependencies" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ShelfSmart-primary.d",
+    "diagnostics" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ShelfSmart-primary.dia",
+    "emit-module-dependencies" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ShelfSmart-primary-emit-module.d",
+    "emit-module-diagnostics" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ShelfSmart-primary-emit-module.dia",
+    "pch" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ShelfSmart-primary-Bridging-header.pch",
+    "swift-dependencies" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ShelfSmart-primary.swiftdeps"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Custom Components/CustomSecureField.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/CustomSecureField.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/CustomSecureField.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/CustomSecureField.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Custom Components/CustomTextField.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/CustomTextField.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/CustomTextField.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/CustomTextField.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Custom Components/CustomTextFieldWithHeading.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/CustomTextFieldWithHeading.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/CustomTextFieldWithHeading.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/CustomTextFieldWithHeading.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Custom Components/RobustAsyncImage.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/RobustAsyncImage.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/RobustAsyncImage.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/RobustAsyncImage.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Custom Components/SimpleAsyncImage.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SimpleAsyncImage.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SimpleAsyncImage.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SimpleAsyncImage.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Helpers/ProductHelpers.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ProductHelpers.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ProductHelpers.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ProductHelpers.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/Firebase/User.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/User.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/User.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/User.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/Spoonacular/Products/GroceryProduct.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/GroceryProduct.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/GroceryProduct.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/GroceryProduct.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/Spoonacular/Products/SpoonacularCredit.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SpoonacularCredit.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SpoonacularCredit.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SpoonacularCredit.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/Spoonacular/Recipes/Enums/Cuisine.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Cuisine.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Cuisine.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Cuisine.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/Spoonacular/Recipes/Enums/Diet.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Diet.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Diet.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Diet.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/Spoonacular/Recipes/Enums/Intolerances.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Intolerances.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Intolerances.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Intolerances.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/Spoonacular/Recipes/Enums/MealType.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/MealType.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/MealType.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/MealType.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/Spoonacular/Recipes/Response/AnalyzedInstructions.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AnalyzedInstructions.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AnalyzedInstructions.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AnalyzedInstructions.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/Spoonacular/Recipes/Response/ComplexSearchRecipe.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ComplexSearchRecipe.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ComplexSearchRecipe.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ComplexSearchRecipe.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/Spoonacular/Recipes/Response/ComplexSearchRecipeResponse.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ComplexSearchRecipeResponse.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ComplexSearchRecipeResponse.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ComplexSearchRecipeResponse.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/Spoonacular/Recipes/Response/Equipment.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Equipment.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Equipment.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Equipment.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/Spoonacular/Recipes/Response/FindByIngredientsRecipe.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/FindByIngredientsRecipe.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/FindByIngredientsRecipe.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/FindByIngredientsRecipe.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/Spoonacular/Recipes/Response/Ingredients.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Ingredients.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Ingredients.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Ingredients.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/Spoonacular/Recipes/Response/MeasureResponse.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/MeasureResponse.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/MeasureResponse.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/MeasureResponse.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/Spoonacular/Recipes/Response/Measures.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Measures.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Measures.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Measures.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/Spoonacular/Recipes/Response/Recipe.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Recipe.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Recipe.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Recipe.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/Spoonacular/Recipes/Response/StepIngredient.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/StepIngredient.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/StepIngredient.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/StepIngredient.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/Spoonacular/Recipes/Response/Steps.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Steps.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Steps.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Steps.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/SwiftData&CloudKit/Product/Credit.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Credit.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Credit.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Credit.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/SwiftData&CloudKit/Product/GroupedProducts.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/GroupedProducts.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/GroupedProducts.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/GroupedProducts.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/SwiftData&CloudKit/Product/Product.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Product.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Product.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/Product.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/SwiftData&CloudKit/Recipe/SDAnalyzedInstructions.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDAnalyzedInstructions.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDAnalyzedInstructions.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDAnalyzedInstructions.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/SwiftData&CloudKit/Recipe/SDEquipment.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDEquipment.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDEquipment.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDEquipment.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/SwiftData&CloudKit/Recipe/SDIngredients.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDIngredients.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDIngredients.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDIngredients.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/SwiftData&CloudKit/Recipe/SDMeasure.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDMeasure.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDMeasure.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDMeasure.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/SwiftData&CloudKit/Recipe/SDMeasures.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDMeasures.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDMeasures.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDMeasures.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/SwiftData&CloudKit/Recipe/SDRecipe.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDRecipe.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDRecipe.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDRecipe.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/SwiftData&CloudKit/Recipe/SDStepIngredient.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDStepIngredient.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDStepIngredient.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDStepIngredient.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Models/SwiftData&CloudKit/Recipe/SDSteps.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDSteps.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDSteps.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SDSteps.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Notifications/NotificationManager.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/NotificationManager.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/NotificationManager.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/NotificationManager.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/ShelfSmartApp.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ShelfSmartApp.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ShelfSmartApp.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ShelfSmartApp.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/TODO.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/TODO.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/TODO.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/TODO.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/ViewModels/AddProductViewViewModel.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AddProductViewViewModel.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AddProductViewViewModel.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AddProductViewViewModel.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/ViewModels/EmailVerificationViewModel.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/EmailVerificationViewModel.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/EmailVerificationViewModel.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/EmailVerificationViewModel.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/ViewModels/EntryViewViewModel.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/EntryViewViewModel.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/EntryViewViewModel.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/EntryViewViewModel.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/ViewModels/LoginViewViewModel.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/LoginViewViewModel.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/LoginViewViewModel.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/LoginViewViewModel.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/ViewModels/ProfileViewViewModel.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ProfileViewViewModel.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ProfileViewViewModel.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ProfileViewViewModel.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/ViewModels/RandomRecipeViewModel.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/RandomRecipeViewModel.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/RandomRecipeViewModel.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/RandomRecipeViewModel.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/ViewModels/SignUpViewViewModel.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SignUpViewViewModel.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SignUpViewViewModel.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SignUpViewViewModel.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/AddProductView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AddProductView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AddProductView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AddProductView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/AllLikedProductsView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AllLikedProductsView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AllLikedProductsView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AllLikedProductsView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/AllLikedRecipesView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AllLikedRecipesView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AllLikedRecipesView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AllLikedRecipesView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/AllUsedProductsView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AllUsedProductsView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AllUsedProductsView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AllUsedProductsView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/AuthenticatedView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AuthenticatedView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AuthenticatedView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/AuthenticatedView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/CardView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/CardView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/CardView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/CardView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/CuisinesView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/CuisinesView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/CuisinesView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/CuisinesView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/DetailProductView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/DetailProductView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/DetailProductView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/DetailProductView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/DietsView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/DietsView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/DietsView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/DietsView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/EmailVerificationView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/EmailVerificationView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/EmailVerificationView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/EmailVerificationView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/EntryView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/EntryView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/EntryView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/EntryView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/ForgotPasswordView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ForgotPasswordView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ForgotPasswordView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ForgotPasswordView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/HomeView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/HomeView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/HomeView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/HomeView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/IntolerancesView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/IntolerancesView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/IntolerancesView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/IntolerancesView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/LoginView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/LoginView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/LoginView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/LoginView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/MealTypesView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/MealTypesView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/MealTypesView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/MealTypesView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/ProfileView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ProfileView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ProfileView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ProfileView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/RandomRecipeView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/RandomRecipeView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/RandomRecipeView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/RandomRecipeView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/ReauthenticationView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ReauthenticationView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ReauthenticationView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/ReauthenticationView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/RecipeCardView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/RecipeCardView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/RecipeCardView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/RecipeCardView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/RecipeDetailView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/RecipeDetailView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/RecipeDetailView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/RecipeDetailView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/ShelfSmart/Views/SignUpView.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SignUpView.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SignUpView.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/SignUpView.o"
+  },
+  "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/DerivedSources/GeneratedAssetSymbols.swift" : {
+    "index-unit-output-path" : "/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/GeneratedAssetSymbols.o",
+    "llvm-bc" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/GeneratedAssetSymbols.bc",
+    "object" : "/Users/sainikhilvarada/Developer/iOS Projects/ShelfSmart/iOS App Code/ShelfSmart/build/ShelfSmart.build/Release-iphoneos/ShelfSmart.build/Objects-normal/arm64/GeneratedAssetSymbols.o"
+  }
+}

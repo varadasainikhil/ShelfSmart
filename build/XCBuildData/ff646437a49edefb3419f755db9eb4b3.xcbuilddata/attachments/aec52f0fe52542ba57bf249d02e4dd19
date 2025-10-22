@@ -1,0 +1,4 @@
+module nanopb {
+umbrella "/Users/sainikhilvarada/Library/Developer/Xcode/DerivedData/ShelfSmart-bzuykouzlbawryghaaqbzhikmfil/SourcePackages/checkouts/nanopb/spm_headers"
+export *
+}

@@ -1,0 +1,4 @@
+module GoogleUtilities_Reachability {
+umbrella "/Users/sainikhilvarada/Library/Developer/Xcode/DerivedData/ShelfSmart-bzuykouzlbawryghaaqbzhikmfil/SourcePackages/checkouts/GoogleUtilities/GoogleUtilities/Reachability/Public"
+export *
+}
