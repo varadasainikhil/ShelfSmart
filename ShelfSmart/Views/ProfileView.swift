@@ -400,6 +400,7 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $showProfileInfo) {
                 ProfileInfoView(
+                    userId: userId,
                     userName: viewModel.userName,
                     userEmail: Auth.auth().currentUser?.email ?? "No email",
                     onSignOut: {
@@ -480,10 +481,12 @@ struct ProfileView: View {
 // MARK: - Profile Info View
 struct ProfileInfoView: View {
     @Environment(\.dismiss) var dismiss
+    let userId: String
     let userName: String
     let userEmail: String
     let onSignOut: () -> Void
     let onDeleteAccount: () -> Void
+    @State private var showEditAllergies = false
 
     var body: some View {
         NavigationStack {
@@ -537,6 +540,39 @@ struct ProfileInfoView: View {
                         RoundedRectangle(cornerRadius: 12)
                             .fill(Color(.systemGray6))
                     )
+
+                    // Edit Allergies Button
+                    Button(action: {
+                        let impactFeedback = UIImpactFeedbackGenerator(style: .light)
+                        impactFeedback.impactOccurred()
+                        showEditAllergies = true
+                    }) {
+                        HStack {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Allergies & Intolerances")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .textCase(.uppercase)
+
+                                Text("Edit your food preferences")
+                                    .font(.body)
+                                    .foregroundStyle(.primary)
+                            }
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(.green)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 12)
+                                .fill(Color(.systemGray6))
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
                 .padding(.horizontal, 20)
 
@@ -601,6 +637,9 @@ struct ProfileInfoView: View {
                     }
                     .foregroundStyle(.green)
                 }
+            }
+            .sheet(isPresented: $showEditAllergies) {
+                EditAllergiesView(userId: userId)
             }
         }
     }
