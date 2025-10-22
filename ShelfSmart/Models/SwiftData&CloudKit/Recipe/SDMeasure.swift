@@ -17,13 +17,13 @@ class SDMeasure {
     // Inverse relationships - one measure can belong to one SDMeasures as either us or metric
     var owningMeasures: SDMeasures?  // When this measure is the "us" measurement
     var owningMeasuresMetric: SDMeasures?  // When this measure is the "metric" measurement
-    
+
     init(from measure: MeasureResponse) {
         self.amount = measure.amount
         self.unitShort = measure.unitShort
         self.unitLong = measure.unitLong
     }
-    
+
     // Required for SwiftData
     init(amount: Double, unitShort: String, unitLong: String) {
         self.amount = amount

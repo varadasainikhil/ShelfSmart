@@ -17,10 +17,11 @@ struct EntryView: View {
                     // User is authenticated and email is verified
                     if viewModel.hasCompletedOnboarding {
                         // User has completed onboarding - show main app
-                        AuthenticatedView(authManager: authManager)
+                        AuthenticatedView(authManager: authManager, userId: viewModel.currentUserId)
                     } else {
                         // User needs to complete onboarding
                         AllergiesOnboardingView(
+                            userId: viewModel.currentUserId,
                             onComplete: {
                                 await viewModel.refreshUserStatus()
                             }
@@ -51,6 +52,16 @@ struct EntryView: View {
             Task {
                 await viewModel.refreshUserStatus()
             }
+        }
+        .onChange(of: viewModel.isLoggedIn) { oldValue, newValue in
+            // When user signs in (including via Apple Sign In), refresh their onboarding status
+            if newValue == true && oldValue == false {
+                print("🔄 User signed in - refreshing onboarding status")
+                Task {
+                    await viewModel.refreshUserStatus()
+                }
+            }
+            // When user signs out, reset is handled in EntryViewViewModel
         }
     }
 }

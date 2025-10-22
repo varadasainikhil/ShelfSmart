@@ -9,6 +9,8 @@ import SwiftData
 import SwiftUI
 
 struct AddProductView: View {
+    let userId: String  // Passed from HomeView
+
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) var dismiss
     @Environment(NotificationManager.self) var notificationManager
@@ -125,7 +127,7 @@ struct AddProductView: View {
 
                             if viewModel.searchSuccess {
                                 Task {
-                                    await viewModel.createProductFromAPIResponse(modelContext: modelContext, notificationManager: notificationManager)
+                                    await viewModel.createProductFromAPIResponse(userId: userId, modelContext: modelContext, notificationManager: notificationManager)
 
                                     await MainActor.run {
                                         if viewModel.errorMessage == nil {
@@ -138,7 +140,7 @@ struct AddProductView: View {
                                 }
                             } else {
                                 Task {
-                                    await viewModel.createAndSaveManualProduct(modelContext: modelContext, notificationManager: notificationManager)
+                                    await viewModel.createAndSaveManualProduct(userId: userId, modelContext: modelContext, notificationManager: notificationManager)
 
                                     await MainActor.run {
                                         if viewModel.errorMessage == nil {
@@ -542,5 +544,5 @@ struct ModernSaveButton: View {
 }
 
 #Preview {
-    AddProductView(viewModel: AddProductViewViewModel())
+    AddProductView(userId: "preview_user_id", viewModel: AddProductViewViewModel())
 }

@@ -12,15 +12,16 @@ import SwiftData
 
 @Observable
 class ProfileViewViewModel{
-    
+    // MARK: - User ID (Single source of truth)
+    let userId: String
+
     var userName : String = ""
-    
+
+    init(userId: String) {
+        self.userId = userId
+    }
+
     func getUserName() async{
-        guard let userId = Auth.auth().currentUser?.uid else{
-            print("Could not get userId")
-            return
-        }
-        
         let db = Firestore.firestore()
         do{
             let user = try await db.collection("users").document(userId).getDocument(as: User.self)
@@ -29,8 +30,6 @@ class ProfileViewViewModel{
         catch{
             print(error.localizedDescription)
         }
-        
-        
     }
     
     func deleteAllData(groups: [GroupedProducts], products: [Product], recipes: [SDRecipe], modelContext: ModelContext, notificationManager: NotificationManager) {
@@ -99,11 +98,6 @@ class ProfileViewViewModel{
 
     // Method to unlike and optionally delete a recipe
     func unlikeRecipe(_ recipe: SDRecipe, modelContext: ModelContext) {
-        guard let userId = Auth.auth().currentUser?.uid else {
-            print("❌ No authenticated user found")
-            return
-        }
-
         ProductHelpers.unlikeRecipe(recipe, userId: userId, modelContext: modelContext)
     }
 

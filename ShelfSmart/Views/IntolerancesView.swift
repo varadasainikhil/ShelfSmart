@@ -156,7 +156,7 @@ struct IntolerancesView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(isPresented: $navigateToRandomRecipe) {
-                RandomRecipeView(viewModel: viewModel)
+                RandomRecipeView(viewModel: viewModel, userId: viewModel.userId)
             }
         }
     }
@@ -225,5 +225,5 @@ struct IntoleranceCard: View {
 }
 
 #Preview {
-    IntolerancesView(viewModel: RandomRecipeViewModel())
+    IntolerancesView(viewModel: RandomRecipeViewModel(userId: "preview_user_id"))
 }

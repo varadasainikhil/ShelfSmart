@@ -10,15 +10,18 @@ import SwiftData
 import SwiftUI
 
 struct AllLikedProductsView: View {
-    @Environment(\.modelContext) var modelContext
-    @Query(sort: \Product.dateAdded, order: .reverse) private var allProducts: [Product]
-    @State private var currentUserId: String = Auth.auth().currentUser?.uid ?? ""
+    let userId: String  // Passed from ProfileView
 
-    // Computed property for liked products by current user
-    // Note: Filtering at app level for now since @Query predicates don't support dynamic user IDs well
-    // For better performance with large datasets, consider implementing custom init with FetchDescriptor
-    var likedProducts: [Product] {
-        return allProducts.filter { $0.isLiked && $0.userId == currentUserId }
+    @Environment(\.modelContext) var modelContext
+    @Query private var likedProducts: [Product]
+
+    init(userId: String) {
+        self.userId = userId
+        // Query for liked products by current user (filtered at database level for better performance)
+        let predicate = #Predicate<Product> { product in
+            product.isLiked && product.userId == userId
+        }
+        self._likedProducts = Query(filter: predicate, sort: \Product.dateAdded, order: .reverse)
     }
     
     var body: some View {
@@ -144,5 +147,5 @@ struct LikedProductCardView: View {
 }
 
 #Preview {
-    AllLikedProductsView()
+    AllLikedProductsView(userId: "preview_user_id")
 }

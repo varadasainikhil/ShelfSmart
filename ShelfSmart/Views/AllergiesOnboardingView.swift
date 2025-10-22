@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct AllergiesOnboardingView: View {
+    let userId: String  // Passed from EntryView
     @State private var viewModel = AllergiesOnboardingViewModel()
     var onComplete: () async -> Void
 
@@ -107,7 +108,7 @@ struct AllergiesOnboardingView: View {
                         Button(action: {
                             Task {
                                 do {
-                                    try await viewModel.saveAllergiesAndCompleteOnboarding()
+                                    try await viewModel.saveAllergiesAndCompleteOnboarding(userId: userId)
                                     // Call completion handler to refresh entry view
                                     await onComplete()
                                 } catch {
@@ -243,7 +244,7 @@ struct OnboardingIntoleranceCard: View {
 }
 
 #Preview {
-    AllergiesOnboardingView(onComplete: {
+    AllergiesOnboardingView(userId: "preview_user_id", onComplete: {
         print("Onboarding completed!")
     })
 }

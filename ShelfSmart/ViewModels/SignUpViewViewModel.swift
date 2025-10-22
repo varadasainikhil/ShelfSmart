@@ -206,19 +206,50 @@ final class SignUpViewViewModel{
                 }
                 
                 print("Processing user: \(userName), email: \(userEmail), uid: \(userId)")
-                
-                // Create/update user document in Firestore
+
+                // Check if user exists in Firestore BEFORE creating
                 let db = Firestore.firestore()
 
                 do {
-                    let user = User(name: userName, email: userEmail, signupMethod: "apple_signin", isEmailVerified: true, emailVerificationSentAt: Date())
+                    // ALWAYS check if user document exists first
+                    let userDocRef = db.collection("users").document(userId)
+                    let userDoc = try await userDocRef.getDocument()
 
-                    // Use merge: true to avoid overwriting existing data
-                    try db.collection("users").document(userId).setData(from: user, merge: true)
-                    print("✅ User with user id: \(userId) saved/updated to Firestore")
+                    if userDoc.exists {
+                        // Returning user - preserve existing data
+                        print("✅ Existing user signed in with Apple: \(userId)")
+
+                        // Fetch their onboarding status for logging
+                        if let userData = userDoc.data(),
+                           let hasCompletedOnboarding = userData["hasCompletedOnboarding"] as? Bool,
+                           let allergies = userData["allergies"] as? [String] {
+                            print("📊 User onboarding status: \(hasCompletedOnboarding ? "Completed" : "Incomplete")")
+                            print("📋 User allergies: \(allergies.isEmpty ? "None" : allergies.joined(separator: ", "))")
+                        } else {
+                            print("⚠️ User data incomplete - may need to update schema")
+                        }
+                    } else {
+                        // First-time signup - create new user document
+                        print("🆕 New Apple Sign-In user detected - creating Firestore document")
+
+                        // Explicitly create user with allergies as empty array
+                        let user = User(
+                            name: userName,
+                            email: userEmail,
+                            signupMethod: "apple_signin",
+                            isEmailVerified: true,
+                            emailVerificationSentAt: Date(),
+                            allergies: [],  // Explicitly set to empty array
+                            hasCompletedOnboarding: false  // Explicitly set to false
+                        )
+
+                        try userDocRef.setData(from: user)
+                        print("✅ New user created in Firestore with allergies: [], hasCompletedOnboarding: false")
+                        print("📝 User will be shown onboarding flow")
+                    }
                 } catch {
-                    print("❌ Failed to save user to Firestore: \(error.localizedDescription)")
-                    // Don't fail the sign-in if Firestore write fails - user is already authenticated
+                    print("❌ Failed to check/save user to Firestore: \(error.localizedDescription)")
+                    // Don't fail the sign-in if Firestore operation fails - user is already authenticated
                 }
                 
             } catch {

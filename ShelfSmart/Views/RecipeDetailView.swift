@@ -10,6 +10,8 @@ import SwiftData
 import FirebaseAuth
 
 struct RecipeDetailView: View {
+    let userId: String  // Passed from ProfileView
+
     @Environment(\.modelContext) var modelContext
     @Environment(\.dismiss) var dismiss
     let sdRecipe: SDRecipe
@@ -359,8 +361,6 @@ struct RecipeDetailView: View {
     // MARK: - Helper Methods
 
     private func toggleLikeRecipe() {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
-
         // Check if this will cause deletion
         let willBeDeleted = sdRecipe.isLiked && sdRecipe.product == nil
 
@@ -608,5 +608,5 @@ struct InstructionStepView: View {
     sampleSDRecipe.summary = "A delicious pasta recipe with fresh tomatoes and herbs."
     sampleSDRecipe.instructions = "Cook pasta according to package directions..."
 
-    return RecipeDetailView(sdRecipe: sampleSDRecipe)
+    return RecipeDetailView(userId: "preview_user_id", sdRecipe: sampleSDRecipe)
 }

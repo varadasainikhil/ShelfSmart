@@ -247,5 +247,5 @@ struct MealTypeCard: View {
 }
 
 #Preview {
-    MealTypesView(viewModel: RandomRecipeViewModel())
+    MealTypesView(viewModel: RandomRecipeViewModel(userId: "preview_user_id"))
 }

@@ -273,7 +273,7 @@ class AddProductViewViewModel {
     }
     
     @MainActor
-    func createProductFromAPIResponse(modelContext : ModelContext, notificationManager: NotificationManager) async {
+    func createProductFromAPIResponse(userId: String, modelContext : ModelContext, notificationManager: NotificationManager) async {
         // Set saving state and reset any previous error messages
         isSaving = true
         errorMessage = nil
@@ -303,18 +303,17 @@ class AddProductViewViewModel {
         }
 
         // Creating the product using our convenience initializer
-        let userId = Auth.auth().currentUser?.uid ?? ""
         product = Product(from: groceryProduct!, expirationDate: self.expirationDate, userId: userId)
         product?.title = name
         product?.productDescription = productDescription
 
         // Calling the function searchAndSaveRecipesForProduct
-        await searchAndSaveRecipesForProduct(product : self.product!, modelContext: modelContext, userExpirationDate: userSelectedExpirationDate, notificationManager: notificationManager)
+        await searchAndSaveRecipesForProduct(product : self.product!, userId: userId, modelContext: modelContext, userExpirationDate: userSelectedExpirationDate, notificationManager: notificationManager)
     }
-    
+
     /// Searches for recipes and creates the product with recipe IDs
     @MainActor
-    private func searchAndSaveRecipesForProduct(product : Product, modelContext: ModelContext, userExpirationDate: Date, notificationManager: NotificationManager) async {
+    private func searchAndSaveRecipesForProduct(product : Product, userId: String, modelContext: ModelContext, userExpirationDate: Date, notificationManager: NotificationManager) async {
         // Extract ingredients for recipe search
         var ingredients: [String] = []
         
@@ -347,14 +346,7 @@ class AddProductViewViewModel {
         print("🖼️ Product imageLink set to: \(String(describing: product.imageLink))")
         print("BreadCrumbs : \(product.breadcrumbs ?? [])")
         print("🍽️ Recipe IDs found: \(recipeIds ?? [])")
-        
-        // Find the userId of the user
-        guard let userId = Auth.auth().currentUser?.uid else {
-            errorMessage = "Could not find the userID of the user"
-            print("Could not find the userID of the user")
-            return
-        }
-        
+
         do {
             // Use normalized date for comparison - ensure we use the exact date selected by user
             let normalizedDate = Calendar.current.startOfDay(for: userExpirationDate)
@@ -392,7 +384,7 @@ class AddProductViewViewModel {
             print("✅ API Product created: \(product.title)")
 
             // Schedule notifications for the product
-            notificationManager.scheduleNotifications(for: product)
+            await notificationManager.scheduleNotifications(for: product)
             print("📅 Notifications scheduled for product: \(product.title)")
 
             // Clear error message on success
@@ -507,7 +499,7 @@ class AddProductViewViewModel {
     
     // Function to create product manually (without API)
     @MainActor
-    func createAndSaveManualProduct(modelContext: ModelContext, notificationManager: NotificationManager) async {
+    func createAndSaveManualProduct(userId: String, modelContext: ModelContext, notificationManager: NotificationManager) async {
         // Set saving state and reset any previous error messages
         self.isSaving = true
         self.errorMessage = nil
@@ -541,7 +533,6 @@ class AddProductViewViewModel {
         
         // Create Product directly without unnecessary GroceryProduct intermediate step
         // For manual products: spoonacularId=nil
-        let userId = Auth.auth().currentUser?.uid ?? ""
         let product = Product(
             id: UUID().uuidString, // Unique identifier for this product instance
             spoonacularId: nil, // No Spoonacular ID for manual products
@@ -565,15 +556,7 @@ class AddProductViewViewModel {
         )
             
         print("📝 Created manual product with expiration date: \(product.expirationDate)")
-        
-        // Find the userId of the user
-        guard let userId = Auth.auth().currentUser?.uid else {
-            self.errorMessage = "Could not find the userID of the user"
-            self.isSaving = false
-            print("Could not find the userID of the user")
-            return
-        }
-            
+
         do {
             // Use normalized date for comparison - ensure we use the exact date selected by user
             let normalizedDate = Calendar.current.startOfDay(for: productExpirationDate)
@@ -610,7 +593,7 @@ class AddProductViewViewModel {
                 print("✅ Manual Product created: \(product.title)")
 
                 // Schedule notifications for the product
-                notificationManager.scheduleNotifications(for: product)
+                await notificationManager.scheduleNotifications(for: product)
                 print("📅 Notifications scheduled for product: \(product.title)")
 
             // Clear error message on success

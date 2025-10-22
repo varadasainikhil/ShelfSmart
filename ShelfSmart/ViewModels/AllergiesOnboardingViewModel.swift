@@ -31,13 +31,7 @@ class AllergiesOnboardingViewModel {
 
     // Save allergies to Firebase and mark onboarding as complete
     @MainActor
-    func saveAllergiesAndCompleteOnboarding() async throws {
-        guard let userId = Auth.auth().currentUser?.uid else {
-            print("❌ No user ID found")
-            errorMessage = "User not authenticated"
-            throw NSError(domain: "AllergiesOnboarding", code: 1, userInfo: [NSLocalizedDescriptionKey: "User not authenticated"])
-        }
-
+    func saveAllergiesAndCompleteOnboarding(userId: String) async throws {
         isSaving = true
         errorMessage = nil
 

@@ -17,6 +17,9 @@ struct RandomRecipeResponse: Codable {
 
 @Observable
 class RandomRecipeViewModel {
+    // MARK: - User ID (Single source of truth)
+    let userId: String
+
     // MARK: - User Allergies (Auto-fetched from Firebase)
     var userAllergies: [String] = []
 
@@ -25,28 +28,27 @@ class RandomRecipeViewModel {
     var selectedCuisines: [String] = []
     var selectedDiets: [String] = []
     var selectedIntolerances: [String] = []
-    
+
     // MARK: - UI State
     var isLoading = false
     var errorMessage: String?
     var searchSuccess = false
-    
+
     // MARK: - Recipe Data (Raw API Response - NOT SwiftData models)
     var currentRecipeId: Int?
     var currentRecipe: Recipe? // Raw API response
     var currentRecipeSummary: FindByIngredientsRecipe? // For ingredient-based searches
-    
+
     // MARK: - Ingredient Search Results
     var foundRecipeIds: [Int] = []
     var foundRecipeSummaries: [FindByIngredientsRecipe] = []
     var ingredientsSearchSuccess = false
 
     // MARK: - Initialization
-    init() {
-        // Fetch user allergies on initialization
-        Task {
-            await fetchUserAllergies()
-        }
+    init(userId: String) {
+        self.userId = userId
+        // ViewModel initialization
+        // Note: Call fetchUserAllergies() manually from views when needed
     }
 
     // MARK: - Computed Properties
@@ -58,11 +60,6 @@ class RandomRecipeViewModel {
 
     /// Fetches user's saved allergies from Firestore and pre-populates selectedIntolerances
     func fetchUserAllergies() async {
-        guard let userId = Auth.auth().currentUser?.uid else {
-            print("⚠️ No user ID found - cannot fetch allergies")
-            return
-        }
-
         do {
             let db = Firestore.firestore()
             let userDoc = try await db.collection("users").document(userId).getDocument()

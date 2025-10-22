@@ -9,6 +9,8 @@ import SwiftUI
 import FirebaseAuth
 
 struct HomeView: View {
+    let userId: String  // Passed from AuthenticatedView
+
     @Environment(\.modelContext) var modelContext
     @State var showingAddProduct : Bool = false
     @State private var addProductViewModel = AddProductViewViewModel()
@@ -16,10 +18,10 @@ struct HomeView: View {
     // Optimized query with predicate-based filtering
     @Query private var groups: [GroupedProducts]
 
-    init() {
-        let currentUserId = Auth.auth().currentUser?.uid ?? ""
+    init(userId: String) {
+        self.userId = userId
         let predicate = #Predicate<GroupedProducts> { group in
-            group.userId == currentUserId
+            group.userId == userId
         }
         self._groups = Query(filter: predicate, sort: \GroupedProducts.expirationDate)
     }
@@ -129,7 +131,7 @@ struct HomeView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .sheet(isPresented: $showingAddProduct, onDismiss: addProductViewModel.resetAllFields) {
-                AddProductView(viewModel: addProductViewModel)
+                AddProductView(userId: userId, viewModel: addProductViewModel)
             }
         }
     }
@@ -347,7 +349,7 @@ private func getGroupStatus(for group: GroupedProducts) -> (message: String, col
             context.insert(group)
         }
         
-        return HomeView()
+        return HomeView(userId: "preview_user_id")
             .modelContainer(container)
     } catch {
         return Text("Preview Error: \(error.localizedDescription)")

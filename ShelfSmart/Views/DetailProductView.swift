@@ -262,7 +262,7 @@ struct DetailProductView: View {
         }
         .sheet(item: $recipeToShow) { sdRecipe in
             NavigationStack {
-                RecipeDetailView(sdRecipe: sdRecipe)
+                RecipeDetailView(userId: product.userId, sdRecipe: sdRecipe)
             }
         }
         .confirmationDialog(

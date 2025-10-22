@@ -228,5 +228,5 @@ struct CuisineCard: View {
 }
 
 #Preview {
-    CuisinesView(viewModel: RandomRecipeViewModel())
+    CuisinesView(viewModel: RandomRecipeViewModel(userId: "preview_user_id"))
 }

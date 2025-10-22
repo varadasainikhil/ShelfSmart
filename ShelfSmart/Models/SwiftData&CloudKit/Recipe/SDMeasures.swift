@@ -18,12 +18,12 @@ class SDMeasures {
 
     // Relationship back to ingredients
     var SDIngredients: SDIngredients?
-    
+
     init(from measures: Measures) {
         self.us = SDMeasure(from: measures.us)
         self.metric = SDMeasure(from: measures.metric)
     }
-    
+
     // Required for SwiftData
     init(us: SDMeasure, metric: SDMeasure) {
         self.us = us

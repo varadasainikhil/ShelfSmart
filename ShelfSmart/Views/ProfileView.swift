@@ -10,10 +10,11 @@ import SwiftData
 import SwiftUI
   
 struct ProfileView: View {
+    let userId: String  // Passed from AuthenticatedView
+
     @Environment(\.modelContext) var modelContext
     @Environment(NotificationManager.self) var notificationManager
-    @State var viewModel = ProfileViewViewModel()
-    @State private var currentUserId: String = Auth.auth().currentUser?.uid ?? ""
+    @State var viewModel: ProfileViewViewModel
     @State private var showDeleteConfirmation = false
     @State private var showDeleteAccountConfirmation = false
     @State private var showReauthAlert = false
@@ -24,31 +25,25 @@ struct ProfileView: View {
     @State private var showDeletionError = false
     @State private var showProfileInfo = false
 
-
-    // Optimized queries with predicates to filter at database level instead of in-memory
-    // This significantly improves performance by reducing data transfer and memory usage
-    @Query private var allGroups: [GroupedProducts]
+    // Database-level filtering with predicates (much better performance)
+    @Query private var groups: [GroupedProducts]
     @Query private var allProducts: [Product]
     @Query private var allRecipes: [SDRecipe]
+    @Query private var likedProducts: [Product]
+    @Query private var likedRecipes: [SDRecipe]
+    @Query private var usedProducts: [Product]
 
-    // Computed properties that filter by current user (filtering happens in getter for reactivity)
-    var groups: [GroupedProducts] {
-        return allGroups.filter { $0.userId == currentUserId }
-    }
+    init(userId: String) {
+        self.userId = userId
+        _viewModel = State(initialValue: ProfileViewViewModel(userId: userId))
 
-    var likedProducts: [Product] {
-        return allProducts.filter { $0.isLiked && $0.userId == currentUserId }
-    }
-
-    var likedRecipes: [SDRecipe] {
-        return allRecipes.filter { $0.isLiked && $0.userId == currentUserId }
-    }
-
-    // Computed property for used products by current user
-    var usedProducts: [Product] {
-        return allProducts.filter { product in
-            product.isUsed && product.userId == currentUserId
-        }
+        // All queries filter at database level for optimal performance
+        self._groups = Query(filter: #Predicate { $0.userId == userId })
+        self._allProducts = Query(filter: #Predicate { $0.userId == userId })
+        self._allRecipes = Query(filter: #Predicate { $0.userId == userId })
+        self._likedProducts = Query(filter: #Predicate { $0.isLiked && $0.userId == userId })
+        self._likedRecipes = Query(filter: #Predicate { $0.isLiked && $0.userId == userId })
+        self._usedProducts = Query(filter: #Predicate { $0.isUsed && $0.userId == userId })
     }
     
     
@@ -101,7 +96,7 @@ struct ProfileView: View {
                         // Liked Products Section
                         VStack(alignment: .leading, spacing: 12) {
                             // Section Header
-                            NavigationLink(destination: AllLikedProductsView()) {
+                            NavigationLink(destination: AllLikedProductsView(userId: userId)) {
                                 HStack {
                                     Text("Liked Products")
                                         .font(.title3)
@@ -171,7 +166,7 @@ struct ProfileView: View {
                         // Liked Recipes Section
                         VStack(alignment: .leading, spacing: 12) {
                             // Section Header
-                            NavigationLink(destination: AllLikedRecipesView()) {
+                            NavigationLink(destination: AllLikedRecipesView(userId: userId)) {
                                 HStack {
                                     Text("Liked Recipes")
                                         .font(.title3)
@@ -193,7 +188,7 @@ struct ProfileView: View {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 12) {
                                         ForEach(Array(likedRecipes.prefix(5)), id: \.self) { recipe in
-                                            NavigationLink(destination: RecipeDetailView(sdRecipe: recipe)) {
+                                            NavigationLink(destination: RecipeDetailView(userId: userId, sdRecipe: recipe)) {
                                                 LikedRecipeCard(recipe: recipe)
                                             }
                                             .buttonStyle(PlainButtonStyle())
@@ -241,7 +236,7 @@ struct ProfileView: View {
                         // Used Products Section
                         VStack(alignment: .leading, spacing: 12) {
                             // Section Header
-                            NavigationLink(destination: AllUsedProductsView()) {
+                            NavigationLink(destination: AllUsedProductsView(userId: userId)) {
                                 HStack {
                                     Text("Used Products")
                                         .font(.title3)
@@ -365,7 +360,6 @@ struct ProfileView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
-                currentUserId = Auth.auth().currentUser?.uid ?? ""
                 Task {
                     await viewModel.getUserName()
                 }
@@ -835,6 +829,6 @@ struct UsedProductCard: View {
 }
 
 #Preview {
-    ProfileView(viewModel: ProfileViewViewModel())
+    ProfileView(userId: "preview_user_id")
 }
 

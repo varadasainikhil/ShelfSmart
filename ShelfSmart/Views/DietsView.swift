@@ -8,9 +8,15 @@
 import SwiftUI
 
 struct DietsView: View {
-    @State private var viewModel = RandomRecipeViewModel()
+    let userId: String  // Passed from AuthenticatedView
+    @State private var viewModel: RandomRecipeViewModel
     @State private var navigateToMealTypes = false
     @State private var navigateToRandomRecipe = false
+
+    init(userId: String) {
+        self.userId = userId
+        _viewModel = State(initialValue: RandomRecipeViewModel(userId: userId))
+    }
     
     // Adaptive grid with better spacing
     private let columns = [
@@ -183,7 +189,13 @@ struct DietsView: View {
             }
             .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(isPresented: $navigateToRandomRecipe) {
-                RandomRecipeView(viewModel: viewModel)
+                RandomRecipeView(viewModel: viewModel, userId: userId)
+            }
+            .onAppear {
+                // Fetch user allergies once when view appears
+                Task {
+                    await viewModel.fetchUserAllergies()
+                }
             }
         }
     }
@@ -264,5 +276,5 @@ struct DietCard: View {
 }
 
 #Preview {
-    DietsView()
+    DietsView(userId: "preview_user_id")
 }

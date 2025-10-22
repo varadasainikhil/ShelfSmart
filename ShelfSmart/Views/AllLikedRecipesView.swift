@@ -10,15 +10,18 @@ import SwiftData
 import SwiftUI
 
 struct AllLikedRecipesView: View {
-    @Environment(\.modelContext) var modelContext
-    @Query(sort: \SDRecipe.id, order: .reverse) private var allRecipes: [SDRecipe]
-    @State private var currentUserId: String = Auth.auth().currentUser?.uid ?? ""
+    let userId: String  // Passed from ProfileView
 
-    // Computed property for liked recipes by current user
-    // Note: Filtering at app level for now since @Query predicates don't support dynamic user IDs well
-    // For better performance with large datasets, consider implementing custom init with FetchDescriptor
-    var likedRecipes: [SDRecipe] {
-        return allRecipes.filter { $0.isLiked && $0.userId == currentUserId }
+    @Environment(\.modelContext) var modelContext
+    @Query private var likedRecipes: [SDRecipe]
+
+    init(userId: String) {
+        self.userId = userId
+        // Query for liked recipes by current user (filtered at database level for better performance)
+        let predicate = #Predicate<SDRecipe> { recipe in
+            recipe.isLiked && recipe.userId == userId
+        }
+        self._likedRecipes = Query(filter: predicate, sort: \SDRecipe.id, order: .reverse)
     }
 
     var body: some View {
@@ -58,7 +61,7 @@ struct AllLikedRecipesView: View {
                 ScrollView {
                     VStack(spacing: 20) {
                         ForEach(likedRecipes, id: \.self) { recipe in
-                            NavigationLink(destination: RecipeDetailView(sdRecipe: recipe)) {
+                            NavigationLink(destination: RecipeDetailView(userId: userId, sdRecipe: recipe)) {
                                 LikedRecipeCardView(recipe: recipe)
                             }
                             .buttonStyle(PlainButtonStyle())
@@ -161,5 +164,5 @@ struct LikedRecipeCardView: View {
 }
 
 #Preview {
-    AllLikedRecipesView()
+    AllLikedRecipesView(userId: "preview_user_id")
 }

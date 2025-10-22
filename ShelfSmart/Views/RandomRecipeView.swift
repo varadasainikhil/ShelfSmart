@@ -10,6 +10,8 @@ import SwiftData
 import FirebaseAuth
 
 struct RandomRecipeView: View {
+    let userId: String  // Passed from DietsView
+
     @Environment(\.modelContext) var modelContext
     @State var viewModel: RandomRecipeViewModel
 
@@ -22,7 +24,8 @@ struct RandomRecipeView: View {
     // Share sheet state
     @State private var shareURL: IdentifiableURL?
 
-    init(viewModel: RandomRecipeViewModel = RandomRecipeViewModel()) {
+    init(viewModel: RandomRecipeViewModel, userId: String) {
+        self.userId = userId
         _viewModel = State(initialValue: viewModel)
     }
 
@@ -171,11 +174,6 @@ struct RandomRecipeView: View {
 
     /// Toggles the like status of the current recipe
     private func toggleLikeRecipe() {
-        guard let userId = Auth.auth().currentUser?.uid else {
-            print("❌ No user ID found")
-            return
-        }
-
         guard let currentRecipe = viewModel.currentRecipe else {
             print("❌ No current recipe")
             return
@@ -575,5 +573,5 @@ struct RecipeInstructionStepView: View {
 }
 
 #Preview {
-    RandomRecipeView()
+    RandomRecipeView(viewModel: RandomRecipeViewModel(userId: "preview_user_id"), userId: "preview_user_id")
 }

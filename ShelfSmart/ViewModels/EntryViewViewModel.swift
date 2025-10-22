@@ -29,7 +29,10 @@ class EntryViewViewModel{
             if let user = user {
                 self.isEmailVerified = user.isEmailVerified
             } else {
+                // User signed out - reset all state
                 self.isEmailVerified = false
+                self.hasCompletedOnboarding = false
+                print("🚪 User signed out - state reset")
             }
         })
     }
