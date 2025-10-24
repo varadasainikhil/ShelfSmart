@@ -15,9 +15,32 @@ struct DetailProductView: View {
     @State private var recipeToShow: SDRecipe?
     @State private var showDeleteConfirmation = false
     @State private var isMarkedAsUsed = false
+    @State private var isDeleting = false
     var product : Product
+
+    // Filter out any invalid or deleted recipes
+    private var validRecipes: [SDRecipe] {
+        guard let recipes = product.recipes else { return [] }
+        return recipes.filter { recipe in
+            // Check if recipe has valid persistent identifier
+            recipe.id != nil
+        }
+    }
+
     var body: some View {
-        ZStack{
+        Group {
+            if isDeleting {
+                // Show loading state during deletion to prevent accessing deleted objects
+                VStack(spacing: 16) {
+                    ProgressView()
+                        .scaleEffect(1.5)
+                    Text("Deleting product...")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else {
+            ZStack{
             // Background Color of the screen
             Rectangle()
                 .fill(product.borderColor.opacity(0.4))
@@ -144,8 +167,8 @@ struct DetailProductView: View {
                             Spacer()
 
                             // Recipe count badge
-                            if let recipes = product.recipes, !recipes.isEmpty {
-                                Text("\(recipes.count)")
+                            if !validRecipes.isEmpty {
+                                Text("\(validRecipes.count)")
                                     .font(.caption.bold())
                                     .foregroundColor(Color(.systemBackground))
                                     .padding(.horizontal, 8)
@@ -154,11 +177,11 @@ struct DetailProductView: View {
                                     .clipShape(Capsule())
                             }
                         }
-                        
+
                         // Recipe Cards Display
-                        if let recipes = product.recipes, !recipes.isEmpty {
+                        if !validRecipes.isEmpty {
                             // Sort recipes by ID to ensure stable order
-                            let sortedRecipes = recipes.sorted { ($0.id ?? 0) < ($1.id ?? 0) }
+                            let sortedRecipes = validRecipes.sorted { ($0.id ?? 0) < ($1.id ?? 0) }
 
                             // Recipe cards grid - 2x2 layout for recipes
                             // Using VStack with HStack instead of LazyVGrid to ensure all images load immediately
@@ -214,6 +237,8 @@ struct DetailProductView: View {
                     
                     Spacer()
                 }
+            }
+        }
             }
         }
         .toolbar {
@@ -315,14 +340,20 @@ struct DetailProductView: View {
         let generator = UIImpactFeedbackGenerator(style: .medium)
         generator.impactOccurred()
 
-        // Use shared delete function with proper error handling
-        do {
-            try ProductHelpers.deleteProduct(product, modelContext: modelContext, notificationManager: notificationManager)
-            // Dismiss after successful deletion
-            dismiss()
-        } catch {
-            print("❌ Failed to delete product: \(error)")
-            // Could show an alert to user here if needed
+        // Set deletion state immediately to prevent view from accessing deleted objects
+        isDeleting = true
+
+        // Perform deletion on the next run loop to allow UI to update
+        Task {
+            do {
+                try ProductHelpers.deleteProduct(product, modelContext: modelContext, notificationManager: notificationManager)
+                // Dismiss after successful deletion
+                dismiss()
+            } catch {
+                print("❌ Failed to delete product: \(error)")
+                // Revert deletion state if it fails
+                isDeleting = false
+            }
         }
     }
 }

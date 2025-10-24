@@ -84,6 +84,9 @@ struct ProductHelpers {
         if let recipes = product.recipes {
             let recipesToDelete = recipes.filter { !$0.isLiked }
 
+            // Clear the recipes array from product first to prevent accessing deleted objects
+            product.recipes?.removeAll(where: { !$0.isLiked })
+
             // Delete non-liked recipes
             for recipe in recipesToDelete {
                 modelContext.delete(recipe)

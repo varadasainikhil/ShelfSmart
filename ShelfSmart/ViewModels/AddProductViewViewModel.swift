@@ -199,13 +199,15 @@ class AddProductViewViewModel {
             let hasValidId = groceryProduct?.id != nil
             let hasValidUPC = !(groceryProduct?.upc?.isEmpty ?? true)
 
+            print()
+            
             if hasValidTitle || hasValidId || hasValidUPC {
                 // Update UI with found product data
                 await MainActor.run {
-                    self.name = groceryProduct?.title ?? "Unknown Product"
-                    self.lastVerifiedBarcode = groceryProduct?.upc ?? ""
-                    self.productDescription = apiResponse.description ?? ""
-                    self.imageLink = apiResponse.image ?? ""
+                    self.name = groceryProduct?.title?.cleanHTMLText ?? "Unknown Product"
+                    self.lastVerifiedBarcode = groceryProduct?.upc?.cleanHTMLText ?? ""
+                    self.productDescription = groceryProduct?.description?.cleanHTMLText ?? ""
+                    self.imageLink = apiResponse.image?.cleanHTMLText ?? ""
                     self.searchSuccess = true
                     self.isLoading = false
                     self.errorMessage = nil // Clear any previous errors

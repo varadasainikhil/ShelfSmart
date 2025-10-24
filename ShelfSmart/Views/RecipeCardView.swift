@@ -11,14 +11,22 @@ struct RecipeCardView: View {
     let sdRecipe: SDRecipe
     let onTap: () -> Void
 
+    // Safe property accessors with defaults to prevent crashes on deleted objects
     private var isLiked: Bool { sdRecipe.isLiked }
+    private var recipeTitle: String { sdRecipe.title ?? "Unknown Recipe" }
+    private var recipeImage: String? { sdRecipe.image }
+    private var readyInMinutes: Int? { sdRecipe.readyInMinutes }
+    private var servings: Int? { sdRecipe.servings }
+    private var isVegetarian: Bool { sdRecipe.vegetarian ?? false }
+    private var isGlutenFree: Bool { sdRecipe.glutenFree ?? false }
+    private var isDairyFree: Bool { sdRecipe.dairyFree ?? false }
 
     var body: some View {
         Button(action: onTap) {
             VStack(alignment: .leading, spacing: 0) {
                 // Recipe Image with Heart Indicator
                 ZStack {
-                    RobustAsyncImage(url: sdRecipe.image) { image in
+                    RobustAsyncImage(url: recipeImage) { image in
                         image
                             .resizable()
                             .scaledToFill()
@@ -51,45 +59,45 @@ struct RecipeCardView: View {
                 // Recipe Info - Fixed height container
                 VStack(alignment: .leading, spacing: 8) {
                     // Recipe Title - Fixed height
-                    Text(sdRecipe.title ?? "Unknown Recipe")
+                    Text(recipeTitle)
                         .font(.headline)
                         .fontWeight(.semibold)
                         .lineLimit(2)
                         .multilineTextAlignment(.leading)
                         .foregroundColor(.primary)
                         .frame(height: 44, alignment: .top) // Fixed height for 2 lines
-                    
+
                     // Recipe Meta Info
                     HStack(spacing: 12) {
                         // Ready Time
-                        if let readyInMinutes = sdRecipe.readyInMinutes {
+                        if let minutes = readyInMinutes {
                             HStack(spacing: 4) {
                                 Image(systemName: "clock")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
-                                Text("\(readyInMinutes)m")
+                                Text("\(minutes)m")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
                         }
-                        
+
                         // Servings
-                        if let servings = sdRecipe.servings {
+                        if let servingCount = servings {
                             HStack(spacing: 4) {
                                 Image(systemName: "fork.knife")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
-                                Text("\(servings)")
+                                Text("\(servingCount)")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
                         }
-                        
+
                         Spacer()
-                        
+
                         // Health badges
                         HStack(spacing: 4) {
-                            if sdRecipe.vegetarian == true {
+                            if isVegetarian {
                                 Text("V")
                                     .font(.caption2.bold())
                                     .foregroundColor(.green)
@@ -97,8 +105,8 @@ struct RecipeCardView: View {
                                     .background(.green.opacity(0.2))
                                     .clipShape(Circle())
                             }
-                            
-                            if sdRecipe.glutenFree == true {
+
+                            if isGlutenFree {
                                 Text("GF")
                                     .font(.caption2.bold())
                                     .foregroundColor(.blue)
@@ -106,8 +114,8 @@ struct RecipeCardView: View {
                                     .background(.blue.opacity(0.2))
                                     .clipShape(Circle())
                             }
-                            
-                            if sdRecipe.dairyFree == true {
+
+                            if isDairyFree {
                                 Text("DF")
                                     .font(.caption2.bold())
                                     .foregroundColor(.purple)
