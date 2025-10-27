@@ -48,6 +48,7 @@ struct ShelfSmartApp: App {
 
     @State private var notificationManager = NotificationManager()
     @State private var modelContainerError: Error?
+    @State private var showSplash = true
 
     // Configure ModelContainer with explicit CloudKit settings
     private var modelContainer: ModelContainer = {
@@ -100,8 +101,14 @@ struct ShelfSmartApp: App {
 
     var body: some Scene {
         WindowGroup {
-            EntryView()
-                .environment(notificationManager)
+            if showSplash {
+                SplashScreenView {
+                    showSplash = false
+                }
+            } else {
+                EntryView()
+                    .environment(notificationManager)
+            }
         }
         .modelContainer(modelContainer)
     }
