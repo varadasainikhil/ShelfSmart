@@ -27,20 +27,23 @@ class AddProductViewViewModel {
     }
     var isLoading : Bool = false
     var isSaving : Bool = false
-    
+
+    // Scanner state
+    var showingScanner : Bool = false
+
     // This is to track the errors
     var errorMessage : String?
-    
+
     // This variable is for tracking the searchProduct success
     var searchSuccess : Bool = false
-    
+
     var lastVerifiedBarcode : String = ""
-    
+
     var searchAttempted : Bool = false
-    
+
     // Store the groceryProduct - created when saving the product
     var groceryProduct : GroceryProduct? = nil
-    
+
     // Product variable to hold the product that is going to be saved to the modelContext
     var product : Product? = nil
     
@@ -60,6 +63,7 @@ class AddProductViewViewModel {
         expirationDate = Calendar.current.date(byAdding: .day, value: 7, to: Date.now) ?? Date.now
         isLoading = false
         isSaving = false
+        showingScanner = false
         errorMessage = nil
         searchSuccess = false
         searchAttempted = false
@@ -76,7 +80,32 @@ class AddProductViewViewModel {
         }
         return apiKey
     }
-    
+
+    // MARK: - Handle Scanned Barcode
+    /// Handles a barcode scanned from the camera
+    /// - Parameters:
+    ///   - code: The scanned barcode string
+    ///   - modelContext: The SwiftData model context for API search
+    func handleScannedBarcode(_ code: String, modelContext: ModelContext) async {
+        print("📷 Handling scanned barcode: \(code)")
+
+        // Update barcode field
+        await MainActor.run {
+            self.barcode = code
+        }
+
+        // Automatically trigger product search
+        do {
+            try await searchProduct(modelContext: modelContext)
+            print("✅ Product search completed for scanned barcode")
+        } catch {
+            print("❌ Error searching for scanned barcode: \(error.localizedDescription)")
+            await MainActor.run {
+                self.errorMessage = "Failed to search for product. Please try again."
+            }
+        }
+    }
+
     // Searches for the product using the barcode
     func searchProduct(modelContext: ModelContext) async throws {
         // Reset state

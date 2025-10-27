@@ -64,6 +64,9 @@ struct AddProductView: View {
                                     Task {
                                         try await viewModel.searchProduct(modelContext: modelContext)
                                     }
+                                },
+                                onScan: {
+                                    viewModel.showingScanner = true
                                 }
                             )
 
@@ -161,6 +164,9 @@ struct AddProductView: View {
             .onAppear {
                 viewModel.resetAllFields()
             }
+            .sheet(isPresented: $viewModel.showingScanner) {
+                BarcodeScannerView(viewModel: viewModel, modelContext: modelContext)
+            }
         }
     }
 }
@@ -174,6 +180,7 @@ struct ModernSearchCard: View {
     let searchSuccess: Bool
     @FocusState.Binding var focusedField: AddProductView.FocusedField?
     let onSearch: () -> Void
+    let onScan: () -> Void
 
     var body: some View {
         VStack(spacing: 16) {
@@ -207,7 +214,7 @@ struct ModernSearchCard: View {
                     .fontWeight(.medium)
                     .foregroundStyle(.primary)
 
-                HStack {
+                HStack(spacing: 8) {
                     TextField("Enter product barcode", text: $barcode)
                         .keyboardType(.decimalPad)
                         .textFieldStyle(PlainTextFieldStyle())
@@ -218,6 +225,18 @@ struct ModernSearchCard: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(Color(.systemGray6))
                         )
+
+                    Button(action: onScan) {
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(Color(.systemBackground))
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(.green)
+                            )
+                    }
 
                     Button(action: {
                         focusedField = nil
