@@ -11,6 +11,7 @@ import SwiftData
 struct DetailProductView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
     @Environment(NotificationManager.self) var notificationManager
     @State private var recipeToShow: SDRecipe?
     @State private var showDeleteConfirmation = false
@@ -27,218 +28,323 @@ struct DetailProductView: View {
         }
     }
 
-    var body: some View {
-        Group {
-            if isDeleting {
-                // Show loading state during deletion to prevent accessing deleted objects
-                VStack(spacing: 16) {
-                    ProgressView()
-                        .scaleEffect(1.5)
-                    Text("Deleting product...")
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
+    // MARK: - Extracted Subviews
+
+    private var deletingStateView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .scaleEffect(1.5)
+            Text("Deleting product...")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var productImageView: some View {
+        ZStack{
+            if let imageLink = product.imageLink, !imageLink.isEmpty {
+                let _ = print("🖼️ DetailProductView - Attempting to load image: \(imageLink)")
+                RobustAsyncImage(url: imageLink) { image in
+                    image
+                        .resizable()
+                        .scaledToFit()
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-            ZStack{
-            // Background Color of the screen
-            Rectangle()
-                .fill(product.borderColor.opacity(0.4))
-                .ignoresSafeArea()
-            
-            ScrollView {
-                VStack{
-                    ZStack{
-                        if let imageLink = product.imageLink, !imageLink.isEmpty {
-                            let _ = print("🖼️ DetailProductView - Attempting to load image: \(imageLink)")
-                            RobustAsyncImage(url: imageLink) { image in
-                                image
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 300, height: 300)
-                                    .clipped()
-                            }
-                        }
-                        else{
-                            Image("placeholder")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 300, height: 300)
-                                .clipped()
-                        }
-                    }
-                    .frame(width: 300, height: 300)
-                    
-                    VStack(spacing: 8) {
-                        Text(product.title)
-                            .font(.title.bold())
-                            .padding(.horizontal)
-                        
-                        // Product type tag
-                        HStack {
-                            Image(systemName: product.spoonacularId != nil ? "cloud.fill" : "person.fill")
-                                .font(.caption)
-                            Text(product.type)
-                                .font(.caption.bold())
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 4)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(product.spoonacularId != nil ? Color.blue.opacity(0.2) : Color.green.opacity(0.2))
+            }
+            else{
+                Image("placeholder")
+                    .resizable()
+                    .scaledToFit()
+            }
+        }
+        .frame(width: 280, height: 280)
+        .clipShape(RoundedRectangle(cornerRadius: 20))
+        .background(
+            RoundedRectangle(cornerRadius: 20)
+                .fill(Color(.systemGray6))
+        )
+        .shadow(color: colorScheme == .dark ? Color.black.opacity(0.5) : Color.black.opacity(0.15), radius: 12, x: 0, y: 6)
+        .shadow(color: colorScheme == .dark ? Color.white.opacity(0.08) : Color.white.opacity(0.6), radius: 4, x: 0, y: -2)
+        .padding(.top, 20)
+    }
+
+    private var productHeaderView: some View {
+        VStack(spacing: 12) {
+            Text(product.title)
+                .font(.title.bold())
+                .padding(.horizontal)
+                .padding(.top, 8)
+
+            // Product type badge with gradient
+            HStack(spacing: 6) {
+                Image(systemName: product.spoonacularId != nil ? "cloud.fill" : "person.fill")
+                    .font(.caption)
+                    .fontWeight(.semibold)
+                Text(product.type)
+                    .font(.caption)
+                    .fontWeight(.semibold)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 6)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(
+                        LinearGradient(
+                            colors: product.spoonacularId != nil
+                                ? [Color.blue.opacity(0.2), Color.blue.opacity(0.1)]
+                                : [Color.green.opacity(0.2), Color.green.opacity(0.1)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
                         )
-                        .foregroundColor(product.spoonacularId != nil ? .blue : .green)
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(
+                        product.spoonacularId != nil ? Color.blue.opacity(0.3) : Color.green.opacity(0.3),
+                        lineWidth: 0.5
+                    )
+            )
+            .foregroundColor(product.spoonacularId != nil ? .blue : .green)
+        }
+    }
+
+    private var statsContainerView: some View {
+        HStack(spacing: 20){
+            // Expiration Date Section
+            VStack(alignment: .center, spacing: 6){
+                HStack(spacing: 4) {
+                    Image(systemName: "calendar")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+
+                    if product.isExpired {
+                        Text("Expired on")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.red)
                     }
-                    
-                    
-                    ZStack{
-                        RoundedRectangle(cornerRadius: 16)
-                            .foregroundStyle(product.borderColor.opacity(0.3))
-                            .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 16))
-                        
-                        HStack(spacing: 20){
-                            
-                            // Expiration Date Section
-                            VStack(alignment: .center, spacing: 4){
-                                HStack(spacing: 4) {
-                                    Image(systemName: "calendar")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                    Text("Expires on")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                Text("\(product.expirationDate.formatted(date: .abbreviated, time: .omitted))")
-                                    .font(.subheadline.bold())
-                                    .foregroundColor(product.isExpired ? .red : .primary)
-                            }
+                    else {
+                        Text("Expires on")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                Text("\(product.expirationDate.formatted(date: .abbreviated, time: .omitted))")
+                    .font(.subheadline)
+                    .fontWeight(.bold)
+                    .foregroundColor(product.isExpired ? .red.opacity(0.9) : .primary)
+            }
+            .frame(maxWidth: .infinity)
+
+            // Soft Divider
+            RoundedRectangle(cornerRadius: 1)
+                .fill(
+                    LinearGradient(
+                        colors: [.secondary.opacity(0.1), .secondary.opacity(0.3), .secondary.opacity(0.1)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .frame(width: 1, height: 44)
+
+            // Ingredients Section
+            VStack(alignment: .center, spacing: 6){
+                HStack(spacing: 4) {
+                    Image(systemName: "list.bullet")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text("Ingredients")
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .foregroundColor(.secondary)
+                }
+                if let ingredientCount = product.ingredientCount {
+                    Text("\(ingredientCount)")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.primary)
+                } else {
+                    Text("N/A")
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.secondary)
+                }
+            }
+            .frame(maxWidth: .infinity)
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color(.secondarySystemBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(
+                    colorScheme == .dark ? Color.white.opacity(0.05) : Color.clear,
+                    lineWidth: 0.5
+                )
+        )
+        .shadow(color: colorScheme == .dark ? Color.black.opacity(0.6) : Color.black.opacity(0.1), radius: 12, x: 0, y: 6)
+        .shadow(color: colorScheme == .dark ? Color.white.opacity(0.08) : Color.white, radius: 2, x: 0, y: -1)
+        .padding(.horizontal, 20)
+        .padding(.top, 8)
+    }
+
+    private var descriptionSection: some View {
+        VStack{
+            if product.productDescription != nil {
+                Text(product.productDescription!)
+            }
+            else if product.generatedText != nil {
+                Text(product.generatedText!)
+            }
+        }
+        .padding()
+    }
+
+    private var recipesSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack{
+                Text("Recipes Using this Product")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                Spacer()
+
+                // Recipe count badge with gradient
+                if !validRecipes.isEmpty {
+                    Text("\(validRecipes.count)")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(
+                            Capsule()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.green, .green.opacity(0.8)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                        )
+                        .shadow(color: .green.opacity(0.3), radius: 4, x: 0, y: 2)
+                }
+            }
+
+            // Recipe Cards Display
+            if !validRecipes.isEmpty {
+                recipeCardsGrid
+            } else {
+                recipeEmptyState
+            }
+        }
+        .padding()
+    }
+
+    private var recipeCardsGrid: some View {
+        let sortedRecipes = validRecipes.sorted { ($0.id ?? 0) < ($1.id ?? 0) }
+
+        return VStack(spacing: 16) {
+            ForEach(0..<(sortedRecipes.count + 1) / 2, id: \.self) { rowIndex in
+                HStack(spacing: 12) {
+                    let startIndex = rowIndex * 2
+                    if startIndex < sortedRecipes.count {
+                        RecipeCardView(sdRecipe: sortedRecipes[startIndex]) {
+                            recipeToShow = sortedRecipes[startIndex]
+                        }
+                        .id("recipe-\(sortedRecipes[startIndex].id ?? 0)")
+                        .frame(maxWidth: .infinity)
+                    }
+
+                    let nextIndex = startIndex + 1
+                    if nextIndex < sortedRecipes.count {
+                        RecipeCardView(sdRecipe: sortedRecipes[nextIndex]) {
+                            recipeToShow = sortedRecipes[nextIndex]
+                        }
+                        .id("recipe-\(sortedRecipes[nextIndex].id ?? 0)")
+                        .frame(maxWidth: .infinity)
+                    } else if startIndex < sortedRecipes.count {
+                        Color.clear
                             .frame(maxWidth: .infinity)
-                            
-                            // Divider
-                            Rectangle()
-                                .fill(Color.secondary.opacity(0.3))
-                                .frame(width: 1, height: 40)
-                            
-                            // Ingredients Section
-                            VStack(alignment: .center, spacing: 4){
-                                HStack(spacing: 4) {
-                                    Image(systemName: "list.bullet")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                    Text("Ingredients")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                if let ingredientCount = product.ingredientCount {
-                                    Text("\(ingredientCount)")
-                                        .font(.title2.bold())
-                                        .foregroundColor(.primary)
-                                } else {
-                                    Text("N/A")
-                                        .font(.title2.bold())
-                                        .foregroundColor(.secondary)
-                                }
-                            }
-                            .frame(maxWidth: .infinity)
-                            
-                        }
-                        .padding(.horizontal, 20)
                     }
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 80)
-                    .padding(.horizontal)
-                    
-                    VStack{
-                        if product.productDescription != nil {
-                            Text(product.productDescription!)
-                        }
-                        else if product.generatedText != nil {
-                            Text(product.generatedText!)
-                        }
-                    }
-                    .padding()
-                    
-                    // Recipes Section
-                    VStack(alignment: .leading, spacing: 16) {
-                        HStack{
-                            Text("Recipes Using this Product")
-                                .font(.title2.bold())
-
-                            Spacer()
-
-                            // Recipe count badge
-                            if !validRecipes.isEmpty {
-                                Text("\(validRecipes.count)")
-                                    .font(.caption.bold())
-                                    .foregroundColor(Color(.systemBackground))
-                                    .padding(.horizontal, 8)
-                                    .padding(.vertical, 4)
-                                    .background(Color.green)
-                                    .clipShape(Capsule())
-                            }
-                        }
-
-                        // Recipe Cards Display
-                        if !validRecipes.isEmpty {
-                            // Sort recipes by ID to ensure stable order
-                            let sortedRecipes = validRecipes.sorted { ($0.id ?? 0) < ($1.id ?? 0) }
-
-                            // Recipe cards grid - 2x2 layout for recipes
-                            // Using VStack with HStack instead of LazyVGrid to ensure all images load immediately
-                            VStack(spacing: 16) {
-                                ForEach(0..<(sortedRecipes.count + 1) / 2, id: \.self) { rowIndex in
-                                    HStack(spacing: 12) {
-                                        let startIndex = rowIndex * 2
-                                        if startIndex < sortedRecipes.count {
-                                            RecipeCardView(sdRecipe: sortedRecipes[startIndex]) {
-                                                recipeToShow = sortedRecipes[startIndex]
-                                            }
-                                            .id("recipe-\(sortedRecipes[startIndex].id ?? 0)")
-                                            .frame(maxWidth: .infinity)
-                                        }
-
-                                        let nextIndex = startIndex + 1
-                                        if nextIndex < sortedRecipes.count {
-                                            RecipeCardView(sdRecipe: sortedRecipes[nextIndex]) {
-                                                recipeToShow = sortedRecipes[nextIndex]
-                                            }
-                                            .id("recipe-\(sortedRecipes[nextIndex].id ?? 0)")
-                                            .frame(maxWidth: .infinity)
-                                        } else if startIndex < sortedRecipes.count {
-                                            // Empty space to maintain grid alignment for odd number of recipes
-                                            Color.clear
-                                                .frame(maxWidth: .infinity)
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            // No recipes found
-                            VStack(spacing: 8) {
-                                Image(systemName: "fork.knife")
-                                    .font(.title2)
-                                    .foregroundColor(.gray)
-                                
-                                Text("No recipes found for this product")
-                                    .font(.body)
-                                    .foregroundColor(.secondary)
-                                
-                                Text("Try adding more specific ingredients or check back later")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                    .multilineTextAlignment(.center)
-                            }
-                            .padding()
-                            .background(Color(.systemGray6))
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                        }
-                    }
-                    .padding()
-                    
-                    Spacer()
                 }
             }
         }
+    }
+
+    private var recipeEmptyState: some View {
+        VStack(spacing: 14) {
+            Circle()
+                .fill(
+                    LinearGradient(
+                        colors: [.orange.opacity(0.15), .orange.opacity(0.08)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .frame(width: 64, height: 64)
+                .overlay {
+                    Image(systemName: "fork.knife")
+                        .font(.title2)
+                        .foregroundColor(.orange.opacity(0.8))
+                }
+                .shadow(color: .orange.opacity(0.15), radius: 8, x: 0, y: 4)
+
+            VStack(spacing: 6) {
+                Text("No recipes found for this product")
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+
+                Text("Try adding more specific ingredients or check back later")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 20)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 32)
+        .padding(.horizontal, 20)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.secondarySystemBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(
+                    colorScheme == .dark ? Color.white.opacity(0.05) : Color.clear,
+                    lineWidth: 0.5
+                )
+        )
+        .shadow(color: colorScheme == .dark ? Color.black.opacity(0.5) : Color.black.opacity(0.06), radius: 8, x: 0, y: 4)
+    }
+
+    private var mainContentView: some View {
+        ScrollView {
+            VStack{
+                productImageView
+                productHeaderView
+                statsContainerView
+                descriptionSection
+                recipesSection
+                Spacer()
+            }
+        }
+    }
+
+    // MARK: - Body
+
+    var body: some View {
+        Group {
+            if isDeleting {
+                deletingStateView
+            } else {
+                mainContentView
             }
         }
         .toolbar {

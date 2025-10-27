@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct RecipeCardView: View {
+    @Environment(\.colorScheme) var colorScheme
     let sdRecipe: SDRecipe
     let onTap: () -> Void
 
@@ -33,7 +34,11 @@ struct RecipeCardView: View {
                     }
                     .frame(height: 120)
                     .clipped()
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 13, style: .continuous)
+                            .stroke(Color.black.opacity(0.05), lineWidth: 0.5)
+                    )
 
                     // Heart indicator overlay (visual only, when liked)
                     if isLiked {
@@ -133,10 +138,18 @@ struct RecipeCardView: View {
         .buttonStyle(RecipeCardButtonStyle())
         .frame(height: 220) // Fixed total height for all cards
         .background(
-            RoundedRectangle(cornerRadius: 12, style: .continuous)
-                .fill(.regularMaterial)
-                .shadow(color: .black.opacity(0.1), radius: 4, x: 0, y: 2)
+            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                .fill(Color(.secondarySystemBackground))
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                .stroke(
+                    colorScheme == .dark ? Color.white.opacity(0.08) : Color.clear,
+                    lineWidth: 0.5
+                )
+        )
+        .shadow(color: colorScheme == .dark ? Color.black.opacity(0.5) : Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
+        .shadow(color: colorScheme == .dark ? Color.white.opacity(0.08) : Color.white.opacity(0.5), radius: 2, x: 0, y: -1)
     }
 }
 

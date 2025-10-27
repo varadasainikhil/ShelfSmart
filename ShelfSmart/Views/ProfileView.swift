@@ -156,9 +156,10 @@ struct ProfileView: View {
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 140)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color(.systemGray6))
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(Color(.secondarySystemBackground))
                                 )
+                                .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 3)
                                 .padding(.horizontal, 20)
                             }
                         }
@@ -226,9 +227,10 @@ struct ProfileView: View {
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 140)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color(.systemGray6))
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(Color(.secondarySystemBackground))
                                 )
+                                .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 3)
                                 .padding(.horizontal, 20)
                             }
                         }
@@ -296,9 +298,10 @@ struct ProfileView: View {
                                 .frame(maxWidth: .infinity)
                                 .frame(height: 140)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color(.systemGray6))
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .fill(Color(.secondarySystemBackground))
                                 )
+                                .shadow(color: Color.black.opacity(0.05), radius: 6, x: 0, y: 3)
                                 .padding(.horizontal, 20)
                             }
                         }
@@ -321,14 +324,21 @@ struct ProfileView: View {
                             Text("Clear All Items")
                                 .fontWeight(.semibold)
                         }
-                        .foregroundStyle(Color(.systemBackground))
+                        .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(.red)
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.red, .red.opacity(0.9)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
                         )
-                        .shadow(color: .red.opacity(0.3), radius: 5, x: 0, y: 2)
+                        .shadow(color: .red.opacity(0.4), radius: 10, x: 0, y: 4)
+                        .shadow(color: .red.opacity(0.2), radius: 2, x: 0, y: 1)
                     }
                     .disabled(groups.isEmpty && likedProducts.isEmpty && likedRecipes.isEmpty && usedProducts.isEmpty)
                     .opacity((groups.isEmpty && likedProducts.isEmpty && likedRecipes.isEmpty && usedProducts.isEmpty) ? 0.6 : 1.0)
@@ -519,9 +529,10 @@ struct ProfileInfoView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(16)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(.systemGray6))
+                        RoundedRectangle(cornerRadius: 13)
+                            .fill(Color(.secondarySystemBackground))
                     )
+                    .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
 
                     // Email Section
                     VStack(alignment: .leading, spacing: 8) {
@@ -537,9 +548,10 @@ struct ProfileInfoView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(16)
                     .background(
-                        RoundedRectangle(cornerRadius: 12)
-                            .fill(Color(.systemGray6))
+                        RoundedRectangle(cornerRadius: 13)
+                            .fill(Color(.secondarySystemBackground))
                     )
+                    .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
 
                     // Edit Allergies Button
                     Button(action: {
@@ -568,9 +580,10 @@ struct ProfileInfoView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(16)
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color(.systemGray6))
+                            RoundedRectangle(cornerRadius: 13)
+                                .fill(Color(.secondarySystemBackground))
                         )
+                        .shadow(color: Color.black.opacity(0.04), radius: 4, x: 0, y: 2)
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
@@ -619,10 +632,17 @@ struct ProfileInfoView: View {
                         .frame(maxWidth: .infinity)
                         .frame(height: 50)
                         .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(.red)
+                            RoundedRectangle(cornerRadius: 14)
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.red, .red.opacity(0.9)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
                         )
-                        .shadow(color: .red.opacity(0.3), radius: 5, x: 0, y: 2)
+                        .shadow(color: .red.opacity(0.4), radius: 10, x: 0, y: 4)
+                        .shadow(color: .red.opacity(0.2), radius: 2, x: 0, y: 1)
                     }
                 }
                 .padding(.horizontal, 20)
@@ -647,10 +667,11 @@ struct ProfileInfoView: View {
 
 // MARK: - Liked Product Card Component
 struct LikedProductCard: View {
+    @Environment(\.colorScheme) var colorScheme
     let product: Product
 
     var body: some View {
-        VStack(alignment: .center, spacing: 8) {
+        let cardContent = VStack(alignment: .center, spacing: 8) {
             // Product Image
             ZStack {
                 if let imageLink = product.imageLink, !imageLink.isEmpty {
@@ -668,7 +689,7 @@ struct LikedProductCard: View {
                         .frame(width: 80, height: 80)
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
-                
+
                 // Heart indicator overlay
                 VStack {
                     HStack {
@@ -689,7 +710,7 @@ struct LikedProductCard: View {
             .frame(width: 80, height: 80)
             .background(Color(.systemGray5))
             .clipShape(RoundedRectangle(cornerRadius: 10))
-            
+
             // Product Info
             VStack(alignment: .center, spacing: 2) {
                 Text(product.title)
@@ -704,24 +725,31 @@ struct LikedProductCard: View {
         }
         .frame(width: 100, height: 120)
         .padding(8)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemGray6))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(product.borderColor.opacity(0.3), lineWidth: 1)
-                )
-        )
-        .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 1)
+
+        return cardContent
+            .background(
+                RoundedRectangle(cornerRadius: 13)
+                    .fill(Color(.secondarySystemBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 13)
+                    .stroke(
+                        colorScheme == .dark ? Color.white.opacity(0.06) : product.borderColor.opacity(0.15),
+                        lineWidth: 0.5
+                    )
+            )
+            .shadow(color: colorScheme == .dark ? Color.black.opacity(0.4) : Color.black.opacity(0.1), radius: 8, x: 0, y: 3)
+            .shadow(color: colorScheme == .dark ? Color.white.opacity(0.05) : Color.white.opacity(0.6), radius: 1, x: 0, y: -1)
     }
 }
 
 // MARK: - Liked Recipe Card Component
 struct LikedRecipeCard: View {
+    @Environment(\.colorScheme) var colorScheme
     let recipe: SDRecipe
 
-    var body: some View {
-        VStack(alignment: .center, spacing: 8) {
+    var body: some View{
+        let cardContent = VStack(alignment: .center, spacing: 8) {
             // Recipe Image
             ZStack {
                 if let imageLink = recipe.image, !imageLink.isEmpty {
@@ -781,24 +809,31 @@ struct LikedRecipeCard: View {
         }
         .frame(width: 100, height: 120)
         .padding(8)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemGray6))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(.orange.opacity(0.3), lineWidth: 1)
-                )
-        )
-        .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 1)
+
+        return cardContent
+            .background(
+                RoundedRectangle(cornerRadius: 13)
+                    .fill(Color(.secondarySystemBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 13)
+                    .stroke(
+                        colorScheme == .dark ? Color.white.opacity(0.06) : Color.orange.opacity(0.15),
+                        lineWidth: 0.5
+                    )
+            )
+            .shadow(color: colorScheme == .dark ? Color.black.opacity(0.4) : Color.black.opacity(0.1), radius: 8, x: 0, y: 3)
+            .shadow(color: colorScheme == .dark ? Color.white.opacity(0.05) : Color.white.opacity(0.6), radius: 1, x: 0, y: -1)
     }
 }
 
 // MARK: - Used Product Card Component
 struct UsedProductCard: View {
+    @Environment(\.colorScheme) var colorScheme
     let product: Product
 
     var body: some View {
-        VStack(alignment: .center, spacing: 8) {
+        let cardContent = VStack(alignment: .center, spacing: 8) {
             // Product Image
             ZStack {
                 if let imageLink = product.imageLink, !imageLink.isEmpty {
@@ -855,15 +890,21 @@ struct UsedProductCard: View {
         }
         .frame(width: 100, height: 120)
         .padding(8)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color(.systemGray6))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(.blue.opacity(0.3), lineWidth: 1)
-                )
-        )
-        .shadow(color: .black.opacity(0.08), radius: 3, x: 0, y: 1)
+
+        return cardContent
+            .background(
+                RoundedRectangle(cornerRadius: 13)
+                    .fill(Color(.secondarySystemBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 13)
+                    .stroke(
+                        colorScheme == .dark ? Color.white.opacity(0.06) : Color.blue.opacity(0.15),
+                        lineWidth: 0.5
+                    )
+            )
+            .shadow(color: colorScheme == .dark ? Color.black.opacity(0.4) : Color.black.opacity(0.1), radius: 8, x: 0, y: 3)
+            .shadow(color: colorScheme == .dark ? Color.white.opacity(0.05) : Color.white.opacity(0.6), radius: 1, x: 0, y: -1)
     }
 }
 

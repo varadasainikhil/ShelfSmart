@@ -30,11 +30,12 @@ struct HomeView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 // Header Section
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 10) {
                     HStack {
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text("Your")
                                 .font(.title2)
+                                .fontWeight(.medium)
                                 .foregroundStyle(.secondary)
                             Text("Products")
                                 .font(.largeTitle)
@@ -44,14 +45,14 @@ struct HomeView: View {
                         Spacer()
                     }
                     .padding(.horizontal, 20)
-                    .padding(.top, 10)
-                    
+                    .padding(.top, 12)
+
                     // Subtitle
                     Text("Track expiration dates and manage your shelf")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .padding(.horizontal, 20)
-                        .padding(.bottom, 20)
+                        .padding(.bottom, 24)
                 }
                 
                 // Content Section
@@ -113,15 +114,19 @@ struct HomeView: View {
                                 impactFeedback.impactOccurred()
                                 showingAddProduct = true
                             } label: {
-                                Circle()
-                                    .fill(.green)
-                                    .frame(width: 56, height: 56)
-                                    .overlay {
-                                        Image(systemName: "plus")
-                                            .font(.system(size: 24, weight: .semibold))
-                                            .foregroundStyle(Color(.systemBackground))
-                                    }
-                                    .shadow(color: .green.opacity(0.3), radius: 8, x: 0, y: 4)
+                                ZStack {
+                                    // Outer glow
+                                    Circle()
+                                        .fill(.green)
+                                        .frame(width: 60, height: 60)
+                                        .shadow(color: .green.opacity(0.4), radius: 12, x: 0, y: 6)
+                                        .shadow(color: .green.opacity(0.2), radius: 4, x: 0, y: 2)
+
+                                    // Icon
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 26, weight: .semibold))
+                                        .foregroundStyle(.white)
+                                }
                             }
                             .padding(.trailing, 20)
                             .padding(.bottom, 34)
@@ -139,6 +144,7 @@ struct HomeView: View {
 
 // MARK: - Enhanced Group View Component
 struct EnhancedGroupView: View {
+    @Environment(\.colorScheme) var colorScheme
     var group: GroupedProducts
 
     // Computed property to filter out used products
@@ -147,37 +153,46 @@ struct EnhancedGroupView: View {
     }
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 14) {
             // Group Header
-            HStack {
+            HStack(spacing: 12) {
                 let status = getGroupStatus(for: group)
 
-                VStack(alignment: .leading, spacing: 2) {
+                VStack(alignment: .leading, spacing: 3) {
                     Text(status.message)
                         .font(.subheadline)
-                        .fontWeight(.semibold)
+                        .fontWeight(.medium)
                         .foregroundStyle(status.color)
 
                     Text("\(activeProducts.count) item\(activeProducts.count == 1 ? "" : "s")")
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.tertiary)
                 }
-                
+
                 Spacer()
-                
-                // Status indicator
-                Circle()
-                    .fill(status.color.opacity(0.2))
-                    .frame(width: 32, height: 32)
-                    .overlay {
-                        Image(systemName: status.icon)
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(status.color)
-                    }
+
+                // Status indicator with gradient
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [status.color.opacity(0.2), status.color.opacity(0.1)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 36, height: 36)
+
+                    Image(systemName: status.icon)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(status.color.opacity(0.9))
+                }
+                // Soft shadow for indicator
+                .shadow(color: status.color.opacity(0.2), radius: 4, x: 0, y: 2)
             }
-            
+
             // Products in group (only active/non-used)
-            VStack(spacing: 8) {
+            VStack(spacing: 10) {
                 ForEach(activeProducts, id: \.id) { product in
                     NavigationLink(destination: DetailProductView(product: product)) {
                         EnhancedCardView(product: product)
@@ -186,12 +201,23 @@ struct EnhancedGroupView: View {
                 }
             }
         }
-        .padding(16)
+        .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 16)
-                .fill(Color(.systemBackground))
-                .shadow(color: Color(.label).opacity(0.05), radius: 8, x: 0, y: 2)
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color(.secondarySystemBackground))
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(
+                    colorScheme == .dark
+                        ? Color.white.opacity(0.05)
+                        : Color.clear,
+                    lineWidth: 0.5
+                )
+        )
+        // Neumorphic shadows - outer depth
+        .shadow(color: colorScheme == .dark ? Color.black.opacity(0.7) : Color.black.opacity(0.1), radius: 16, x: 0, y: 6)
+        .shadow(color: colorScheme == .dark ? Color.white.opacity(0.08) : Color.white, radius: 2, x: 0, y: -1)
     }
 }
 
@@ -199,11 +225,13 @@ struct EnhancedGroupView: View {
 struct EnhancedCardView: View {
     @Environment(\.modelContext) var modelContext
     @Environment(NotificationManager.self) var notificationManager
+    @Environment(\.colorScheme) var colorScheme
     var product: Product
 
-    var body: some View {
-        HStack(spacing: 12) {
-            // Product Image
+    // MARK: - Subviews (extracted to help compiler type-checking)
+
+    private var productImageView: some View {
+        ZStack(alignment: .topTrailing) {
             Group {
                 if let imageLink = product.imageLink, !imageLink.isEmpty {
                     RobustAsyncImage(url: imageLink) { image in
@@ -217,71 +245,127 @@ struct EnhancedCardView: View {
                         .scaledToFill()
                 }
             }
-            .frame(width: 60, height: 60)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .frame(width: 68, height: 68)
+            .clipShape(RoundedRectangle(cornerRadius: 13))
             .background(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: 13)
                     .fill(Color(.systemGray6))
             )
-            
-            // Product Info
-            VStack(alignment: .leading, spacing: 4) {
-                Text(product.title)
-                    .font(.body)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
-                    .strikethrough(product.isUsed, color: .primary)
-                
-                if let description = product.productDescription ?? product.generatedText {
-                    Text(description)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-                
-                if let brand = product.brand, !brand.isEmpty {
-                    Text(brand)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                }
-            }
+            .shadow(color: colorScheme == .dark ? Color.black.opacity(0.4) : Color.black.opacity(0.1), radius: 4, x: 2, y: 2)
+            .shadow(color: colorScheme == .dark ? Color.white.opacity(0.12) : Color.white.opacity(0.8), radius: 3, x: -1, y: -1)
 
-            Spacer()
-
-            // Action Button - Trash for expired, Mark as Used for others
-            Button(action: {
-                if product.isExpired {
-                    handleDeleteExpiredProduct(product: product, modelContext: modelContext, notificationManager: notificationManager)
-                } else {
-                    handleMarkAsUsed(product: product, modelContext: modelContext, notificationManager: notificationManager)
-                }
-            }) {
-                if product.isExpired {
-                    Image(systemName: "trash.fill")
-                        .font(.system(size: 24, weight: .semibold))
-                        .foregroundStyle(.red)
-                } else {
-                    Image(systemName: product.isUsed ? "checkmark.circle.fill" : "checkmark.circle")
-                        .font(.system(size: 24, weight: .semibold))
-                        .foregroundStyle(product.isUsed ? .green : .gray)
-                }
+            if product.isExpired {
+                expirationBadge
             }
-            .buttonStyle(PlainButtonStyle())
-            .padding(.trailing, 4)
         }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(product.borderColor.opacity(0.05))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(product.borderColor.opacity(0.3), lineWidth: 1)
-                )
-        )
-        .opacity(product.isUsed ? 0.6 : 1.0)
-        .grayscale(product.isUsed ? 0.8 : 0.0)
+    }
+
+    private var expirationBadge: some View {
+        Circle()
+            .fill(.red)
+            .frame(width: 26, height: 26)
+            .overlay {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+            .shadow(color: .red.opacity(0.4), radius: 4, x: 0, y: 2)
+            .offset(x: 5, y: -5)
+    }
+
+    private var productInfoView: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(product.title)
+                .font(.body)
+                .fontWeight(.semibold)
+                .foregroundStyle(.primary)
+                .lineLimit(2)
+                .strikethrough(product.isUsed, color: .primary)
+
+            if let description = product.productDescription ?? product.generatedText {
+                Text(description)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            if let brand = product.brand, !brand.isEmpty {
+                Text(brand)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+            }
+        }
+    }
+
+    private var actionButton: some View {
+        Button(action: {
+            if product.isExpired {
+                handleDeleteExpiredProduct(product: product, modelContext: modelContext, notificationManager: notificationManager)
+            } else {
+                handleMarkAsUsed(product: product, modelContext: modelContext, notificationManager: notificationManager)
+            }
+        }) {
+            if product.isExpired {
+                Image(systemName: "trash.fill")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(.red.opacity(0.8))
+            } else {
+                Image(systemName: product.isUsed ? "checkmark.circle.fill" : "checkmark.circle")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(product.isUsed ? .green : .gray.opacity(0.6))
+            }
+        }
+        .buttonStyle(PlainButtonStyle())
+        .frame(width: 44, height: 44)
+    }
+
+    private var cardContent: some View {
+        HStack(spacing: 14) {
+            productImageView
+            productInfoView
+            Spacer(minLength: 8)
+            actionButton
+        }
+    }
+
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: 13)
+            .fill(Color(.systemBackground))
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: 13)
+            .stroke(
+                colorScheme == .dark
+                    ? Color.white.opacity(0.08)
+                    : Color.clear,
+                lineWidth: 0.5
+            )
+    }
+
+    // MARK: - Body
+
+    var body: some View {
+        cardContent
+            .padding(14)
+            .background(cardBackground)
+            .overlay(cardBorder)
+            .shadow(
+                color: colorScheme == .dark ? Color.black.opacity(0.6) : Color.black.opacity(0.08),
+                radius: 10,
+                x: 0,
+                y: 4
+            )
+            .shadow(
+                color: colorScheme == .dark ? Color.white.opacity(0.1) : Color.white.opacity(0.5),
+                radius: 2,
+                x: 0,
+                y: -1
+            )
+            .opacity(product.isUsed ? 0.6 : 1.0)
+            .grayscale(product.isUsed ? 0.8 : 0.0)
     }
 }
 

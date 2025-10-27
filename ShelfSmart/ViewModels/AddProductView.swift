@@ -166,6 +166,7 @@ struct AddProductView: View {
 }
 // MARK: - Modern Search Card
 struct ModernSearchCard: View {
+    @Environment(\.colorScheme) var colorScheme
     @Binding var barcode: String
     let isLoading: Bool
     let isDisabled: Bool
@@ -284,15 +285,24 @@ struct ModernSearchCard: View {
         }
         .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 18)
                 .fill(Color(.secondarySystemBackground))
-                .shadow(color: Color(.label).opacity(0.05), radius: 8, x: 0, y: 2)
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(
+                    colorScheme == .dark ? Color.white.opacity(0.05) : Color.clear,
+                    lineWidth: 0.5
+                )
+        )
+        .shadow(color: colorScheme == .dark ? Color.black.opacity(0.6) : Color.black.opacity(0.1), radius: 12, x: 0, y: 6)
+        .shadow(color: colorScheme == .dark ? Color.white.opacity(0.08) : Color.white, radius: 2, x: 0, y: -1)
     }
 }
 
 // MARK: - Modern Product Preview Card
 struct ModernProductPreviewCard: View {
+    @Environment(\.colorScheme) var colorScheme
     let name: String
     let description: String
     let barcode: String
@@ -373,15 +383,24 @@ struct ModernProductPreviewCard: View {
         }
         .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 18)
                 .fill(Color(.secondarySystemBackground))
-                .shadow(color: Color(.label).opacity(0.05), radius: 8, x: 0, y: 2)
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(
+                    colorScheme == .dark ? Color.white.opacity(0.05) : Color.clear,
+                    lineWidth: 0.5
+                )
+        )
+        .shadow(color: colorScheme == .dark ? Color.black.opacity(0.6) : Color.black.opacity(0.1), radius: 12, x: 0, y: 6)
+        .shadow(color: colorScheme == .dark ? Color.white.opacity(0.08) : Color.white, radius: 2, x: 0, y: -1)
     }
 }
 
 // MARK: - Modern Manual Entry Card
 struct ModernManualEntryCard: View {
+    @Environment(\.colorScheme) var colorScheme
     @Binding var name: String
     @Binding var description: String
     @Binding var expirationDate: Date
@@ -496,15 +515,24 @@ struct ModernManualEntryCard: View {
         }
         .padding(20)
         .background(
-            RoundedRectangle(cornerRadius: 16)
+            RoundedRectangle(cornerRadius: 18)
                 .fill(Color(.secondarySystemBackground))
-                .shadow(color: Color(.label).opacity(0.05), radius: 8, x: 0, y: 2)
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(
+                    colorScheme == .dark ? Color.white.opacity(0.05) : Color.clear,
+                    lineWidth: 0.5
+                )
+        )
+        .shadow(color: colorScheme == .dark ? Color.black.opacity(0.6) : Color.black.opacity(0.1), radius: 12, x: 0, y: 6)
+        .shadow(color: colorScheme == .dark ? Color.white.opacity(0.08) : Color.white, radius: 2, x: 0, y: -1)
     }
 }
 
 // MARK: - Modern Save Button
 struct ModernSaveButton: View {
+    @Environment(\.colorScheme) var colorScheme
     let searchSuccess: Bool
     let isSaving: Bool
     let isDisabled: Bool
@@ -530,10 +558,22 @@ struct ModernSaveButton: View {
             .padding(.vertical, 18)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(isDisabled ? Color(.systemGray4) : .green)
-                    .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 16))
-                    .shadow(color: isDisabled ? .clear : .green.opacity(0.4), radius: 12, x: 0, y: 6)
+                    .fill(
+                        isDisabled
+                            ? LinearGradient(
+                                colors: [Color(.systemGray4), Color(.systemGray4)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                            : LinearGradient(
+                                colors: [.green, .green.opacity(0.9)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                    )
             )
+            .shadow(color: isDisabled ? .clear : (colorScheme == .dark ? Color.green.opacity(0.5) : Color.green.opacity(0.4)), radius: 14, x: 0, y: 6)
+            .shadow(color: isDisabled ? .clear : Color.green.opacity(0.2), radius: 4, x: 0, y: 2)
         }
         .buttonStyle(PlainButtonStyle())
         .disabled(isDisabled)

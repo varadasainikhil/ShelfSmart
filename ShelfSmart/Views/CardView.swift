@@ -15,7 +15,7 @@ struct CardView: View {
         
         ZStack{
             RoundedRectangle(cornerRadius: 12)
-                .fill(product.borderColor.opacity(0.15))
+                .fill(Color(.systemBackground))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(product.borderColor, lineWidth: 2)
