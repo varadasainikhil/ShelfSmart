@@ -207,6 +207,41 @@ struct ModernSearchCard: View {
                     }
             }
 
+            // Camera Scan Button - Full Width
+            Button(action: onScan) {
+                HStack(spacing: 10) {
+                    Image(systemName: "camera.fill")
+                        .font(.system(size: 18, weight: .semibold))
+                    Text("Scan Barcode")
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                }
+                .foregroundStyle(Color(.systemBackground))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(.green)
+                )
+            }   
+
+            // "or" Divider
+            HStack(spacing: 12) {
+                Rectangle()
+                    .frame(height: 1)
+                    .foregroundStyle(Color(.systemGray4))
+
+                Text("or")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                Rectangle()
+                    .frame(height: 1)
+                    .foregroundStyle(Color(.systemGray4))
+            }
+            .padding(.top, 12)
+            //.padding(.bottom, 6)
+
             // Barcode Input
             VStack(alignment: .leading, spacing: 8) {
                 Text("Barcode")
@@ -225,18 +260,6 @@ struct ModernSearchCard: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .fill(Color(.systemGray6))
                         )
-
-                    Button(action: onScan) {
-                        Image(systemName: "camera.fill")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(Color(.systemBackground))
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 12)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(.green)
-                            )
-                    }
 
                     Button(action: {
                         focusedField = nil
