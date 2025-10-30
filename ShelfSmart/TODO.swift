@@ -13,8 +13,6 @@ import Foundation
 // TODO: 10. Add a setting menu to ask the user if the wants notifications with sound or not.
 // TODO: 11. Add a feature that allows the user to remind her about the product on the day she chooses - the date should not exceed the date of expiry.
 
-// TODO: 3. Add a one parameter at a time sign up process - User first enters email, clicks next, enters password and confirms it.
-// TODO: 4. Try to add a method to share recipes
 // TODO: 5. Make the UI uniform : Button with glass effect.
 // TODO: Make the UI For adding products like 2 options with half sheet - enter barcode or add yourself? Clicking on add yourself will open a new sheet to add name, description and expiration date.
 

@@ -8,9 +8,8 @@
 import SwiftUI
 
 struct ForgotPasswordView: View {
-    @State var viewModel: LoginViewViewModel
+    @State var viewModel: PasswordAuthViewModel
     @Environment(\.dismiss) private var dismiss
-    var onNavigateToSignUp: (() -> Void)?
 
     var body: some View {
         NavigationStack {
@@ -133,20 +132,18 @@ struct ForgotPasswordView: View {
             }
             .alert("Error", isPresented: $viewModel.showingResetError) {
                 if viewModel.shouldShowSignUpOption {
-                    Button("Sign Up") {
+                    Button("OK") {
                         dismiss()
-                        onNavigateToSignUp?()
                     }
-                    Button("Try Again") { }
                 } else if viewModel.shouldShowAppleSignInOptions {
-                    Button("Go to Login") {
+                    Button("OK") {
                         dismiss()
                     }
                     Button("Try Different Email") {
                         viewModel.forgotPasswordEmail = ""
                     }
                 } else {
-                    Button("Try Again") { }
+                    Button("OK") { }
                 }
             } message: {
                 Text(viewModel.resetErrorMessage)
@@ -156,5 +153,5 @@ struct ForgotPasswordView: View {
 }
 
 #Preview {
-    ForgotPasswordView(viewModel: LoginViewViewModel(), onNavigateToSignUp: nil)
+    ForgotPasswordView(viewModel: PasswordAuthViewModel(email: "user@example.com", isSignUpMode: false))
 }

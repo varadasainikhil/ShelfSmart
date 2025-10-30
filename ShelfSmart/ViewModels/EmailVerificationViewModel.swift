@@ -119,20 +119,39 @@ final class EmailVerificationViewModel {
     private func createUserInFirestore(_ firebaseUser: FirebaseAuth.User) async {
         let db = Firestore.firestore()
         let userId = firebaseUser.uid
+        let userEmail = firebaseUser.email ?? ""
 
         do {
+            // 1. Fetch the pending user name from authUsers collection
+            let hashedEmail = AuthHelpers.hashEmail(userEmail)
+            let authUserDocRef = db.collection("authUsers").document(hashedEmail)
+            let authUserDoc = try await authUserDocRef.getDocument()
+
+            var userName = userFullName // Default to passed value
+            if let pendingName = authUserDoc.data()?["pendingUserName"] as? String, !pendingName.isEmpty {
+                userName = pendingName
+                print("📥 Retrieved pending user name from authUsers: \(pendingName)")
+            }
+
+            // 2. Update authUsers document with signUpMethod only (remove pendingUserName)
+            try await authUserDocRef.setData([
+                "signUpMethod": "email_password"
+            ], merge: true)
+            print("✅ authUsers document updated for email_password user")
+
+            // 3. Create user document in users collection
             let user = User(
-                name: userFullName,
-                email: firebaseUser.email ?? "",
+                name: userName,
+                email: userEmail,
                 signupMethod: "email_password",
                 isEmailVerified: true,
                 emailVerificationSentAt: Date()
             )
 
             try db.collection("users").document(userId).setData(from: user)
-            print("Verified user with ID: \(userId) added to Firestore")
+            print("✅ Verified user with ID: \(userId) added to Firestore")
         } catch {
-            print("Error adding verified user to Firestore: \(error.localizedDescription)")
+            print("❌ Error adding verified user to Firestore: \(error.localizedDescription)")
         }
     }
 

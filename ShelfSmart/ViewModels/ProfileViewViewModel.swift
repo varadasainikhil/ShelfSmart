@@ -22,6 +22,13 @@ class ProfileViewViewModel{
     }
 
     func getUserName() async{
+        // Guard: Check if user is still authenticated
+        // This prevents errors during account deletion or sign-out
+        guard Auth.auth().currentUser != nil else {
+            print("ℹ️ User not authenticated - skipping user name fetch")
+            return
+        }
+
         let db = Firestore.firestore()
         do{
             let user = try await db.collection("users").document(userId).getDocument(as: User.self)
@@ -122,13 +129,41 @@ class ProfileViewViewModel{
         }
 
         let userId = user.uid
+        let userEmail = user.email
         let db = Firestore.firestore()
 
         print("🗑️ Starting account deletion for user: \(userId)")
 
-        // Step 1: Delete Firebase Auth account FIRST
-        // This ensures that if re-authentication is required, no data is deleted yet
-        print("🗑️ Step 1: Deleting Firebase Auth account...")
+        // Step 1: Delete Firestore documents FIRST (while user is still authenticated)
+        // This ensures security rules pass since request.auth is still valid
+        print("🗑️ Step 1: Deleting Firestore user document...")
+        do {
+            try await db.collection("users").document(userId).delete()
+            print("✅ Firestore user document deleted successfully")
+        } catch {
+            print("⚠️ Failed to delete Firestore document: \(error.localizedDescription)")
+            // Continue with deletion process even if Firestore fails
+        }
+
+        // Step 1.5: Delete authUsers document
+        // This document uses hashed email as the ID and stores authentication method
+        print("🗑️ Step 1.5: Deleting authUsers document...")
+        if let userEmail = userEmail {
+            let hashedEmail = AuthHelpers.hashEmail(userEmail)
+            do {
+                try await db.collection("authUsers").document(hashedEmail).delete()
+                print("✅ authUsers document deleted successfully")
+            } catch {
+                print("⚠️ Failed to delete authUsers document: \(error.localizedDescription)")
+                // Continue with deletion process even if authUsers fails
+            }
+        } else {
+            print("⚠️ No email found for user - skipping authUsers deletion")
+        }
+
+        // Step 2: Delete Firebase Auth account
+        // This must happen AFTER Firestore deletion to maintain authentication for security rules
+        print("🗑️ Step 2: Deleting Firebase Auth account...")
         do {
             try await user.delete()
             print("✅ Firebase Auth account deleted successfully")
@@ -141,17 +176,6 @@ class ProfileViewViewModel{
                 print("❌ Failed to delete Firebase Auth account: \(error.localizedDescription)")
                 throw error
             }
-        }
-
-        // Step 2: Delete Firestore user document
-        // Only reached if Firebase Auth deletion succeeded
-        print("🗑️ Step 2: Deleting Firestore user document...")
-        do {
-            try await db.collection("users").document(userId).delete()
-            print("✅ Firestore user document deleted successfully")
-        } catch {
-            print("⚠️ Failed to delete Firestore document: \(error.localizedDescription)")
-            // Continue even if Firestore fails - account is already deleted
         }
 
         // Step 3: Delete all local SwiftData (products, groups, recipes)

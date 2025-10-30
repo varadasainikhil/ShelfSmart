@@ -60,6 +60,17 @@ class RandomRecipeViewModel {
 
     /// Fetches user's saved allergies from Firestore and pre-populates selectedIntolerances
     func fetchUserAllergies() async {
+        // Guard: Check if user is still authenticated
+        // This prevents errors during account deletion or sign-out
+        guard Auth.auth().currentUser != nil else {
+            print("ℹ️ User not authenticated - skipping allergy fetch")
+            await MainActor.run {
+                self.userAllergies = []
+                self.selectedIntolerances = []
+            }
+            return
+        }
+
         do {
             let db = Firestore.firestore()
             let userDoc = try await db.collection("users").document(userId).getDocument()

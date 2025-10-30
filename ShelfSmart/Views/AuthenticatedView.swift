@@ -10,7 +10,6 @@ import SwiftData
 import FirebaseAuth
 
 struct AuthenticatedView: View {
-    @State var authManager : SignUpViewViewModel
     let userId: String  // Explicit parameter to ensure correct user filtering
 
     // Environment
@@ -26,8 +25,7 @@ struct AuthenticatedView: View {
     // Rate limiting for foreground sync (minimum 60 seconds between syncs)
     @State private var lastSyncTime: Date?
 
-    init(authManager: SignUpViewViewModel, userId: String) {
-        _authManager = State(initialValue: authManager)
+    init(userId: String) {
         self.userId = userId
 
         // Query all products for the current user using explicit userId
@@ -91,5 +89,5 @@ struct AuthenticatedView: View {
 }
 
 #Preview {
-    AuthenticatedView(authManager: SignUpViewViewModel(), userId: "preview_user_id")
+    AuthenticatedView(userId: "preview_user_id")
 }

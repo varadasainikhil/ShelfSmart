@@ -620,7 +620,13 @@ struct ProfileInfoView: View {
                         let impactFeedback = UIImpactFeedbackGenerator(style: .light)
                         impactFeedback.impactOccurred()
                         dismiss() // Dismiss the sheet first
-                        onDeleteAccount() // Then trigger deletion
+
+                        // Add a small delay to ensure the sheet has fully dismissed
+                        // before presenting the confirmation dialog
+                        Task { @MainActor in
+                            try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
+                            onDeleteAccount() // Then trigger deletion
+                        }
                     }) {
                         HStack {
                             Image(systemName: "trash.fill")

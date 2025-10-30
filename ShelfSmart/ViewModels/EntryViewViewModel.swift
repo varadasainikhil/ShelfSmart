@@ -45,7 +45,10 @@ class EntryViewViewModel{
     }
 
     func refreshUserStatus() async {
-        guard let currentUser = Auth.auth().currentUser else { return }
+        guard let currentUser = Auth.auth().currentUser else {
+            // User not authenticated - silently return
+            return
+        }
 
         do {
             // Reload user to get latest verification status
@@ -70,7 +73,15 @@ class EntryViewViewModel{
                 }
             }
         } catch {
-            print("❌ Error refreshing user status: \(error.localizedDescription)")
+            // Check if this is a permission error (expected during account deletion/sign-out)
+            let nsError = error as NSError
+            if nsError.domain == "FIRFirestoreErrorDomain" && nsError.code == 7 {
+                // Code 7 = PERMISSION_DENIED - expected during deletion/sign-out
+                print("ℹ️ Permission denied during user status refresh (expected during sign-out)")
+            } else {
+                print("❌ Error refreshing user status: \(error.localizedDescription)")
+            }
+
             // On error, default to requiring onboarding
             await MainActor.run {
                 self.hasCompletedOnboarding = false
