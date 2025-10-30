@@ -133,9 +133,9 @@ final class EmailVerificationViewModel {
                 print("📥 Retrieved pending user name from authUsers: \(pendingName)")
             }
 
-            // 2. Update authUsers document with signUpMethod only (remove pendingUserName)
+            // 2. Update authUsers document with signupMethod only (remove pendingUserName)
             try await authUserDocRef.setData([
-                "signUpMethod": "email_password"
+                "signupMethod": "email_password"
             ], merge: true)
             print("✅ authUsers document updated for email_password user")
 

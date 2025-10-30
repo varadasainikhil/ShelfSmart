@@ -100,9 +100,9 @@ class WelcomeAuthViewModel {
         let authUserDoc = try await db.collection("authUsers").document(hashedEmail).getDocument()
 
         if authUserDoc.exists {
-            // Document exists - get the signUpMethod
-            let signUpMethod = authUserDoc.data()?["signUpMethod"] as? String
-            return (true, signUpMethod)
+            // Document exists - get the signupMethod
+            let signupMethod = authUserDoc.data()?["signupMethod"] as? String
+            return (true, signupMethod)
         } else {
             // Document doesn't exist - new user
             return (false, nil)
@@ -270,7 +270,7 @@ class WelcomeAuthViewModel {
                 // Create or update authUsers document
                 let authUserDocRef = db.collection("authUsers").document(hashedEmail)
                 try await authUserDocRef.setData([
-                    "signUpMethod": "apple_signin"
+                    "signupMethod": "apple_signin"
                 ], merge: true)
                 print("✅ authUsers document created/updated for Apple Sign In")
 

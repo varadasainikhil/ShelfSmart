@@ -173,7 +173,7 @@ class PasswordAuthViewModel {
             let db = Firestore.firestore()
             let authUserDocRef = db.collection("authUsers").document(hashedEmail)
             try await authUserDocRef.setData([
-                "signUpMethod": "email_password",
+                "signupMethod": "email_password",
                 "pendingUserName": trimmedUserName
             ])
             print("💾 Stored pending user name in Firebase authUsers collection")
@@ -222,22 +222,12 @@ class PasswordAuthViewModel {
         // Hash the email to use as document ID in authUsers collection
         let hashedEmail = AuthHelpers.hashEmail(email)
 
-        // Check authUsers collection first (new structure)
+        // Check authUsers collection
         let db = Firestore.firestore()
         let authUserDoc = try await db.collection("authUsers").document(hashedEmail).getDocument()
 
         if authUserDoc.exists {
-            return authUserDoc.data()?["signUpMethod"] as? String
-        }
-
-        // Fallback: Check old users collection for backward compatibility
-        let querySnapshot = try await db.collection("users")
-            .whereField("email", isEqualTo: email)
-            .getDocuments()
-
-        if let document = querySnapshot.documents.first {
-            let data = document.data()
-            return data["signupMethod"] as? String
+            return authUserDoc.data()?["signupMethod"] as? String
         }
 
         return nil
