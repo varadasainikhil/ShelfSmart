@@ -11,6 +11,7 @@ import VisionKit
 import Vision
 import AVFoundation
 
+@available(iOS 16, *)
 struct BarcodeScannerView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var dataScannerManager = DataScannerManager()
@@ -170,6 +171,7 @@ struct BarcodeScannerView: View {
 }
 
 // MARK: - DataScannerViewController Wrapper
+@available(iOS 16, *)
 struct DataScannerViewControllerRepresentable: UIViewControllerRepresentable {
     let dataScannerManager: DataScannerManager
 

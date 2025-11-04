@@ -9,6 +9,7 @@ import Foundation
 import SwiftUI
 import VisionKit
 
+@available(iOS 16, *)
 @Observable
 final class DataScannerManager: NSObject, DataScannerViewControllerDelegate {
     // MARK: - Published Properties

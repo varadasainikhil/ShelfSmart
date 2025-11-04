@@ -92,7 +92,7 @@ struct CompactButton: View {
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(isEnabled ? .green : Color(.systemGray4))
-                    .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
+                    .conditionalGlassEffect()
                     .shadow(color: isEnabled ? .green.opacity(0.3) : .clear, radius: 6, x: 0, y: 3)
             )
         }

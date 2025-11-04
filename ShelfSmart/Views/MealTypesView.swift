@@ -96,7 +96,7 @@ struct MealTypesView: View {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(.green)
-                                    .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
+                                    .conditionalGlassEffect()
 
                                 HStack {
                                     Image(systemName: "arrow.left")
@@ -116,7 +116,7 @@ struct MealTypesView: View {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(.green)
-                                    .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
+                                    .conditionalGlassEffect()
 
                                 HStack {
                                     Text("Next")

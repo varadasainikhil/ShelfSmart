@@ -119,7 +119,7 @@ struct AllergiesOnboardingView: View {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(.green)
-                                    .glassEffect(.regular.interactive(), in: RoundedRectangle(cornerRadius: 12))
+                                    .conditionalGlassEffect()
 
                                 if viewModel.isSaving {
                                     HStack {
