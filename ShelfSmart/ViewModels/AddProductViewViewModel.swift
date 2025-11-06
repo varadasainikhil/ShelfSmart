@@ -230,7 +230,7 @@ class AddProductViewViewModel {
 
             print()
             
-            if hasValidTitle || hasValidId || hasValidUPC {
+            if hasValidTitle && hasValidId && hasValidUPC {
                 // Update UI with found product data
                 await MainActor.run {
                     self.name = groceryProduct?.title?.cleanHTMLText ?? "Unknown Product"
