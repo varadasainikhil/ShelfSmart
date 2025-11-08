@@ -53,8 +53,35 @@ struct ShelfSmartApp: App {
     // Configure ModelContainer with explicit CloudKit settings
     private var modelContainer: ModelContainer = {
         let schema = Schema([
+            // Spoonacular Products
             GroupedProducts.self,
-            SDRecipe.self
+            Product.self,
+            Credit.self,
+            SDRecipe.self,
+            SDAnalyzedInstructions.self,
+            SDSteps.self,
+            SDStepIngredient.self,
+            SDEquipment.self,
+            SDIngredients.self,
+            SDMeasures.self,
+            SDMeasure.self,
+
+            // OFFA Products
+            GroupedOFFAProducts.self,
+            LSProduct.self,
+            LSIngredient.self,
+            LSNutriments.self,
+            LSNutriscoreData.self,
+            LSNutriscoreComponents.self,
+            LSNutrientComponent.self,
+            SDOFFARecipe.self,
+            SDOFFAAnalyzedInstructions.self,
+            SDOFFASteps.self,
+            SDOFFAStepIngredient.self,
+            SDOFFAEquipment.self,
+            SDOFFAIngredients.self,
+            SDOFFAMeasures.self,
+            SDOFFAMeasure.self
         ])
 
         let modelConfiguration = ModelConfiguration(
@@ -69,6 +96,17 @@ struct ShelfSmartApp: App {
         } catch {
             // Fallback: Create in-memory container to prevent app crash
             print("❌ Failed to create persistent ModelContainer: \(error)")
+            print("❌ Error details: \(error.localizedDescription)")
+            if let nsError = error as NSError? {
+                print("❌ Error domain: \(nsError.domain)")
+                print("❌ Error code: \(nsError.code)")
+                print("❌ Error userInfo: \(nsError.userInfo)")
+                if let underlyingError = nsError.userInfo[NSUnderlyingErrorKey] as? NSError {
+                    print("❌ Underlying error: \(underlyingError.localizedDescription)")
+                    print("❌ Underlying error domain: \(underlyingError.domain)")
+                    print("❌ Underlying error code: \(underlyingError.code)")
+                }
+            }
             print("⚠️ Falling back to in-memory storage - data will not persist!")
 
             do {
@@ -83,7 +121,18 @@ struct ShelfSmartApp: App {
                 print("⚠️ Creating emergency fallback container")
 
                 // Try one last time with absolutely minimal configuration
-                let emergencySchema = Schema([GroupedProducts.self, SDRecipe.self])
+                let emergencySchema = Schema([
+                    // Spoonacular Products (minimal)
+                    GroupedProducts.self,
+                    Product.self,
+                    Credit.self,
+                    SDRecipe.self,
+
+                    // OFFA Products (minimal)
+                    GroupedOFFAProducts.self,
+                    LSProduct.self,
+                    SDOFFARecipe.self
+                ])
                 do {
                     return try ModelContainer(
                         for: emergencySchema,
@@ -93,6 +142,18 @@ struct ShelfSmartApp: App {
                     // If even this fails, something is seriously wrong with the system
                     // Log the error and return a container anyway to prevent crash
                     print("❌ FATAL: All ModelContainer creation attempts failed: \(error)")
+                    print("❌ FATAL Error details: \(error.localizedDescription)")
+                    if let nsError = error as NSError? {
+                        print("❌ FATAL Error domain: \(nsError.domain)")
+                        print("❌ FATAL Error code: \(nsError.code)")
+                        print("❌ FATAL Error userInfo: \(nsError.userInfo)")
+                        if let underlyingError = nsError.userInfo[NSUnderlyingErrorKey] as? NSError {
+                            print("❌ FATAL Underlying error: \(underlyingError.localizedDescription)")
+                            print("❌ FATAL Underlying error domain: \(underlyingError.domain)")
+                            print("❌ FATAL Underlying error code: \(underlyingError.code)")
+                            print("❌ FATAL Underlying error userInfo: \(underlyingError.userInfo)")
+                        }
+                    }
                     fatalError("Critical system error: Unable to initialize data storage. Please reinstall the app.")
                 }
             }

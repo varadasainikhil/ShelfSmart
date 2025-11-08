@@ -62,7 +62,7 @@ struct AddProductView: View {
                                 focusedField: $focusedField,
                                 onSearch: {
                                     Task {
-                                        try await viewModel.searchProduct(modelContext: modelContext)
+                                        try await viewModel.searchProductOFFA(modelContext: modelContext)
                                     }
                                 },
                                 onScan: {
@@ -130,7 +130,7 @@ struct AddProductView: View {
 
                             if viewModel.searchSuccess {
                                 Task {
-                                    await viewModel.createProductFromAPIResponse(userId: userId, modelContext: modelContext, notificationManager: notificationManager)
+                                    await viewModel.createOFFAProductFromAPIResponse(userId: userId, modelContext: modelContext, notificationManager: notificationManager)
 
                                     await MainActor.run {
                                         if viewModel.errorMessage == nil {

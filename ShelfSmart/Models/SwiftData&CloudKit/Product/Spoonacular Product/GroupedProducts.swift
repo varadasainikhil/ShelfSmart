@@ -49,22 +49,25 @@ class GroupedProducts{
     
     // Calculate the days left for expiry
     func daysTillExpiry() -> (message : String, count : Int){
-        var textToShow = ""
-        let dateTillExpiration = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: .now), to: Calendar.current.startOfDay(for: expirationDate))
-        guard let daysTillExpiration = dateTillExpiration.day else { return (message : "could not calculate days for expiration" , count : 0) }
-        if daysTillExpiration > 0 {
-            textToShow = "\(daysTillExpiration) Days left"
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let expiry = calendar.startOfDay(for: expirationDate)
+        
+        let components = calendar.dateComponents([.day], from: today, to: expiry)
+        
+        guard let days = components.day else {
+            return ("Error calculating days", 0)
         }
-        else if daysTillExpiration == 0 {
-            textToShow = "Expiring Today"
+        
+        if days < 0 {
+            return ("Expired \(abs(days)) day\(abs(days) == 1 ? "" : "s") ago", days)
+        } else if days == 0 {
+            return ("Expires today", days)
+        } else if days == 1 {
+            return ("Expires tomorrow", days)
+        } else {
+            return ("Expires in \(days) days", days)
         }
-        else if daysTillExpiration == -1 {
-            textToShow = "Expired Yesterday"
-        }
-        else {
-            textToShow = "Expired \(-daysTillExpiration) Days ago"
-        }
-        return (message : textToShow, count: daysTillExpiration)
     }
-
 }
+

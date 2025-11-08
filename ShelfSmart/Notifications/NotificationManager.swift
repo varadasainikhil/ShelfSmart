@@ -173,6 +173,133 @@ class NotificationManager{
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ids)
     }
 
+    // MARK: - LSProduct (OFFA) Notification Methods
+
+    func scheduleNotifications(for lsProduct: LSProduct) async {
+        // 1. Check authorization status first
+        let authStatus = await checkAuthorizationStatus()
+        guard authStatus == .authorized else {
+            print("⚠️ [OFFA] Cannot schedule notifications - Permission not granted (status: \(authStatus.rawValue))")
+            return
+        }
+
+        // 2. Delete any existing notifications for this product first
+        deleteScheduledNotifications(for: lsProduct)
+
+        // 3. Schedule notifications
+        await scheduleNotificationsInternal(for: lsProduct)
+    }
+
+    private func scheduleNotificationsInternal(for lsProduct: LSProduct) async {
+        let daysLeft = lsProduct.daysTillExpiry().count
+        let productTitle = lsProduct.title
+        let productWarningNotificationId = lsProduct.warningNotificationId
+        let productExpirationNotificationId = lsProduct.expirationNotificationId
+
+        // Create date formatter once for reuse
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .medium
+        dateFormatter.timeStyle = .short
+
+        print("🔍 [OFFA] DEBUG: Product '\(productTitle)' expires in \(daysLeft) days")
+        print("🔍 [OFFA] DEBUG: Expiration date: \(lsProduct.expirationDate)")
+
+        // Notification 1: Warning notification
+        if daysLeft >= 7 {
+            // Schedule warning notification only if it's in the future
+            if let warningDate = lsProduct.warningDate {
+                var warningComponents = Calendar.current.dateComponents([.year,.month,.day,.hour,.minute], from: warningDate)
+
+                // Setting the time to 3:06 PM
+                warningComponents.hour = 15
+                warningComponents.minute = 06
+                warningComponents.timeZone = TimeZone.current
+
+                // Check if warning date is in the future
+                if let scheduledWarningDate = Calendar.current.date(from: warningComponents), scheduledWarningDate > Date.now {
+                    // Scheduling the warning notification
+                    let warningContent = UNMutableNotificationContent()
+                    warningContent.title = "Expiring In a Week"
+                    warningContent.body = "\(productTitle) is expiring in a week"
+                    warningContent.sound = .default
+
+                    let warningTrigger = UNCalendarNotificationTrigger(dateMatching: warningComponents, repeats: false)
+                    let warningRequest = UNNotificationRequest(identifier: productWarningNotificationId, content: warningContent, trigger: warningTrigger)
+
+                    do {
+                        try await UNUserNotificationCenter.current().add(warningRequest)
+                        print("✅ [OFFA] Warning notification scheduled for \(productTitle) at \(dateFormatter.string(from: scheduledWarningDate))")
+                    } catch {
+                        print("❌ [OFFA] Failed to schedule warning notification for \(productTitle): \(error.localizedDescription)")
+                    }
+                } else if let scheduledWarningDate = Calendar.current.date(from: warningComponents) {
+                    print("⚠️ [OFFA] SKIPPED: Warning notification time (\(dateFormatter.string(from: scheduledWarningDate))) is in the past.")
+                }
+            } else {
+                print("⚠️ [OFFA] Could not calculate the warningDate")
+            }
+
+            // Notification 2: Expiration Notification
+            var expirationComponents = Calendar.current.dateComponents([.year,.month,.day,.hour,.minute], from: lsProduct.expirationDate)
+
+            // Setting the time to 3:06 PM
+            expirationComponents.hour = 15
+            expirationComponents.minute = 06
+            expirationComponents.timeZone = TimeZone.current
+
+            // Check if expiration date is in the future
+            if let scheduledExpirationDate = Calendar.current.date(from: expirationComponents), scheduledExpirationDate > Date.now {
+                let expirationContent = UNMutableNotificationContent()
+                expirationContent.title = "Expired"
+                expirationContent.body = "\(productTitle) is expired"
+                expirationContent.sound = .default
+
+                let expirationTrigger = UNCalendarNotificationTrigger(dateMatching: expirationComponents, repeats: false)
+                let expirationRequest = UNNotificationRequest(identifier: productExpirationNotificationId, content: expirationContent, trigger: expirationTrigger)
+
+                do {
+                    try await UNUserNotificationCenter.current().add(expirationRequest)
+                    print("✅ [OFFA] Expiration notification scheduled for \(productTitle) at \(dateFormatter.string(from: scheduledExpirationDate))")
+                } catch {
+                    print("❌ [OFFA] Failed to schedule expiration notification for \(productTitle): \(error.localizedDescription)")
+                }
+            } else {
+                print("⚠️ [OFFA] SKIPPED: Expiration date is in the past or invalid. Not scheduling expiration notification.")
+            }
+        } else {
+            // If less than 7 days, only send the expiration notification
+            var expirationComponents = Calendar.current.dateComponents([.year,.month,.day,.hour,.minute], from: lsProduct.expirationDate)
+
+            expirationComponents.hour = 15
+            expirationComponents.minute = 06
+            expirationComponents.timeZone = TimeZone.current
+
+            if let scheduledExpirationDate = Calendar.current.date(from: expirationComponents), scheduledExpirationDate > Date.now {
+                let expirationContent = UNMutableNotificationContent()
+                expirationContent.title = "Expiring Soon"
+                expirationContent.body = "\(productTitle) is expiring soon"
+                expirationContent.sound = .default
+
+                let expirationTrigger = UNCalendarNotificationTrigger(dateMatching: expirationComponents, repeats: false)
+                let expirationRequest = UNNotificationRequest(identifier: productExpirationNotificationId, content: expirationContent, trigger: expirationTrigger)
+
+                do {
+                    try await UNUserNotificationCenter.current().add(expirationRequest)
+                    print("✅ [OFFA] Expiring soon notification scheduled for \(productTitle) at \(dateFormatter.string(from: scheduledExpirationDate))")
+                } catch {
+                    print("❌ [OFFA] Failed to schedule expiring soon notification for \(productTitle): \(error.localizedDescription)")
+                }
+            } else {
+                print("⚠️ [OFFA] SKIPPED: Expiration date is in the past. Not scheduling notification.")
+            }
+        }
+    }
+
+    func deleteScheduledNotifications(for lsProduct: LSProduct) {
+        let ids = [lsProduct.warningNotificationId, lsProduct.expirationNotificationId]
+        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ids)
+    }
+
     // Verify pending notifications (for debugging)
     func verifyPendingNotifications() async {
         let pendingRequests = await UNUserNotificationCenter.current().pendingNotificationRequests()

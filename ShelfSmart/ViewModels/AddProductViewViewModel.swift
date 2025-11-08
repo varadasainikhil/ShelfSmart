@@ -41,11 +41,16 @@ class AddProductViewViewModel {
 
     var searchAttempted : Bool = false
 
-    // Store the groceryProduct - created when saving the product
+    // Store the groceryProduct - created when saving the product (Spoonacular)
     var groceryProduct : GroceryProduct? = nil
 
-    // Product variable to hold the product that is going to be saved to the modelContext
+    // Product variable to hold the product that is going to be saved to the modelContext (Spoonacular)
     var product : Product? = nil
+
+    // OFFA product variables
+    var offaProduct: OFFAProduct? = nil
+    var lsProduct: LSProduct? = nil
+    var offaRecipes: [SDOFFARecipe] = []
     
     var isSearchButtonDisabled : Bool {
         return barcode.isEmpty || isLoading
@@ -69,6 +74,9 @@ class AddProductViewViewModel {
         searchAttempted = false
         groceryProduct = nil
         self.recipes = [SDRecipe]()
+        offaProduct = nil
+        lsProduct = nil
+        self.offaRecipes = []
         print("🔄 Reset all fields to initial state - clean sheet ready")
     }
     
@@ -94,12 +102,12 @@ class AddProductViewViewModel {
             self.barcode = code
         }
 
-        // Automatically trigger product search
+        // Automatically trigger OFFA product search
         do {
-            try await searchProduct(modelContext: modelContext)
-            print("✅ Product search completed for scanned barcode")
+            try await searchProductOFFA(modelContext: modelContext)
+            print("✅ [OFFA] Product search completed for scanned barcode")
         } catch {
-            print("❌ Error searching for scanned barcode: \(error.localizedDescription)")
+            print("❌ [OFFA] Error searching for scanned barcode: \(error.localizedDescription)")
             await MainActor.run {
                 self.errorMessage = "Failed to search for product. Please try again."
             }
@@ -302,7 +310,253 @@ class AddProductViewViewModel {
             }
         }
     }
-    
+
+    // MARK: - OFFA Product Search
+    /// Searches for the product using the barcode via Open Food Facts API
+    func searchProductOFFA(modelContext: ModelContext) async throws {
+        // Reset state
+        await MainActor.run {
+            isLoading = true
+            errorMessage = nil
+            searchSuccess = false
+            searchAttempted = true
+            imageLink = ""
+        }
+
+        print("🔍 [OFFA] Searching for barcode: \(barcode)")
+
+        // Build OFFA API URL - no API key needed!
+        guard let url = URL(string: "https://world.openfoodfacts.net/api/v2/product/\(barcode)") else {
+            print("❌ [OFFA] Error: Failed to create URL")
+            await MainActor.run {
+                isLoading = false
+                errorMessage = "Invalid barcode format"
+                searchSuccess = false
+            }
+            throw URLError(.badURL)
+        }
+
+        print("🌐 [OFFA] Making request to: \(url.absoluteString)")
+
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+
+            // Log response details
+            if let httpResponse = response as? HTTPURLResponse {
+                print("📡 [OFFA] Response status code: \(httpResponse.statusCode)")
+
+                guard httpResponse.statusCode == 200 else {
+                    print("❌ [OFFA] Unexpected status code: \(httpResponse.statusCode)")
+                    await MainActor.run {
+                        isLoading = false
+                        errorMessage = "Server error. Please try again."
+                        searchSuccess = false
+                    }
+                    return
+                }
+            }
+
+            
+            print("📦 [OFFA] Received data size: \(data.count) bytes")
+
+            // Log the raw JSON response for debugging
+            if let jsonString = String(data: data, encoding: .utf8) {
+                print("📄 [OFFA] Raw JSON Response: \(jsonString.prefix(500))...") // First 500 chars
+            }
+
+            let decoder = JSONDecoder()
+            let apiResponse = try decoder.decode(OpenFoodFactsResponse.self, from: data)
+
+            print("✅ [OFFA] Successfully decoded response")
+            print("📦 [OFFA] Status: \(apiResponse.status)")
+            print("📦 [OFFA] Status Verbose: \(apiResponse.statusVerbose ?? "N/A")")
+
+            // Check if product was found
+            guard apiResponse.status == 1, let product = apiResponse.product else {
+                print("⚠️ [OFFA] Product not found in OFFA database")
+                await MainActor.run {
+                    self.isLoading = false
+                    self.errorMessage = "Product not found. Please enter details manually."
+                    self.searchSuccess = false
+                    // Keep barcode so user can still save manually with this barcode
+                }
+                return
+            }
+
+            print("✅ [OFFA] Product found!")
+            print("📦 [OFFA] Product Name: \(product.productName ?? "Unknown")")
+            print("📦 [OFFA] Brand: \(product.brands ?? "Unknown")")
+            print("📦 [OFFA] Barcode: \(product.code)")
+            print("🖼️ [OFFA] Image URL: \(product.imageFrontURL ?? "None")")
+
+            self.offaProduct = product
+
+            // Update UI with found product data
+            await MainActor.run {
+                self.name = product.productName ?? "Unknown Product"
+                self.lastVerifiedBarcode = product.code
+                self.productDescription = product.ingredientsText ?? ""
+                self.imageLink = product.imageFrontURL ?? product.imageURL ?? ""
+                self.searchSuccess = true
+                self.isLoading = false
+                self.errorMessage = nil
+            }
+
+            print("✅ [OFFA] Product data loaded successfully - ready for user to save")
+
+        } catch let decodingError as DecodingError {
+            print("❌ [OFFA] JSON Decoding Error: \(decodingError)")
+            print("❌ [OFFA] Decoding Error Details: \(decodingError.localizedDescription)")
+
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = "Product not found. Please enter details manually."
+                self.searchSuccess = false
+                self.offaProduct = nil
+            }
+        } catch let urlError as URLError {
+            print("❌ [OFFA] Network Error: \(urlError)")
+            print("❌ [OFFA] Network Error Code: \(urlError.code.rawValue)")
+
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = "Network error: \(urlError.localizedDescription)"
+                self.searchSuccess = false
+                self.offaProduct = nil
+            }
+        } catch {
+            print("❌ [OFFA] Unknown Error: \(error)")
+            print("❌ [OFFA] Error Type: \(type(of: error))")
+
+            await MainActor.run {
+                self.isLoading = false
+                self.errorMessage = "Unexpected error: \(error.localizedDescription)"
+                self.searchSuccess = false
+                self.offaProduct = nil
+            }
+        }
+    }
+
+    // MARK: - Create OFFA Product from API Response
+    @MainActor
+    func createOFFAProductFromAPIResponse(userId: String, modelContext: ModelContext, notificationManager: NotificationManager) async {
+        // Set saving state and reset any previous error messages
+        isSaving = true
+        errorMessage = nil
+
+        guard let offaProduct = offaProduct else {
+            print("❌ [OFFA] No OFFA product available to save")
+            errorMessage = "No product data available"
+            isSaving = false
+            return
+        }
+
+        // Capture the expiration date before any potential reset
+        let userSelectedExpirationDate = self.expirationDate
+        print("📦 [OFFA] User selected expiration date: \(userSelectedExpirationDate)")
+        print("📦 [OFFA] Creating LSProduct from OFFA product: \(offaProduct.productName ?? "Unknown")")
+
+        // Search for recipes using product title as ingredient
+        print("🔍 [OFFA] Searching for recipes using product title: \(self.name)")
+        let recipeIds = await searchForRecipeIdsForOFFAProduct(productTitle: self.name)
+
+        // Fetch recipe details
+        await self.searchRecipeByIDForOFFAProduct(recipeIds: recipeIds ?? [])
+
+        // Create LSProduct using convenience initializer
+        let lsProduct = LSProduct(
+            from: offaProduct,
+            recipeIds: recipeIds,
+            recipes: self.offaRecipes,
+            expirationDate: userSelectedExpirationDate,
+            userId: userId
+        )
+
+        // Update with user-edited fields
+        lsProduct.title = self.name
+        lsProduct.productDescription = self.productDescription.isEmpty ? nil : self.productDescription
+        lsProduct.imageLink = self.imageLink
+
+        self.lsProduct = lsProduct
+
+        print("✅ [OFFA] Created LSProduct: \(lsProduct.title)")
+        print("🍽️ [OFFA] Recipe IDs: \(recipeIds ?? [])")
+        print("🖼️ [OFFA] Image link: \(lsProduct.imageLink ?? "None")")
+
+        // Save to GroupedOFFAProducts
+        await searchAndSaveRecipesForOFFAProduct(
+            lsProduct: lsProduct,
+            userId: userId,
+            modelContext: modelContext,
+            userExpirationDate: userSelectedExpirationDate,
+            notificationManager: notificationManager
+        )
+    }
+
+    /// Saves OFFA product to grouped products and schedules notifications
+    @MainActor
+    private func searchAndSaveRecipesForOFFAProduct(
+        lsProduct: LSProduct,
+        userId: String,
+        modelContext: ModelContext,
+        userExpirationDate: Date,
+        notificationManager: NotificationManager
+    ) async {
+        print("💾 [OFFA] Saving LSProduct to database")
+
+        do {
+            // Use normalized date for comparison
+            let normalizedDate = Calendar.current.startOfDay(for: userExpirationDate)
+            print("🗓️ [OFFA] Original expiration date: \(userExpirationDate)")
+            print("🗓️ [OFFA] Normalized date for grouping: \(normalizedDate)")
+
+            // Set the expiration date to normalized date
+            lsProduct.expirationDate = normalizedDate
+
+            // Use SwiftData predicate to find existing group
+            let predicate = #Predicate<GroupedOFFAProducts> { group in
+                group.expirationDate == normalizedDate &&
+                group.userId == userId
+            }
+
+            let descriptor = FetchDescriptor<GroupedOFFAProducts>(predicate: predicate)
+            let existingGroups = try modelContext.fetch(descriptor)
+
+            // Check if we found any existing groups for this date and user
+            if let existingGroup = existingGroups.first {
+                // Add to existing group
+                existingGroup.offaProducts?.append(lsProduct)
+                print("✅ [OFFA] Found existing group, added LSProduct to it")
+            } else {
+                // Create new group
+                let newGroupedProducts = GroupedOFFAProducts(
+                    expirationDate: normalizedDate,
+                    offaProducts: [lsProduct],
+                    userId: userId
+                )
+                modelContext.insert(newGroupedProducts)
+                print("✅ [OFFA] Created new GroupedOFFAProducts")
+            }
+
+            // Save to database
+            try modelContext.save()
+            print("✅ [OFFA] Successfully saved LSProduct to database: \(lsProduct.title)")
+
+            // Schedule notifications for the product
+            await notificationManager.scheduleNotifications(for: lsProduct)
+            print("📅 [OFFA] Notifications scheduled for product: \(lsProduct.title)")
+
+            // Clear error message on success
+            self.errorMessage = nil
+            self.isSaving = false
+
+        } catch {
+            print("❌ [OFFA] Error saving LSProduct: \(error.localizedDescription)")
+            self.errorMessage = "Failed to save product. Please try again."
+            self.isSaving = false
+        }
+    }
+
     @MainActor
     func createProductFromAPIResponse(userId: String, modelContext : ModelContext, notificationManager: NotificationManager) async {
         // Set saving state and reset any previous error messages
@@ -528,111 +782,102 @@ class AddProductViewViewModel {
         }
     }
     
-    // Function to create product manually (without API)
+    // Function to create product manually (without API) - Creates LSProduct (OFFA format)
     @MainActor
     func createAndSaveManualProduct(userId: String, modelContext: ModelContext, notificationManager: NotificationManager) async {
         // Set saving state and reset any previous error messages
         self.isSaving = true
         self.errorMessage = nil
-        
+
         // Validate required fields - only name is required
         let productName = self.name.trimmingCharacters(in: .whitespacesAndNewlines)
         let productDescription = self.productDescription
         let productBarcode = self.barcode
         let productExpirationDate = self.expirationDate
-        
+
         guard !productName.isEmpty else {
             self.errorMessage = "Product name cannot be empty."
             self.isSaving = false
             return
         }
-        
-        // Create default credits for manual products
-        let credit = Credit(text: "Manually added product", link: "", image: "User Added", imageLink: "")
-        
-        print("📝 Creating manual product directly")
-        print("🗓️ User selected expiration date: \(productExpirationDate)")
-        
-        // Search for recipes using product name
-        let ingredients = productName.components(separatedBy: " ")
-        
-        // Search for recipes by ingredients using the name because it is a manual entry
-        let recipeIds = await self.searchForRecipeIds(ingredients: ingredients)
-        
-        // Searching for recipes from recipeIds
-        await self.searchRecipeByID(recipeIds: recipeIds ?? [Int]())
-        
-        // Create Product directly without unnecessary GroceryProduct intermediate step
-        // For manual products: spoonacularId=nil
-        let product = Product(
-            id: UUID().uuidString, // Unique identifier for this product instance
-            spoonacularId: nil, // No Spoonacular ID for manual products
-            barcode: productBarcode,
+
+        print("📝 [Manual OFFA] Creating manual LSProduct")
+        print("🗓️ [Manual OFFA] User selected expiration date: \(productExpirationDate)")
+
+        // Search for recipes using product name as ingredient
+        print("🔍 [Manual OFFA] Searching for recipes using product name: \(productName)")
+        let recipeIds = await self.searchForRecipeIdsForOFFAProduct(productTitle: productName)
+
+        // Fetch recipe details
+        await self.searchRecipeByIDForOFFAProduct(recipeIds: recipeIds ?? [])
+
+        // Create LSProduct for manual entry using convenience initializer
+        let lsProduct = LSProduct(
+            barcode: productBarcode.isEmpty ? "" : productBarcode,
             title: productName,
             brand: "",
-            breadcrumbs: productName.components(separatedBy: " "),
-            badges: nil,
-            importantBadges: nil,
-            spoonacularScore: nil,
+            quantity: nil,
             productDescription: productDescription.isEmpty ? nil : productDescription,
             imageLink: nil,
-            moreImageLinks: nil,
-            generatedText: nil,
-            ingredientCount: nil,
             recipeIds: recipeIds,
-            recipes: self.recipes,
-            credits: credit,
+            recipes: self.offaRecipes,
             expirationDate: productExpirationDate,
             userId: userId
         )
-            
-        print("📝 Created manual product with expiration date: \(product.expirationDate)")
+
+        self.lsProduct = lsProduct
+
+        print("✅ [Manual OFFA] Created LSProduct: \(lsProduct.title)")
+        print("🍽️ [Manual OFFA] Recipe IDs: \(recipeIds ?? [])")
 
         do {
-            // Use normalized date for comparison - ensure we use the exact date selected by user
+            // Use normalized date for comparison
             let normalizedDate = Calendar.current.startOfDay(for: productExpirationDate)
-            print("🗓️ Manual product - Original expiration date: \(productExpirationDate)")
-            print("🗓️ Manual product - Normalized date for grouping: \(normalizedDate)")
-                
-            // Setting the product expiration date to the normalizedDate
-            product.expirationDate = normalizedDate
-            
-                // Use SwiftData predicate for more efficient querying
-                let predicate = #Predicate<GroupedProducts> { group in
-                    group.expirationDate == normalizedDate &&
-                    group.userId == userId
-                }
-                
-                let descriptor = FetchDescriptor<GroupedProducts>(predicate: predicate)
-                let existingGroups = try modelContext.fetch(descriptor)
-                
-                // Check if we found any existing groups for this date and the userID
-                if let existingGroup = existingGroups.first {
-                    // Add to existing group
-                    existingGroup.products?.append(product)
-                    print("📝 Found existing group for manual product, adding item to it")
-                } else {
-                    // Create new group
-                    let newGroupedProducts = GroupedProducts(expirationDate: normalizedDate, products: [product], userId: userId)
-                    modelContext.insert(newGroupedProducts)
-                    print("📝 Created new group for manual product")
-                }
-                
-                // Single save operation
-                try modelContext.save()
-                print("✅ Successfully saved manual product to database")
-                print("✅ Manual Product created: \(product.title)")
+            print("🗓️ [Manual OFFA] Original expiration date: \(productExpirationDate)")
+            print("🗓️ [Manual OFFA] Normalized date for grouping: \(normalizedDate)")
 
-                // Schedule notifications for the product
-                await notificationManager.scheduleNotifications(for: product)
-                print("📅 Notifications scheduled for product: \(product.title)")
+            // Set the expiration date to normalized date
+            lsProduct.expirationDate = normalizedDate
+
+            // Use SwiftData predicate to find existing group
+            let predicate = #Predicate<GroupedOFFAProducts> { group in
+                group.expirationDate == normalizedDate &&
+                group.userId == userId
+            }
+
+            let descriptor = FetchDescriptor<GroupedOFFAProducts>(predicate: predicate)
+            let existingGroups = try modelContext.fetch(descriptor)
+
+            // Check if we found any existing groups for this date and user
+            if let existingGroup = existingGroups.first {
+                // Add to existing group
+                existingGroup.offaProducts?.append(lsProduct)
+                print("✅ [Manual OFFA] Found existing group, added LSProduct to it")
+            } else {
+                // Create new group
+                let newGroupedProducts = GroupedOFFAProducts(
+                    expirationDate: normalizedDate,
+                    offaProducts: [lsProduct],
+                    userId: userId
+                )
+                modelContext.insert(newGroupedProducts)
+                print("✅ [Manual OFFA] Created new GroupedOFFAProducts")
+            }
+
+            // Save to database
+            try modelContext.save()
+            print("✅ [Manual OFFA] Successfully saved manual LSProduct to database: \(lsProduct.title)")
+
+            // Schedule notifications for the product
+            await notificationManager.scheduleNotifications(for: lsProduct)
+            print("📅 [Manual OFFA] Notifications scheduled for product: \(lsProduct.title)")
 
             // Clear error message on success
             self.errorMessage = nil
             self.isSaving = false
 
         } catch {
-            print("❌ Error creating manual product: \(error.localizedDescription)")
+            print("❌ [Manual OFFA] Error saving manual LSProduct: \(error.localizedDescription)")
             self.errorMessage = "Failed to save product. Please try again."
             self.isSaving = false
         }
@@ -728,6 +973,198 @@ class AddProductViewViewModel {
                 return
             }
         }
-        
+
+    }
+
+    // MARK: - OFFA Recipe Methods
+    /// Searches for recipe IDs using product title as ingredient (for OFFA products)
+    /// - Parameter productTitle: The product title to use as ingredient
+    /// - Returns: Array of recipe IDs (up to 4)
+    private func searchForRecipeIdsForOFFAProduct(productTitle: String) async -> [Int]? {
+        do {
+            // Get and validate API key
+            guard let apiKey = getAPIKey(), !apiKey.isEmpty else {
+                print("❌ [OFFA Recipe] Error: API key is nil or empty")
+                return nil
+            }
+
+            // Build URL with query parameters
+            guard var urlComponents = URLComponents(string: "https://api.spoonacular.com/recipes/findByIngredients") else {
+                print("❌ [OFFA Recipe] Error: Failed to create URL components")
+                return nil
+            }
+
+            // Use product title as the ingredient
+            let queryItems: [URLQueryItem] = [
+                URLQueryItem(name: "apiKey", value: apiKey),
+                URLQueryItem(name: "ingredients", value: productTitle),
+                URLQueryItem(name: "number", value: "4"), // Limit to 4 recipes
+                URLQueryItem(name: "ignorePantry", value: "true")
+            ]
+
+            urlComponents.queryItems = queryItems
+
+            guard let url = urlComponents.url else {
+                print("❌ [OFFA Recipe] Error: Failed to create final URL")
+                return nil
+            }
+
+            print("🌐 [OFFA Recipe] Making recipe search request to: \(url.absoluteString)")
+
+            // Make API request
+            let (data, response) = try await URLSession.shared.data(from: url)
+
+            // Validate HTTP response
+            guard let httpResponse = response as? HTTPURLResponse else {
+                print("❌ [OFFA Recipe] Error: Invalid response type")
+                return nil
+            }
+
+            print("📡 [OFFA Recipe] Recipe search response status code: \(httpResponse.statusCode)")
+
+            // Handle HTTP error status codes
+            switch httpResponse.statusCode {
+            case 200...299:
+                print("✅ [OFFA Recipe] Recipe search successful")
+            case 401:
+                print("❌ [OFFA Recipe] Unauthorized: Invalid API key")
+                return nil
+            case 402:
+                print("❌ [OFFA Recipe] Payment required: API quota exceeded")
+                return nil
+            case 403:
+                print("❌ [OFFA Recipe] Forbidden: Access denied")
+                return nil
+            case 404:
+                print("❌ [OFFA Recipe] Not found: Invalid endpoint")
+                return nil
+            case 429:
+                print("❌ [OFFA Recipe] Too many requests: Rate limit exceeded")
+                return nil
+            case 500...599:
+                print("❌ [OFFA Recipe] Server error: \(httpResponse.statusCode)")
+                return nil
+            default:
+                print("❌ [OFFA Recipe] Unexpected status code: \(httpResponse.statusCode)")
+                return nil
+            }
+
+            // Validate data is not empty
+            guard !data.isEmpty else {
+                print("❌ [OFFA Recipe] Error: Empty response data")
+                return nil
+            }
+
+            // Parse JSON response
+            let decoder = JSONDecoder()
+            let recipes = try decoder.decode([FindByIngredientsRecipe].self, from: data)
+
+            print("✅ [OFFA Recipe] Successfully decoded recipe search response")
+            print("🍽️ [OFFA Recipe] Found \(recipes.count) recipes")
+
+            // Extract recipe IDs
+            let recipeIds = recipes.map { $0.id }
+            print("📋 [OFFA Recipe] Recipe IDs: \(recipeIds)")
+
+            return recipeIds
+
+        } catch {
+            print("❌ [OFFA Recipe] Error searching for recipes: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
+    /// Searches for recipes by ID and converts to SDOFFARecipe (for OFFA products)
+    /// - Parameter recipeIds: Array of recipe IDs to fetch
+    func searchRecipeByIDForOFFAProduct(recipeIds: [Int]) async {
+        for recipeId in recipeIds {
+            do {
+                // Get and validate API key
+                guard let apiKey = getAPIKey(), !apiKey.isEmpty else {
+                    print("❌ [OFFA Recipe] Error: API key is nil or empty")
+                    return
+                }
+
+                // Build URL with query parameters
+                guard var urlComponents = URLComponents(string: "https://api.spoonacular.com/recipes/\(recipeId)/information") else {
+                    print("❌ [OFFA Recipe] Error: Failed to create URL components")
+                    return
+                }
+
+                let queryItems: [URLQueryItem] = [
+                    URLQueryItem(name: "apiKey", value: apiKey)
+                ]
+
+                urlComponents.queryItems = queryItems
+
+                guard let url = urlComponents.url else {
+                    print("❌ [OFFA Recipe] Error: Failed to create final URL")
+                    return
+                }
+
+                print("🌐 [OFFA Recipe] Making recipe detail request to: \(url.absoluteString)")
+
+                // Make API request
+                let (data, response) = try await URLSession.shared.data(from: url)
+
+                // Validate HTTP response
+                guard let httpResponse = response as? HTTPURLResponse else {
+                    print("❌ [OFFA Recipe] Error: Invalid response type")
+                    return
+                }
+
+                print("📡 [OFFA Recipe] Recipe detail response status code: \(httpResponse.statusCode)")
+
+                // Handle HTTP error status codes
+                switch httpResponse.statusCode {
+                case 200...299:
+                    print("✅ [OFFA Recipe] Recipe detail fetch successful")
+                case 401:
+                    print("❌ [OFFA Recipe] Unauthorized: Invalid API key")
+                    return
+                case 402:
+                    print("❌ [OFFA Recipe] Payment required: API quota exceeded")
+                    return
+                case 403:
+                    print("❌ [OFFA Recipe] Forbidden: Access denied")
+                    return
+                case 404:
+                    print("❌ [OFFA Recipe] Not found: Invalid endpoint")
+                    return
+                case 429:
+                    print("❌ [OFFA Recipe] Too many requests: Rate limit exceeded")
+                    return
+                case 500...599:
+                    print("❌ [OFFA Recipe] Server error: \(httpResponse.statusCode)")
+                    return
+                default:
+                    print("❌ [OFFA Recipe] Unexpected status code: \(httpResponse.statusCode)")
+                    return
+                }
+
+                // Validate data is not empty
+                guard !data.isEmpty else {
+                    print("❌ [OFFA Recipe] Error: Empty response data")
+                    return
+                }
+
+                // Parse JSON response
+                let decoder = JSONDecoder()
+                let recipe = try decoder.decode(Recipe.self, from: data)
+
+                print("✅ [OFFA Recipe] Successfully decoded recipe information")
+
+                // Convert to SDOFFARecipe
+                let sdOffaRecipe = SDOFFARecipe(from: recipe)
+                await MainActor.run {
+                    self.offaRecipes.append(sdOffaRecipe)
+                }
+
+                print("✅ [OFFA Recipe] Added recipe to OFFA product: \(sdOffaRecipe.title ?? "Unknown Recipe")")
+            } catch {
+                print("❌ [OFFA Recipe] Error fetching recipe details: \(error.localizedDescription)")
+                return
+            }
+        }
     }
 }

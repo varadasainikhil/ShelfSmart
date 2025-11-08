@@ -17,13 +17,40 @@ struct HomeView: View {
 
     // Optimized query with predicate-based filtering
     @Query private var groups: [GroupedProducts]
+    @Query private var offaGroups: [GroupedOFFAProducts]
 
     init(userId: String) {
         self.userId = userId
+
+        // Predicate for Spoonacular products
         let predicate = #Predicate<GroupedProducts> { group in
             group.userId == userId
         }
         self._groups = Query(filter: predicate, sort: \GroupedProducts.expirationDate)
+
+        // Predicate for OFFA products
+        let offaPredicate = #Predicate<GroupedOFFAProducts> { group in
+            group.userId == userId
+        }
+        self._offaGroups = Query(filter: offaPredicate, sort: \GroupedOFFAProducts.expirationDate)
+    }
+
+    // Combine and sort both product types by expiration date
+    private var allGroupsSorted: [(date: Date, isOFFA: Bool, index: Int)] {
+        var combined: [(date: Date, isOFFA: Bool, index: Int)] = []
+
+        // Add Spoonacular groups
+        for (index, group) in groups.enumerated() {
+            combined.append((date: group.expirationDate, isOFFA: false, index: index))
+        }
+
+        // Add OFFA groups
+        for (index, group) in offaGroups.enumerated() {
+            combined.append((date: group.expirationDate, isOFFA: true, index: index))
+        }
+
+        // Sort by expiration date
+        return combined.sorted { $0.date < $1.date }
     }
 
     var body: some View {
@@ -57,7 +84,7 @@ struct HomeView: View {
                 
                 // Content Section
                 ZStack {
-                    if groups.isEmpty {
+                    if groups.isEmpty && offaGroups.isEmpty {
                         // Empty State
                         VStack(spacing: 20) {
                             Spacer()
@@ -93,8 +120,14 @@ struct HomeView: View {
                         ScrollViewReader { proxy in
                             ScrollView {
                                 VStack(spacing: 16) {
-                                    ForEach(groups) { group in
-                                        EnhancedGroupView(group: group)
+                                    ForEach(allGroupsSorted, id: \.date) { item in
+                                        if item.isOFFA {
+                                            // OFFA Product Group
+                                            EnhancedOFFAGroupView(group: offaGroups[item.index])
+                                        } else {
+                                            // Spoonacular Product Group
+                                            EnhancedGroupView(group: groups[item.index])
+                                        }
                                     }
                                 }
                                 .padding(.horizontal, 20)
@@ -218,6 +251,226 @@ struct EnhancedGroupView: View {
         // Neumorphic shadows - outer depth
         .shadow(color: colorScheme == .dark ? Color.black.opacity(0.7) : Color.black.opacity(0.1), radius: 16, x: 0, y: 6)
         .shadow(color: colorScheme == .dark ? Color.white.opacity(0.08) : Color.white, radius: 2, x: 0, y: -1)
+    }
+}
+
+// MARK: - Enhanced OFFA Group View Component
+struct EnhancedOFFAGroupView: View {
+    @Environment(\.colorScheme) var colorScheme
+    var group: GroupedOFFAProducts
+
+    // Computed property to filter out used products
+    private var activeProducts: [LSProduct] {
+        group.offaProducts?.filter { !$0.isUsed } ?? []
+    }
+
+    var body: some View {
+        VStack(spacing: 14) {
+            // Group Header
+            HStack(spacing: 12) {
+                let status = getOFFAGroupStatus(for: group)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(status.message)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                        .foregroundStyle(status.color)
+
+                    Text("\(activeProducts.count) item\(activeProducts.count == 1 ? "" : "s")")
+                        .font(.caption)
+                        .foregroundStyle(.tertiary)
+                }
+
+                Spacer()
+
+                // Status indicator with gradient
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [status.color.opacity(0.2), status.color.opacity(0.1)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 36, height: 36)
+
+                    Image(systemName: status.icon)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(status.color.opacity(0.9))
+                }
+                // Soft shadow for indicator
+                .shadow(color: status.color.opacity(0.2), radius: 4, x: 0, y: 2)
+            }
+
+            // Products in group (only active/non-used)
+            VStack(spacing: 10) {
+                ForEach(activeProducts, id: \.id) { product in
+                    NavigationLink(destination: Text("Detail View - Coming Soon")) {
+                        EnhancedOFFACardView(product: product)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                }
+            }
+        }
+        .padding(20)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(Color(.secondarySystemBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18)
+                .stroke(
+                    colorScheme == .dark
+                        ? Color.white.opacity(0.05)
+                        : Color.clear,
+                    lineWidth: 0.5
+                )
+        )
+        // Neumorphic shadows - outer depth
+        .shadow(color: colorScheme == .dark ? Color.black.opacity(0.7) : Color.black.opacity(0.1), radius: 16, x: 0, y: 6)
+        .shadow(color: colorScheme == .dark ? Color.white.opacity(0.08) : Color.white, radius: 2, x: 0, y: -1)
+    }
+}
+
+// MARK: - Enhanced OFFA Card View Component
+struct EnhancedOFFACardView: View {
+    @Environment(\.modelContext) var modelContext
+    @Environment(NotificationManager.self) var notificationManager
+    @Environment(\.colorScheme) var colorScheme
+    var product: LSProduct
+
+    // MARK: - Subviews
+
+    private var productImageView: some View {
+        ZStack(alignment: .topTrailing) {
+            Group {
+                if let imageURL = product.imageFrontURL ?? product.imageLink, !imageURL.isEmpty {
+                    RobustAsyncImage(url: imageURL) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    }
+                } else {
+                    Image("placeholder")
+                        .resizable()
+                        .scaledToFill()
+                }
+            }
+            .frame(width: 68, height: 68)
+            .clipShape(RoundedRectangle(cornerRadius: 13))
+            .background(
+                RoundedRectangle(cornerRadius: 13)
+                    .fill(Color(.systemGray6))
+            )
+            .shadow(color: colorScheme == .dark ? Color.black.opacity(0.4) : Color.black.opacity(0.1), radius: 4, x: 2, y: 2)
+            .shadow(color: colorScheme == .dark ? Color.white.opacity(0.12) : Color.white.opacity(0.8), radius: 3, x: -1, y: -1)
+
+            if product.isExpired {
+                expirationBadge
+            }
+        }
+    }
+
+    private var expirationBadge: some View {
+        Circle()
+            .fill(.red)
+            .frame(width: 26, height: 26)
+            .overlay {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.white)
+            }
+            .shadow(color: .red.opacity(0.4), radius: 4, x: 0, y: 2)
+            .offset(x: 5, y: -5)
+    }
+
+    private var productInfoView: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(product.title)
+                .font(.body)
+                .fontWeight(.semibold)
+                .foregroundStyle(.primary)
+                .lineLimit(2)
+                .strikethrough(product.isUsed, color: .primary)
+
+            if let brand = product.brand, !brand.isEmpty {
+                Text(brand)
+                    .font(.caption)
+                    .fontWeight(.medium)
+                    .foregroundStyle(.tertiary)
+                    .lineLimit(1)
+            }
+        }
+    }
+
+    private var actionButton: some View {
+        Button(action: {
+            if product.isExpired {
+                handleDeleteExpiredOFFAProduct(product: product, modelContext: modelContext)
+            } else {
+                handleMarkOFFAAsUsed(product: product, modelContext: modelContext)
+            }
+        }) {
+            if product.isExpired {
+                Image(systemName: "trash.fill")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(.red.opacity(0.8))
+            } else {
+                Image(systemName: product.isUsed ? "checkmark.circle.fill" : "checkmark.circle")
+                    .font(.system(size: 22, weight: .semibold))
+                    .foregroundStyle(product.isUsed ? .green : .gray.opacity(0.6))
+            }
+        }
+        .buttonStyle(PlainButtonStyle())
+        .frame(width: 44, height: 44)
+    }
+
+    private var cardContent: some View {
+        HStack(spacing: 14) {
+            productImageView
+            productInfoView
+            Spacer(minLength: 8)
+            actionButton
+        }
+    }
+
+    private var cardBackground: some View {
+        RoundedRectangle(cornerRadius: 13)
+            .fill(Color(.systemBackground))
+    }
+
+    private var cardBorder: some View {
+        RoundedRectangle(cornerRadius: 13)
+            .stroke(
+                colorScheme == .dark
+                    ? Color.white.opacity(0.08)
+                    : Color.clear,
+                lineWidth: 0.5
+            )
+    }
+
+    // MARK: - Body
+
+    var body: some View {
+        cardContent
+            .padding(14)
+            .background(cardBackground)
+            .overlay(cardBorder)
+            .shadow(
+                color: colorScheme == .dark ? Color.black.opacity(0.6) : Color.black.opacity(0.08),
+                radius: 10,
+                x: 0,
+                y: 4
+            )
+            .shadow(
+                color: colorScheme == .dark ? Color.white.opacity(0.1) : Color.white.opacity(0.5),
+                radius: 2,
+                x: 0,
+                y: -1
+            )
+            .opacity(product.isUsed ? 0.6 : 1.0)
+            .grayscale(product.isUsed ? 0.8 : 0.0)
     }
 }
 
@@ -398,6 +651,37 @@ private func getGroupStatus(for group: GroupedProducts) -> (message: String, col
         return ("Expires in \(days) day\(days == 1 ? "" : "s")", .orange, "clock.fill")
     } else {
         return ("Expires in \(days) days", .green, "leaf.fill")
+    }
+}
+
+private func getOFFAGroupStatus(for group: GroupedOFFAProducts) -> (message: String, color: Color, icon: String) {
+    let calendar = Calendar.current
+    let today = calendar.startOfDay(for: Date())
+    let expiry = calendar.startOfDay(for: group.expirationDate)
+    let days = calendar.dateComponents([.day], from: today, to: expiry).day ?? 0
+
+    if days < 0 {
+        return ("Expired \(abs(days)) day\(abs(days) == 1 ? "" : "s") ago", .red, "exclamationmark.triangle.fill")
+    } else if days == 0 {
+        return ("Expires today", .orange, "clock.fill")
+    } else if days <= 3 {
+        return ("Expires in \(days) day\(days == 1 ? "" : "s")", .orange, "clock.fill")
+    } else {
+        return ("Expires in \(days) days", .green, "leaf.fill")
+    }
+}
+
+private func handleMarkOFFAAsUsed(product: LSProduct, modelContext: ModelContext) {
+    withAnimation {
+        product.isUsed.toggle()
+        try? modelContext.save()
+    }
+}
+
+private func handleDeleteExpiredOFFAProduct(product: LSProduct, modelContext: ModelContext) {
+    withAnimation {
+        modelContext.delete(product)
+        try? modelContext.save()
     }
 }
 
