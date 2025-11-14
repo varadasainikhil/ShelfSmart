@@ -14,19 +14,44 @@ struct AllUsedProductsView: View {
 
     @Environment(\.modelContext) var modelContext
     @Query private var usedProducts: [Product]
+    @Query private var usedOFFAProducts: [LSProduct]
 
     init(userId: String) {
         self.userId = userId
-        // Query for used products by current user (filtered at database level for better performance)
+        // Query for used Spoonacular products by current user
         let predicate = #Predicate<Product> { product in
             product.isUsed && product.userId == userId
         }
         self._usedProducts = Query(filter: predicate, sort: \Product.dateAdded, order: .reverse)
+
+        // Query for used OFFA products by current user
+        let offaPredicate = #Predicate<LSProduct> { product in
+            product.isUsed && product.userId == userId
+        }
+        self._usedOFFAProducts = Query(filter: offaPredicate, sort: \LSProduct.dateAdded, order: .reverse)
+    }
+
+    // Combine and sort both product types by dateAdded
+    private var allUsedProductsSorted: [(date: Date, isOFFA: Bool, index: Int)] {
+        var combined: [(date: Date, isOFFA: Bool, index: Int)] = []
+
+        // Add Spoonacular products
+        for (index, product) in usedProducts.enumerated() {
+            combined.append((date: product.dateAdded, isOFFA: false, index: index))
+        }
+
+        // Add OFFA products
+        for (index, product) in usedOFFAProducts.enumerated() {
+            combined.append((date: product.dateAdded, isOFFA: true, index: index))
+        }
+
+        // Sort by date added (most recent first)
+        return combined.sorted { $0.date > $1.date }
     }
 
     var body: some View {
         NavigationStack {
-            if usedProducts.isEmpty {
+            if usedProducts.isEmpty && usedOFFAProducts.isEmpty {
                 // Empty State
                 VStack(spacing: 24) {
                     Spacer()
@@ -60,11 +85,22 @@ struct AllUsedProductsView: View {
             } else {
                 ScrollView {
                     VStack(spacing: 20) {
-                        ForEach(usedProducts, id: \.self) { product in
-                            NavigationLink(destination: DetailProductView(product: product)) {
-                                UsedProductCardView(product: product)
+                        ForEach(allUsedProductsSorted, id: \.date) { item in
+                            if item.isOFFA {
+                                // OFFA Product
+                                let product = usedOFFAProducts[item.index]
+                                NavigationLink(destination: Text("OFFA Detail View - Coming Soon")) {
+                                    UsedOFFAProductCardView(product: product)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            } else {
+                                // Spoonacular Product
+                                let product = usedProducts[item.index]
+                                NavigationLink(destination: DetailProductView(product: product)) {
+                                    UsedProductCardView(product: product)
+                                }
+                                .buttonStyle(PlainButtonStyle())
                             }
-                            .buttonStyle(PlainButtonStyle())
                         }
                     }
                     .padding(.horizontal, 20)
@@ -126,6 +162,86 @@ struct UsedProductCardView: View {
                 }
 
                 if let description = product.productDescription ?? product.generatedText, !description.isEmpty {
+                    Text(description)
+                        .font(.system(size: 13))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(3)
+                        .multilineTextAlignment(.leading)
+                }
+
+                if let brand = product.brand, !brand.isEmpty {
+                    Text(brand)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .multilineTextAlignment(.leading)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(minHeight: 70, alignment: .top) // Ensure consistent height and top alignment
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.secondarySystemBackground))
+                .shadow(color: Color(.label).opacity(0.08), radius: 8, x: 0, y: 2)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(.blue.opacity(0.2), lineWidth: 1)
+        )
+    }
+}
+
+// MARK: - Used OFFA Product Card Component
+struct UsedOFFAProductCardView: View {
+    let product: LSProduct
+
+    var body: some View {
+        HStack(spacing: 16) {
+            // Product Image
+            Group {
+                if let imageURL = product.imageFrontURL ?? product.imageLink, !imageURL.isEmpty {
+                    RobustAsyncImage(url: imageURL) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    }
+                } else {
+                    Image("placeholder")
+                        .resizable()
+                        .scaledToFill()
+                }
+            }
+            .frame(width: 70, height: 70)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color(.systemGray6))
+            )
+            .grayscale(0.8)
+            .opacity(0.7)
+
+            // Product Info
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 8) {
+                    Text(product.title)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                        .strikethrough(true, color: .primary)
+
+                    Spacer()
+
+                    // Used indicator badge
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 18))
+                        .foregroundStyle(.green)
+                }
+
+                if let description = product.productDescription, !description.isEmpty {
                     Text(description)
                         .font(.system(size: 13))
                         .foregroundStyle(.secondary)

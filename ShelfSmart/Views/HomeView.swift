@@ -407,9 +407,9 @@ struct EnhancedOFFACardView: View {
     private var actionButton: some View {
         Button(action: {
             if product.isExpired {
-                handleDeleteExpiredOFFAProduct(product: product, modelContext: modelContext)
+                handleDeleteExpiredOFFAProduct(product: product, modelContext: modelContext, notificationManager: notificationManager)
             } else {
-                handleMarkOFFAAsUsed(product: product, modelContext: modelContext)
+                handleMarkOFFAAsUsed(product: product, modelContext: modelContext, notificationManager: notificationManager)
             }
         }) {
             if product.isExpired {
@@ -671,17 +671,17 @@ private func getOFFAGroupStatus(for group: GroupedOFFAProducts) -> (message: Str
     }
 }
 
-private func handleMarkOFFAAsUsed(product: LSProduct, modelContext: ModelContext) {
-    withAnimation {
-        product.isUsed.toggle()
-        try? modelContext.save()
-    }
+private func handleMarkOFFAAsUsed(product: LSProduct, modelContext: ModelContext, notificationManager: NotificationManager) {
+    ProductHelpers.markOFFAProductAsUsed(product: product, modelContext: modelContext, notificationManager: notificationManager)
 }
 
-private func handleDeleteExpiredOFFAProduct(product: LSProduct, modelContext: ModelContext) {
-    withAnimation {
-        modelContext.delete(product)
-        try? modelContext.save()
+private func handleDeleteExpiredOFFAProduct(product: LSProduct, modelContext: ModelContext, notificationManager: NotificationManager) {
+    // Use shared delete function with proper error handling
+    do {
+        try ProductHelpers.deleteOFFAProduct(product, modelContext: modelContext, notificationManager: notificationManager)
+    } catch {
+        print("❌ Failed to delete expired OFFA product: \(error)")
+        // Error is now properly logged instead of being silently swallowed
     }
 }
 

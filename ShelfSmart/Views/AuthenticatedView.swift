@@ -14,6 +14,7 @@ struct AuthenticatedView: View {
 
     // Environment
     @Environment(\.scenePhase) var scenePhase
+    @Environment(\.modelContext) var modelContext
     @Environment(NotificationManager.self) var notificationManager
 
     // Query all products for current user (for notification sync)
@@ -21,6 +22,9 @@ struct AuthenticatedView: View {
 
     // Track if initial sync has been performed
     @State private var hasPerformedInitialSync = false
+
+    // Track if cleanup has been performed for this app session
+    @State private var hasPerformedCleanup = false
 
     // Rate limiting for foreground sync (minimum 60 seconds between syncs)
     @State private var lastSyncTime: Date?
@@ -48,6 +52,14 @@ struct AuthenticatedView: View {
             }
         }
         .onAppear {
+            // Perform cleanup of orphaned groups once per app launch
+            if !hasPerformedCleanup {
+                Task {
+                    await ProductHelpers.cleanupOrphanedGroups(for: userId, modelContext: modelContext)
+                    hasPerformedCleanup = true
+                }
+            }
+
             // Perform initial notification sync when view appears
             if !hasPerformedInitialSync {
                 Task {

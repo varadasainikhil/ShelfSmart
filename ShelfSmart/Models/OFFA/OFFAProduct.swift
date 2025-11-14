@@ -24,10 +24,17 @@ struct OFFAProduct: Codable, Identifiable {
     // Allergens
     let allergens: String?
     let allergensTags: [String]?
+
+    // EcoScore
+    let ecoScoreGrade : String?
+    let ecoScoreScore : Int?
     
     // Ingredients
     let ingredientsText: String? // TODO: Implement as a backup for ingredients if Ingredient is not found
     let ingredients: [OFFAIngredient]?
+    
+    // NOVA GROUP
+    let novaGroup : Int?
     
     // Nutrition (per 100g)
     let nutriments: OFFANutriments?
@@ -36,6 +43,9 @@ struct OFFAProduct: Codable, Identifiable {
     let nutriscoreGrade: String?
     let nutriscoreScore: Int?
     let nutriscoreData: OFFANutriscoreData?
+    
+    // Serving Size
+    let servingSize : String?
         
     enum CodingKeys: String, CodingKey {
         case id = "_id"
@@ -49,12 +59,17 @@ struct OFFAProduct: Codable, Identifiable {
         case imageNutritionURL = "image_nutrition_url"
         case allergens
         case allergensTags = "allergens_tags"
+        case ecoScoreGrade = "ecoscore_grade"
+        case ecoScoreScore = "ecoscore_score"
         case ingredientsText = "ingredients_text"
         case ingredients
+        case novaGroup = "nova_group"
         case nutriments
         case nutriscoreGrade = "nutriscore_grade"
         case nutriscoreScore = "nutriscore_score"
         case nutriscoreData = "nutriscore_data"
+        case servingSize = "serving_size"
     }
 }
+
 

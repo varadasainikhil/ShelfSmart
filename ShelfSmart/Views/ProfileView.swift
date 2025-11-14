@@ -32,6 +32,7 @@ struct ProfileView: View {
     @Query private var likedProducts: [Product]
     @Query private var likedRecipes: [SDRecipe]
     @Query private var usedProducts: [Product]
+    @Query private var usedLSProducts: [LSProduct]
 
     init(userId: String) {
         self.userId = userId
@@ -44,6 +45,7 @@ struct ProfileView: View {
         self._likedProducts = Query(filter: #Predicate { $0.isLiked && $0.userId == userId })
         self._likedRecipes = Query(filter: #Predicate { $0.isLiked && $0.userId == userId })
         self._usedProducts = Query(filter: #Predicate { $0.isUsed && $0.userId == userId })
+        self._usedLSProducts = Query(filter: #Predicate<LSProduct> { $0.isUsed && $0.userId == userId })
     }
     
     
@@ -255,13 +257,22 @@ struct ProfileView: View {
                             .buttonStyle(PlainButtonStyle())
                             .padding(.horizontal, 20)
 
-                            // Recent 5 Used Products - Horizontal Scroll
-                            if !usedProducts.isEmpty {
+                            // Recent 5 Used Products - Horizontal Scroll (both Spoonacular and OFFA)
+                            if !usedProducts.isEmpty || !usedLSProducts.isEmpty {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 12) {
+                                        // Spoonacular products
                                         ForEach(Array(usedProducts.prefix(5)), id: \.self) { product in
                                             NavigationLink(destination: DetailProductView(product: product)) {
                                                 UsedProductCard(product: product)
+                                            }
+                                            .buttonStyle(PlainButtonStyle())
+                                        }
+
+                                        // OFFA products
+                                        ForEach(Array(usedLSProducts.prefix(5)), id: \.self) { product in
+                                            NavigationLink(destination: Text("OFFA Detail View - Coming Soon")) {
+                                                UsedOFFAProductCard(product: product)
                                             }
                                             .buttonStyle(PlainButtonStyle())
                                         }
@@ -271,7 +282,7 @@ struct ProfileView: View {
                                 .padding(.bottom, 16)
                             }
 
-                            if usedProducts.isEmpty {
+                            if usedProducts.isEmpty && usedLSProducts.isEmpty {
                                 // Empty State for Used Products
                                 VStack(spacing: 16) {
                                     Circle()
@@ -340,8 +351,8 @@ struct ProfileView: View {
                         .shadow(color: .red.opacity(0.4), radius: 10, x: 0, y: 4)
                         .shadow(color: .red.opacity(0.2), radius: 2, x: 0, y: 1)
                     }
-                    .disabled(groups.isEmpty && likedProducts.isEmpty && likedRecipes.isEmpty && usedProducts.isEmpty)
-                    .opacity((groups.isEmpty && likedProducts.isEmpty && likedRecipes.isEmpty && usedProducts.isEmpty) ? 0.6 : 1.0)
+                    .disabled(groups.isEmpty && likedProducts.isEmpty && likedRecipes.isEmpty && usedProducts.isEmpty && usedLSProducts.isEmpty)
+                    .opacity((groups.isEmpty && likedProducts.isEmpty && likedRecipes.isEmpty && usedProducts.isEmpty && usedLSProducts.isEmpty) ? 0.6 : 1.0)
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 34)
@@ -844,6 +855,87 @@ struct UsedProductCard: View {
             ZStack {
                 if let imageLink = product.imageLink, !imageLink.isEmpty {
                     RobustAsyncImage(url: imageLink) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    }
+                    .frame(width: 80, height: 80)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                } else {
+                    Image("placeholder")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 80, height: 80)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+
+                // Checkmark indicator overlay
+                VStack {
+                    HStack {
+                        Spacer()
+                        Image(systemName: "checkmark.circle.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Color(.systemBackground))
+                            .background(
+                                Circle()
+                                    .fill(.green)
+                                    .frame(width: 22, height: 22)
+                            )
+                            .offset(x: -6, y: 6)
+                    }
+                    Spacer()
+                }
+            }
+            .frame(width: 80, height: 80)
+            .background(Color(.systemGray5))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .grayscale(0.5)
+            .opacity(0.8)
+
+            // Product Info
+            VStack(alignment: .center, spacing: 2) {
+                Text(product.title)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .strikethrough(true, color: .primary)
+                    .frame(maxWidth: .infinity)
+            }
+            .frame(height: 28) // Reduced height for text area
+            .padding(.horizontal, 4)
+        }
+        .frame(width: 100, height: 120)
+        .padding(8)
+
+        return cardContent
+            .background(
+                RoundedRectangle(cornerRadius: 13)
+                    .fill(Color(.secondarySystemBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 13)
+                    .stroke(
+                        colorScheme == .dark ? Color.white.opacity(0.06) : Color.blue.opacity(0.15),
+                        lineWidth: 0.5
+                    )
+            )
+            .shadow(color: colorScheme == .dark ? Color.black.opacity(0.4) : Color.black.opacity(0.1), radius: 8, x: 0, y: 3)
+            .shadow(color: colorScheme == .dark ? Color.white.opacity(0.05) : Color.white.opacity(0.6), radius: 1, x: 0, y: -1)
+    }
+}
+
+// MARK: - Used OFFA Product Card Component
+struct UsedOFFAProductCard: View {
+    @Environment(\.colorScheme) var colorScheme
+    let product: LSProduct
+
+    var body: some View {
+        let cardContent = VStack(alignment: .center, spacing: 8) {
+            // Product Image
+            ZStack {
+                if let imageURL = product.imageFrontURL ?? product.imageLink, !imageURL.isEmpty {
+                    RobustAsyncImage(url: imageURL) { image in
                         image
                             .resizable()
                             .scaledToFill()

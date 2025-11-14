@@ -125,6 +125,10 @@ struct AddProductView: View {
                         isSaving: viewModel.isSaving,
                         isDisabled: viewModel.isSaveButtonDisabled,
                         onSave: {
+                            // Prevent double-tap by immediately disabling button
+                            guard !viewModel.isSaving else { return }
+                            viewModel.isSaving = true
+
                             let impactFeedback = UIImpactFeedbackGenerator(style: .medium)
                             impactFeedback.impactOccurred()
 

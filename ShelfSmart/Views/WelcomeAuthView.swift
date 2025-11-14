@@ -211,3 +211,21 @@ struct FeatureHighlight: View {
 #Preview {
     WelcomeAuthView()
 }
+
+ /*
+  The Problem
+  The user sees the AllergiesOnboardingView briefly before being redirected to HomeView because:
+  SplashScreenView (ShelfSmartApp.swift:165-168) shows for ~1.8 seconds
+  After splash completes, it shows EntryView
+  EntryView initially renders with default state values:
+  isLoggedIn defaults to false
+  hasCompletedOnboarding defaults to false
+  The Firebase auth listener and refreshUserStatus() are called, but they take time to:
+  Check authentication status
+  Fetch onboarding status from Firestore (EntryViewViewModel.swift:59)
+  During this delay, SwiftUI renders the view with the default states, showing AllergiesOnboardingView
+  Once the async data loads, the view updates to show HomeView
+  The Solution
+  We need to add a loading state to prevent showing any screens until we've confirmed the user's actual authentication and onboarding status. Let me implement this fix:
+
+  */

@@ -444,6 +444,9 @@ class AddProductViewViewModel {
         isSaving = true
         errorMessage = nil
 
+        // Clear any previously accumulated recipes to prevent duplicates
+        self.offaRecipes = []
+
         guard let offaProduct = offaProduct else {
             print("❌ [OFFA] No OFFA product available to save")
             errorMessage = "No product data available"
@@ -788,6 +791,9 @@ class AddProductViewViewModel {
         // Set saving state and reset any previous error messages
         self.isSaving = true
         self.errorMessage = nil
+
+        // Clear any previously accumulated recipes to prevent duplicates
+        self.offaRecipes = []
 
         // Validate required fields - only name is required
         let productName = self.name.trimmingCharacters(in: .whitespacesAndNewlines)

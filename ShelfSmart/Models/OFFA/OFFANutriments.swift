@@ -9,6 +9,10 @@ import Foundation
 
 // MARK: - Nutriments (Nutrition per 100g)
 struct OFFANutriments: Codable {
+    // Added sugars
+    let addedSugars: Double?
+    let addedSugarsUnit: String?
+
     // Energy
     let energyKcal: Double?
     let energyKcalUnit: String?
@@ -38,7 +42,8 @@ struct OFFANutriments: Codable {
     let sodiumUnit: String?
     
     enum CodingKeys: String, CodingKey {
-    
+        case addedSugars = "added_sugars_100g"
+        case addedSugarsUnit = "added_sugars_unit"
         
         case energyKcal = "energy-kcal_100g"
         case energyKcalUnit = "energy-kcal_unit"
