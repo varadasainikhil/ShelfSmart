@@ -13,7 +13,7 @@ import FirebaseFirestore
 class EntryViewViewModel{
     var isLoggedIn : Bool = false
     var isEmailVerified : Bool = false
-    var hasCompletedOnboarding : Bool = false
+    var hasCompletedOnboarding : Bool? = nil  // nil = unknown, false = not completed, true = completed
     var currentUserId : String = ""
     var currentUserEmail : String = ""
 
@@ -31,7 +31,7 @@ class EntryViewViewModel{
             } else {
                 // User signed out - reset all state
                 self.isEmailVerified = false
-                self.hasCompletedOnboarding = false
+                self.hasCompletedOnboarding = nil  // Reset to unknown when signing out
                 print("🚪 User signed out - state reset")
             }
         })
@@ -82,9 +82,9 @@ class EntryViewViewModel{
                 print("❌ Error refreshing user status: \(error.localizedDescription)")
             }
 
-            // On error, default to requiring onboarding
+            // On error, keep status as unknown (don't assume not completed)
             await MainActor.run {
-                self.hasCompletedOnboarding = false
+                self.hasCompletedOnboarding = nil
             }
         }
     }

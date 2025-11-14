@@ -9,7 +9,7 @@ import SwiftUI
 import FirebaseFirestore
 
 struct EntryView: View {
-    @State var viewModel = EntryViewViewModel()
+    @State var viewModel : EntryViewViewModel
     @State private var pendingUserName: String = "User"
 
     /// Fetch pending user name from Firebase authUsers collection
@@ -37,17 +37,29 @@ struct EntryView: View {
             if viewModel.isLoggedIn && !viewModel.currentUserId.isEmpty {
                 if viewModel.isEmailVerified {
                     // User is authenticated and email is verified
-                    if viewModel.hasCompletedOnboarding {
-                        // User has completed onboarding - show main app
-                        AuthenticatedView(userId: viewModel.currentUserId)
+                    if let hasCompleted = viewModel.hasCompletedOnboarding {
+                        // We know the onboarding status
+                        if hasCompleted {
+                            // User has completed onboarding - show main app
+                            AuthenticatedView(userId: viewModel.currentUserId)
+                        } else {
+                            // User needs to complete onboarding
+                            AllergiesOnboardingView(
+                                userId: viewModel.currentUserId,
+                                onComplete: {
+                                    await viewModel.refreshUserStatus()
+                                }
+                            )
+                        }
                     } else {
-                        // User needs to complete onboarding
-                        AllergiesOnboardingView(
-                            userId: viewModel.currentUserId,
-                            onComplete: {
-                                await viewModel.refreshUserStatus()
-                            }
-                        )
+                        // Onboarding status unknown - show loading
+                        VStack(spacing: 16) {
+                            ProgressView()
+                            Text("Loading your profile...")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 } else {
                     // User is authenticated but email is not verified
@@ -73,12 +85,8 @@ struct EntryView: View {
         .onDisappear {
             viewModel.stopHandler()
         }
-        .onAppear {
-            // Refresh user status when view appears
-            Task {
-                await viewModel.refreshUserStatus()
-            }
-        }
+        // Note: No need for .onAppear refresh since data is fetched during splash screen
+        // Only refresh when user authentication state changes
         .onChange(of: viewModel.isLoggedIn) { oldValue, newValue in
             // When user signs in (including via Apple Sign In), refresh their onboarding status
             if newValue == true && oldValue == false {
@@ -93,5 +101,6 @@ struct EntryView: View {
 }
 
 #Preview {
-    EntryView()
+    let entryViewModel = EntryViewViewModel()
+    EntryView(viewModel: entryViewModel)
 }

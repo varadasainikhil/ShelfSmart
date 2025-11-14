@@ -49,6 +49,8 @@ struct ShelfSmartApp: App {
     @State private var notificationManager = NotificationManager()
     @State private var modelContainerError: Error?
     @State private var showSplash = true
+    @State private var isDataReady = false
+    @State private var entryViewViewModel : EntryViewViewModel? = nil
 
     // Configure ModelContainer with explicit CloudKit settings
     private var modelContainer: ModelContainer = {
@@ -163,11 +165,22 @@ struct ShelfSmartApp: App {
     var body: some Scene {
         WindowGroup {
             if showSplash {
-                SplashScreenView {
-                    showSplash = false
-                }
-            } else {
-                EntryView()
+                SplashScreenView()
+                    .task {
+                        // Create EntryViewViewModel here as firebase is ready
+                        if entryViewViewModel == nil{ 
+                            entryViewViewModel = EntryViewViewModel()
+                        }
+                        // Fetch Data during splash
+                        await entryViewViewModel?.refreshUserStatus()
+                        isDataReady = true
+                        
+                        // Wait for the animation
+                        try? await Task.sleep(for: .seconds(1.8))
+                        showSplash = false
+                    }
+            } else if  let viewModel = entryViewViewModel{
+                EntryView(viewModel: viewModel)
                     .environment(notificationManager)
             }
         }

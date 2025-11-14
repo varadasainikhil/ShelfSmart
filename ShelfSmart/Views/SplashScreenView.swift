@@ -9,7 +9,6 @@ import SwiftUI
 
 struct SplashScreenView: View {
     @State private var opacity: Double = 0.0
-    var onComplete: () -> Void
 
     var body: some View {
         ZStack {
@@ -39,21 +38,10 @@ struct SplashScreenView: View {
                 opacity = 1.0
             }
 
-            // Dismiss after 1.8 seconds total (1.4s visible + 0.4s fade out)
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) {
-                withAnimation(.easeOut(duration: 0.4)) {
-                    opacity = 0.0
-                }
-
-                // Call completion handler after fade out
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                    onComplete()
-                }
-            }
         }
     }
 }
 
 #Preview {
-    SplashScreenView(onComplete: {})
+    SplashScreenView()
 }
