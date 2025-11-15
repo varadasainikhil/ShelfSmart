@@ -306,7 +306,7 @@ struct EnhancedOFFAGroupView: View {
             // Products in group (only active/non-used)
             VStack(spacing: 10) {
                 ForEach(activeProducts, id: \.id) { product in
-                    NavigationLink(destination: Text("Detail View - Coming Soon")) {
+                    NavigationLink(destination: LSProductDetailView(product: product)) {
                         EnhancedOFFACardView(product: product)
                     }
                     .buttonStyle(PlainButtonStyle())

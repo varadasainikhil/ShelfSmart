@@ -43,6 +43,16 @@ class LSProduct {
     @Relationship(deleteRule: .cascade, inverse: \LSNutriscoreData.product)
     var nutriscoreData : LSNutriscoreData? // Detailed nutriscore data
 
+    // Eco-Score
+    var ecoScoreGrade : String? // Eco-score grade (A-E)
+    var ecoScoreScore : Int? // Eco-score numeric score
+
+    // NOVA Group
+    var novaGroup : Int? // NOVA group classification (1-4)
+
+    // Serving Size
+    var servingSize : String? // Serving size (e.g., "240ml", "100g")
+
     var recipeIds : [Int]? = [Int]() // Array of recipe IDs found for this product
 
     // One-to-many relationship with SDOFFARecipe
@@ -115,7 +125,7 @@ class LSProduct {
         Calendar.current.date(byAdding: .day, value: -7, to: expirationDate)
     }
 
-    init(id: String = UUID().uuidString, barcode: String, title: String, brand: String, quantity: String? = nil, productDescription: String? = nil, imageLink: String? = nil, imageFrontURL: String? = nil, imageIngredientsURL: String? = nil, imageNutritionURL: String? = nil, allergens: String? = nil, allergensTags: [String]? = nil, ingredientsText: String? = nil, ingredients: [LSIngredient]? = nil, nutriments: LSNutriments? = nil, nutriscoreGrade: String? = nil, nutriscoreScore: Int? = nil, nutriscoreData: LSNutriscoreData? = nil, recipeIds: [Int]? = nil, recipes : [SDOFFARecipe]? = nil, expirationDate: Date, userId: String = "") {
+    init(id: String = UUID().uuidString, barcode: String, title: String, brand: String, quantity: String? = nil, productDescription: String? = nil, imageLink: String? = nil, imageFrontURL: String? = nil, imageIngredientsURL: String? = nil, imageNutritionURL: String? = nil, allergens: String? = nil, allergensTags: [String]? = nil, ingredientsText: String? = nil, ingredients: [LSIngredient]? = nil, nutriments: LSNutriments? = nil, nutriscoreGrade: String? = nil, nutriscoreScore: Int? = nil, nutriscoreData: LSNutriscoreData? = nil, ecoScoreGrade: String? = nil, ecoScoreScore: Int? = nil, novaGroup: Int? = nil, servingSize: String? = nil, recipeIds: [Int]? = nil, recipes : [SDOFFARecipe]? = nil, expirationDate: Date, userId: String = "") {
         self.id = id
         self.barcode = barcode
         self.title = title
@@ -134,6 +144,10 @@ class LSProduct {
         self.nutriscoreGrade = nutriscoreGrade
         self.nutriscoreScore = nutriscoreScore
         self.nutriscoreData = nutriscoreData
+        self.ecoScoreGrade = ecoScoreGrade
+        self.ecoScoreScore = ecoScoreScore
+        self.novaGroup = novaGroup
+        self.servingSize = servingSize
         self.recipeIds = recipeIds
         self.recipes = recipes
         self.dateAdded = .now
@@ -178,6 +192,10 @@ class LSProduct {
             nutriscoreGrade: offaProduct.nutriscoreGrade,
             nutriscoreScore: offaProduct.nutriscoreScore,
             nutriscoreData: lsNutriscoreData,
+            ecoScoreGrade: offaProduct.ecoScoreGrade,
+            ecoScoreScore: offaProduct.ecoScoreScore,
+            novaGroup: offaProduct.novaGroup,
+            servingSize: offaProduct.servingSize,
             recipeIds: recipeIds,
             recipes: recipes,
             expirationDate: expirationDate,

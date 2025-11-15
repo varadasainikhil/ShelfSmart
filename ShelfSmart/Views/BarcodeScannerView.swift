@@ -132,7 +132,7 @@ struct BarcodeScannerView: View {
 
     // MARK: - Check and Request Permission
     private func checkAndRequestPermission() async {
-        print("📷 Checking camera permission...")
+        print(" Checking camera permission...")
         isCheckingPermission = true
 
         // Check current permission status
@@ -140,7 +140,7 @@ struct BarcodeScannerView: View {
 
         // If not determined, request permission
         if cameraPermissionManager.permissionStatus == .notDetermined {
-            print("📷 Permission not determined, requesting...")
+            print(" Permission not determined, requesting...")
             _ = await cameraPermissionManager.requestPermission()
         }
 
@@ -152,7 +152,7 @@ struct BarcodeScannerView: View {
 
     // MARK: - Handle Scanned Barcode
     private func handleScannedBarcode(_ barcodeValue: String) {
-        print("📷 Processing scanned barcode: \(barcodeValue)")
+        print(" Processing scanned barcode: \(barcodeValue)")
 
         // Show loading indicator
         dataScannerManager.isSearching = true
@@ -198,9 +198,9 @@ struct DataScannerViewControllerRepresentable: UIViewControllerRepresentable {
         if !uiViewController.isScanning {
             do {
                 try uiViewController.startScanning()
-                print("📷 Started barcode scanning")
+                print(" Started barcode scanning")
             } catch {
-                print("❌ Failed to start scanning: \(error.localizedDescription)")
+                print(" Failed to start scanning: \(error.localizedDescription)")
                 // Note: Errors will be handled by the delegate's becameUnavailableWithError method
             }
         }
@@ -210,7 +210,7 @@ struct DataScannerViewControllerRepresentable: UIViewControllerRepresentable {
         // Stop scanning when view disappears
         if uiViewController.isScanning {
             uiViewController.stopScanning()
-            print("📷 Stopped barcode scanning")
+            print(" Stopped barcode scanning")
         }
     }
 }
