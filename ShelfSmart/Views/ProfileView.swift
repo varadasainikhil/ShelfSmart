@@ -30,6 +30,7 @@ struct ProfileView: View {
     @Query private var allProducts: [Product]
     @Query private var allRecipes: [SDRecipe]
     @Query private var likedProducts: [Product]
+    @Query private var likedLSProducts: [LSProduct]
     @Query private var likedRecipes: [SDRecipe]
     @Query private var usedProducts: [Product]
     @Query private var usedLSProducts: [LSProduct]
@@ -43,6 +44,7 @@ struct ProfileView: View {
         self._allProducts = Query(filter: #Predicate { $0.userId == userId })
         self._allRecipes = Query(filter: #Predicate { $0.userId == userId })
         self._likedProducts = Query(filter: #Predicate { $0.isLiked && $0.userId == userId })
+        self._likedLSProducts = Query(filter: #Predicate<LSProduct> { $0.isLiked && $0.userId == userId })
         self._likedRecipes = Query(filter: #Predicate { $0.isLiked && $0.userId == userId })
         self._usedProducts = Query(filter: #Predicate { $0.isUsed && $0.userId == userId })
         self._usedLSProducts = Query(filter: #Predicate<LSProduct> { $0.isUsed && $0.userId == userId })
@@ -115,13 +117,22 @@ struct ProfileView: View {
                             .buttonStyle(PlainButtonStyle())
                             .padding(.horizontal, 20)
                         
-                            // Recent 5 Liked Items - Horizontal Scroll
-                            if !likedProducts.isEmpty {
+                            // Recent 5 Liked Items - Horizontal Scroll (both Spoonacular and OFFA)
+                            if !likedProducts.isEmpty || !likedLSProducts.isEmpty {
                                 ScrollView(.horizontal, showsIndicators: false) {
                                     HStack(spacing: 12) {
+                                        // Spoonacular products
                                         ForEach(Array(likedProducts.prefix(5)), id: \.self) { product in
                                             NavigationLink(destination: DetailProductView(product: product)) {
                                                 LikedProductCard(product: product)
+                                            }
+                                            .buttonStyle(PlainButtonStyle())
+                                        }
+
+                                        // OFFA products
+                                        ForEach(Array(likedLSProducts.prefix(5)), id: \.self) { product in
+                                            NavigationLink(destination: LSProductDetailView(product: product)) {
+                                                LikedOFFAProductCard(product: product)
                                             }
                                             .buttonStyle(PlainButtonStyle())
                                         }
@@ -130,8 +141,8 @@ struct ProfileView: View {
                                 }
                                 .padding(.bottom, 16)
                             }
-                        
-                            if likedProducts.isEmpty {
+
+                            if likedProducts.isEmpty && likedLSProducts.isEmpty {
                                 // Empty State for Liked Products
                                 VStack(spacing: 16) {
                                     Circle()
@@ -351,8 +362,8 @@ struct ProfileView: View {
                         .shadow(color: .red.opacity(0.4), radius: 10, x: 0, y: 4)
                         .shadow(color: .red.opacity(0.2), radius: 2, x: 0, y: 1)
                     }
-                    .disabled(groups.isEmpty && likedProducts.isEmpty && likedRecipes.isEmpty && usedProducts.isEmpty && usedLSProducts.isEmpty)
-                    .opacity((groups.isEmpty && likedProducts.isEmpty && likedRecipes.isEmpty && usedProducts.isEmpty && usedLSProducts.isEmpty) ? 0.6 : 1.0)
+                    .disabled(groups.isEmpty && likedProducts.isEmpty && likedLSProducts.isEmpty && likedRecipes.isEmpty && usedProducts.isEmpty && usedLSProducts.isEmpty)
+                    .opacity((groups.isEmpty && likedProducts.isEmpty && likedLSProducts.isEmpty && likedRecipes.isEmpty && usedProducts.isEmpty && usedLSProducts.isEmpty) ? 0.6 : 1.0)
                 }
                 .padding(.horizontal, 20)
                 .padding(.bottom, 34)
@@ -752,6 +763,84 @@ struct LikedProductCard: View {
                 RoundedRectangle(cornerRadius: 13)
                     .stroke(
                         colorScheme == .dark ? Color.white.opacity(0.06) : product.borderColor.opacity(0.15),
+                        lineWidth: 0.5
+                    )
+            )
+            .shadow(color: colorScheme == .dark ? Color.black.opacity(0.4) : Color.black.opacity(0.1), radius: 8, x: 0, y: 3)
+            .shadow(color: colorScheme == .dark ? Color.white.opacity(0.05) : Color.white.opacity(0.6), radius: 1, x: 0, y: -1)
+    }
+}
+
+// MARK: - Liked OFFA Product Card Component
+struct LikedOFFAProductCard: View {
+    @Environment(\.colorScheme) var colorScheme
+    let product: LSProduct
+
+    var body: some View {
+        let cardContent = VStack(alignment: .center, spacing: 8) {
+            // Product Image
+            ZStack {
+                if let imageURL = product.imageFrontURL ?? product.imageLink, !imageURL.isEmpty {
+                    RobustAsyncImage(url: imageURL) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    }
+                    .frame(width: 80, height: 80)
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                } else {
+                    Image("placeholder")
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: 80, height: 80)
+                        .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+
+                // Heart indicator overlay
+                VStack {
+                    HStack {
+                        Spacer()
+                        Image(systemName: "heart.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .background(
+                                Circle()
+                                    .fill(.red)
+                                    .frame(width: 22, height: 22)
+                            )
+                            .offset(x: -6, y: 6)
+                    }
+                    Spacer()
+                }
+            }
+            .frame(width: 80, height: 80)
+            .background(Color(.systemGray5))
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+
+            // Product Info
+            VStack(alignment: .center, spacing: 2) {
+                Text(product.title)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.primary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+            }
+            .frame(height: 28) // Reduced height for text area
+            .padding(.horizontal, 4)
+        }
+        .frame(width: 100, height: 120)
+        .padding(8)
+
+        return cardContent
+            .background(
+                RoundedRectangle(cornerRadius: 13)
+                    .fill(Color(.secondarySystemBackground))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 13)
+                    .stroke(
+                        colorScheme == .dark ? Color.white.opacity(0.06) : Color.red.opacity(0.15),
                         lineWidth: 0.5
                     )
             )

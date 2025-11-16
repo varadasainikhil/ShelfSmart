@@ -332,4 +332,40 @@ struct ProductHelpers {
             }
         }
     }
+
+    /// Unlike an OFFA recipe and delete it if it's standalone (not associated with a product)
+    /// - Parameters:
+    ///   - recipe: The OFFA recipe to unlike
+    ///   - userId: The current user ID
+    ///   - modelContext: The SwiftData model context
+    ///   - completion: Closure called with true if recipe was deleted, false otherwise
+    static func unlikeOFFARecipe(_ recipe: SDOFFARecipe, userId: String, modelContext: ModelContext, completion: ((Bool) -> Void)? = nil) {
+        // Check state BEFORE making any changes to avoid accessing invalid backing data
+        let willBeDeletedOnUnlike = recipe.isLiked && recipe.product == nil
+
+        if willBeDeletedOnUnlike {
+            // Recipe is standalone and will be deleted - don't bother toggling, just delete
+            do {
+                modelContext.delete(recipe)
+                try modelContext.save()
+                print("✅ OFFA Recipe unliked and deleted successfully")
+                completion?(true)
+            } catch {
+                print("❌ Failed to delete OFFA recipe: \(error)")
+                completion?(false)
+            }
+        } else {
+            // Recipe is either attached to a product or will remain standalone
+            // Just toggle the like status
+            do {
+                recipe.likeRecipe(userId: userId)
+                try modelContext.save()
+                print("✅ OFFA Recipe like status toggled successfully")
+                completion?(false)
+            } catch {
+                print("❌ Failed to toggle OFFA recipe like status: \(error)")
+                completion?(false)
+            }
+        }
+    }
 }

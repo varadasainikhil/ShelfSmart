@@ -12,11 +12,16 @@ struct LSProductDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(NotificationManager.self) var notificationManager
 
     var product: LSProduct
 
+    @State private var viewModel: LSProductDetailViewModel
     @State private var selectedTab: ProductTab = .nutrition
     @State private var recipeToShow: SDOFFARecipe?
+    @State private var showDeleteConfirmation = false
+    @State private var isMarkedAsUsed = false
+    @State private var isDeleting = false
 
     enum ProductTab: String, CaseIterable {
         case nutrition = "Nutrition"
@@ -25,16 +30,89 @@ struct LSProductDetailView: View {
         case details = "Details"
     }
 
-    // Filter out any invalid or deleted recipes
-    private var validRecipes: [SDOFFARecipe] {
-        guard let recipes = product.recipes else { return [] }
-        return recipes.filter { recipe in
-            recipe.id != nil
-        }
+    // MARK: - Initialization
+    init(product: LSProduct) {
+        self.product = product
+        self._viewModel = State(initialValue: LSProductDetailViewModel(product: product))
     }
 
     // MARK: - Body
     var body: some View {
+        Group {
+            if isDeleting {
+                deletingStateView
+            } else {
+                mainContentView
+            }
+        }
+        .navigationTitle("")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                HStack(spacing: 16) {
+                    // Favorite button
+                    Button {
+                        toggleFavorite()
+                    } label: {
+                        Image(systemName: product.isLiked ? "heart.fill" : "heart")
+                            .foregroundStyle(product.isLiked ? .red : .primary)
+                    }
+
+                    // Mark as used button
+                    Button {
+                        handleMarkAsUsed()
+                    } label: {
+                        Image(systemName: (isMarkedAsUsed || product.isUsed) ? "checkmark.circle.fill" : "checkmark.circle")
+                            .foregroundStyle((isMarkedAsUsed || product.isUsed) ? .green : .primary)
+                    }
+
+                    // Delete button
+                    Button {
+                        showDeleteConfirmation = true
+                    } label: {
+                        Image(systemName: "trash.fill")
+                            .foregroundStyle(.red)
+                    }
+                }
+            }
+        }
+        .confirmationDialog(
+            "Delete Product",
+            isPresented: $showDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Delete", role: .destructive) {
+                deleteProduct()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            if product.isLiked {
+                Text("This is a liked item! Are you sure you want to delete '\(product.title)'? This action cannot be undone.")
+            } else {
+                Text("Are you sure you want to delete '\(product.title)'? This action cannot be undone.")
+            }
+        }
+        .sheet(item: $recipeToShow) { sdRecipe in
+            NavigationStack {
+                OFFARecipeDetailView(userId: product.userId, sdRecipe: sdRecipe)
+            }
+        }
+    }
+
+    // MARK: - Deleting State View
+    private var deletingStateView: some View {
+        VStack(spacing: 16) {
+            ProgressView()
+                .scaleEffect(1.5)
+            Text("Deleting product...")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    // MARK: - Main Content View
+    private var mainContentView: some View {
         ScrollView {
             VStack(spacing: 0) {
                 // Product Image
@@ -71,30 +149,13 @@ struct LSProductDetailView: View {
                     .padding(.horizontal, 16)
 
                 // Recipe Suggestions
-                if !validRecipes.isEmpty {
+                if !viewModel.validRecipes.isEmpty {
                     recipeSuggestionsSection
                         .padding(.horizontal, 16)
                         .padding(.top, 16)
                 }
 
                 Spacer(minLength: 20)
-            }
-        }
-        .navigationTitle("Product Details")
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button {
-                    toggleFavorite()
-                } label: {
-                    Image(systemName: product.isLiked ? "heart.fill" : "heart")
-                        .foregroundStyle(product.isLiked ? .red : .primary)
-                }
-            }
-        }
-        .sheet(item: $recipeToShow) { sdRecipe in
-            NavigationStack {
-                OFFARecipeDetailView(userId: product.userId, sdRecipe: sdRecipe)
             }
         }
     }
@@ -169,58 +230,31 @@ struct LSProductDetailView: View {
 
     // MARK: - Quick Stats Section
     private var quickStatsSection: some View {
-        HStack(spacing: 0) {
-            // Calories
-            VStack(spacing: 4) {
-                Text("Calories")
-                    .font(.subheadline)
-                    .fontWeight(.medium)
-                    .foregroundStyle(.secondary)
+        VStack(spacing: 4) {
+            Text("Calories")
+                .font(.subheadline)
+                .fontWeight(.medium)
+                .foregroundStyle(.secondary)
 
-                Text(caloriesText)
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(viewModel.caloriesString)
                     .font(.title)
                     .fontWeight(.bold)
-                    .foregroundStyle(.primary)
-            }
-            .frame(maxWidth: .infinity)
+                    .foregroundStyle(viewModel.caloriesColor)
 
-            Divider()
-                .frame(height: 44)
-
-            // Serving Size
-            VStack(spacing: 4) {
-                Text("Serving Size")
-                    .font(.subheadline)
+                Text("kcal per 100g")
+                    .font(.caption)
                     .fontWeight(.medium)
                     .foregroundStyle(.secondary)
-
-                Text(servingSizeText)
-                    .font(.title)
-                    .fontWeight(.bold)
-                    .foregroundStyle(.primary)
             }
-            .frame(maxWidth: .infinity)
         }
+        .frame(maxWidth: .infinity)
         .padding(.vertical, 16)
         .background(
             RoundedRectangle(cornerRadius: 16)
                 .fill(Color(.secondarySystemBackground))
         )
         .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-    }
-
-    private var caloriesText: String {
-        if let energyKcal = product.nutriments?.energyKcal {
-            return "\(Int(energyKcal))"
-        }
-        return "N/A"
-    }
-
-    private var servingSizeText: String {
-        if let servingSize = product.servingSize, !servingSize.isEmpty {
-            return servingSize
-        }
-        return "N/A"
     }
 
     // MARK: - Summary Scores Section
@@ -234,23 +268,23 @@ struct LSProductDetailView: View {
             HStack(spacing: 16) {
                 // Nutri-Score
                 ScoreBadge(
-                    grade: product.nutriscoreGrade?.uppercased() ?? "N/A",
+                    grade: viewModel.nutriscoreGradeDisplay,
                     title: "Nutri-Score",
-                    color: nutriscoreColor
+                    color: viewModel.nutriscoreColor
                 )
 
                 // Eco-Score
                 ScoreBadge(
-                    grade: product.ecoScoreGrade?.uppercased() ?? "N/A",
+                    grade: viewModel.ecoscoreGradeDisplay,
                     title: "Eco-Score",
-                    color: ecoscoreColor
+                    color: viewModel.ecoscoreColor
                 )
 
-                // NOVA Group
+                // Processing Level
                 ScoreBadge(
-                    grade: product.novaGroup != nil ? "\(product.novaGroup!)" : "N/A",
-                    title: "NOVA Group",
-                    color: novaGroupColor
+                    grade: viewModel.processingLevelGrade,
+                    title: "Processing Level",
+                    color: viewModel.processingLevelColor
                 )
             }
         }
@@ -260,41 +294,6 @@ struct LSProductDetailView: View {
                 .fill(Color(.secondarySystemBackground))
         )
         .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
-    }
-
-    private var nutriscoreColor: Color {
-        guard let grade = product.nutriscoreGrade?.lowercased() else { return .gray }
-        switch grade {
-        case "a": return .green
-        case "b": return Color(red: 0.6, green: 0.8, blue: 0.2)
-        case "c": return .yellow
-        case "d": return .orange
-        case "e": return .red
-        default: return .gray
-        }
-    }
-
-    private var ecoscoreColor: Color {
-        guard let grade = product.ecoScoreGrade?.lowercased() else { return .gray }
-        switch grade {
-        case "a": return .green
-        case "b": return Color(red: 0.6, green: 0.8, blue: 0.2)
-        case "c": return .yellow
-        case "d": return .orange
-        case "e": return .red
-        default: return .gray
-        }
-    }
-
-    private var novaGroupColor: Color {
-        guard let group = product.novaGroup else { return .gray }
-        switch group {
-        case 1: return .green
-        case 2: return .yellow
-        case 3: return .orange
-        case 4: return .red
-        default: return .gray
-        }
     }
 
     // MARK: - Positives & Negatives Section
@@ -307,7 +306,7 @@ struct LSProductDetailView: View {
                     .fontWeight(.bold)
                     .foregroundStyle(.green)
 
-                if let positives = getNormalizedPositives(), !positives.isEmpty {
+                if let positives = viewModel.normalizedPositives, !positives.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         ForEach(positives, id: \.id) { component in
                             HStack(alignment: .top, spacing: 6) {
@@ -322,12 +321,14 @@ struct LSProductDetailView: View {
                         }
                     }
                 } else {
-                    Text("No data available")
+                    Text("N/A")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                 }
+
+                Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .padding(12)
             .background(
                 RoundedRectangle(cornerRadius: 12)
@@ -341,7 +342,7 @@ struct LSProductDetailView: View {
                     .fontWeight(.bold)
                     .foregroundStyle(.red)
 
-                if let negatives = getNormalizedNegatives(), !negatives.isEmpty {
+                if let negatives = viewModel.normalizedNegatives, !negatives.isEmpty {
                     VStack(alignment: .leading, spacing: 8) {
                         ForEach(negatives, id: \.id) { component in
                             HStack(alignment: .top, spacing: 6) {
@@ -356,18 +357,21 @@ struct LSProductDetailView: View {
                         }
                     }
                 } else {
-                    Text("No data available")
+                    Text("N/A")
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                 }
+
+                Spacer(minLength: 0)
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .padding(12)
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(Color(.secondarySystemBackground))
             )
         }
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     // MARK: - Tabs Section
@@ -438,16 +442,23 @@ struct LSProductDetailView: View {
                 .fontWeight(.bold)
                 .foregroundStyle(.primary)
 
-            if let ingredientsText = product.ingredientsText, !ingredientsText.isEmpty {
-                Text(ingredientsText)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineSpacing(4)
-            } else if let ingredients = product.ingredients, !ingredients.isEmpty {
-                Text(ingredients.compactMap { $0.text }.joined(separator: ", "))
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineSpacing(4)
+            if let ingredientsList = viewModel.formattedIngredientsList, !ingredientsList.isEmpty {
+                VStack(alignment: .leading, spacing: 6) {
+                    ForEach(Array(ingredientsList.enumerated()), id: \.offset) { index, ingredient in
+                        HStack(alignment: .top, spacing: 8) {
+                            Text("\(index + 1).")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.secondary)
+                                .frame(minWidth: 24, alignment: .trailing)
+
+                            Text(LSProductDetailViewModel.capitalizeFirstLetter(ingredient))
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
             } else {
                 Text("No ingredients information available")
                     .font(.subheadline)
@@ -472,21 +483,26 @@ struct LSProductDetailView: View {
                 .fontWeight(.bold)
                 .foregroundStyle(.primary)
 
-            if let allergens = product.allergens, !allergens.isEmpty {
-                Text(allergens)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .lineSpacing(4)
-            } else if let allergensTags = product.allergensTags, !allergensTags.isEmpty {
+            if let allergensList = viewModel.formattedAllergensList, !allergensList.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
-                    ForEach(allergensTags, id: \.self) { allergen in
-                        HStack(spacing: 6) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .font(.caption)
-                                .foregroundStyle(.orange)
-                            Text(allergen.replacingOccurrences(of: "en:", with: "").capitalized)
+                    ForEach(Array(allergensList.enumerated()), id: \.offset) { index, allergen in
+                        HStack(alignment: .top, spacing: 8) {
+                            Text("\(index + 1).")
                                 .font(.subheadline)
+                                .fontWeight(.medium)
                                 .foregroundStyle(.secondary)
+                                .frame(minWidth: 24, alignment: .trailing)
+
+                            HStack(spacing: 6) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .font(.caption)
+                                    .foregroundStyle(.red)
+
+                                Text(allergen)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
                         }
                     }
                 }
@@ -555,8 +571,14 @@ struct LSProductDetailView: View {
                 .fontWeight(.bold)
                 .foregroundStyle(.primary)
 
-            LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                ForEach(validRecipes.prefix(4), id: \.id) { recipe in
+            LazyVGrid(
+                columns: [
+                    GridItem(.flexible(), spacing: 12),
+                    GridItem(.flexible(), spacing: 12)
+                ],
+                spacing: 16
+            ) {
+                ForEach(viewModel.validRecipes.prefix(4), id: \.id) { recipe in
                     RecipeCard(recipe: recipe) {
                         recipeToShow = recipe
                     }
@@ -572,66 +594,68 @@ struct LSProductDetailView: View {
         product.LikeProduct()
     }
 
-    private func getNormalizedPositives() -> [NormalizedComponent]? {
-        guard let nutriscoreData = product.nutriscoreData,
-              let components = nutriscoreData.components,
-              let positive = components.positive else {
-            return nil
+    private func handleMarkAsUsed() {
+        // Immediate haptic feedback for tactile response
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
+
+        // Immediate visual feedback using state variable (no SwiftData access)
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+            isMarkedAsUsed = true
         }
 
-        return positive.compactMap { component in
-            guard let points = component.points,
-                  let pointsMax = component.pointsMax,
-                  pointsMax > 0,
-                  let value = component.value else {
-                return nil
+        // Mark product as used
+        Task { @MainActor in
+            // Small delay for animation
+            try? await Task.sleep(for: .milliseconds(300))
+            dismiss()
+
+            // Cleanup in detached task (no view updates)
+            Task.detached {
+                await MainActor.run {
+                    // Mark product as used
+                    product.isUsed = true
+
+                    // Cancel notifications for this product
+                    notificationManager.deleteScheduledNotifications(for: product)
+
+                    // Save to model context
+                    do {
+                        try modelContext.save()
+                    } catch {
+                        print("❌ Failed to save product as used: \(error)")
+                    }
+                }
             }
-
-            let normalizedPoints = (Double(points) / Double(pointsMax)) * 10.0
-            let displayName = formatNutrientName(component.nutrientId)
-
-            return NormalizedComponent(
-                id: component.nutrientId,
-                displayText: "\(displayName): \(String(format: "%.1f", normalizedPoints))/10",
-                value: value,
-                normalizedPoints: normalizedPoints,
-                unit: component.unit ?? ""
-            )
         }
     }
+    
+    private func deleteProduct() {
+        // Haptic feedback for tactile response
+        let generator = UIImpactFeedbackGenerator(style: .medium)
+        generator.impactOccurred()
 
-    private func getNormalizedNegatives() -> [NormalizedComponent]? {
-        guard let nutriscoreData = product.nutriscoreData,
-              let components = nutriscoreData.components,
-              let negative = components.negative else {
-            return nil
-        }
+        // Set deletion state immediately to prevent view from accessing deleted objects
+        isDeleting = true
 
-        return negative.compactMap { component in
-            guard let points = component.points,
-                  let pointsMax = component.pointsMax,
-                  pointsMax > 0,
-                  let value = component.value else {
-                return nil
+        // Perform deletion on the next run loop to allow UI to update
+        Task {
+            do {
+                // Cancel notifications for this product
+                notificationManager.deleteScheduledNotifications(for: product)
+
+                // Delete the product
+                modelContext.delete(product)
+                try modelContext.save()
+
+                // Dismiss after successful deletion
+                dismiss()
+            } catch {
+                print("❌ Failed to delete product: \(error)")
+                // Revert deletion state if it fails
+                isDeleting = false
             }
-
-            let normalizedPoints = (Double(points) / Double(pointsMax)) * 10.0
-            let displayName = formatNutrientName(component.nutrientId)
-
-            return NormalizedComponent(
-                id: component.nutrientId,
-                displayText: "\(displayName): \(String(format: "%.1f", normalizedPoints))/10",
-                value: value,
-                normalizedPoints: normalizedPoints,
-                unit: component.unit ?? ""
-            )
         }
-    }
-
-    private func formatNutrientName(_ nutrientId: String) -> String {
-        // Convert snake_case to Title Case
-        let components = nutrientId.split(separator: "_")
-        return components.map { $0.prefix(1).uppercased() + $0.dropFirst() }.joined(separator: " ")
     }
 }
 
@@ -733,52 +757,149 @@ struct DetailRow: View {
 }
 
 struct RecipeCard: View {
+    @Environment(\.colorScheme) var colorScheme
     let recipe: SDOFFARecipe
     let onTap: () -> Void
 
+    // Safe property accessors with defaults to prevent crashes on deleted objects
+    private var isLiked: Bool { recipe.isLiked }
+    private var recipeTitle: String { recipe.title ?? "Unknown Recipe" }
+    private var recipeImage: String? { recipe.image }
+    private var readyInMinutes: Int? { recipe.readyInMinutes }
+    private var servings: Int? { recipe.servings }
+    private var isVegetarian: Bool { recipe.vegetarian ?? false }
+    private var isGlutenFree: Bool { recipe.glutenFree ?? false }
+    private var isDairyFree: Bool { recipe.dairyFree ?? false }
+
     var body: some View {
         Button(action: onTap) {
-            VStack(alignment: .leading, spacing: 8) {
-                // Recipe Image
+            VStack(alignment: .leading, spacing: 0) {
+                // Recipe Image with Heart Indicator
                 ZStack {
-                    if let imageUrl = recipe.image, !imageUrl.isEmpty {
-                        RobustAsyncImage(url: imageUrl) { image in
-                            image
-                                .resizable()
-                                .scaledToFill()
+                    RobustAsyncImage(url: recipeImage) { image in
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    }
+                    .frame(height: 120)
+                    .clipped()
+                    .clipShape(RoundedRectangle(cornerRadius: 13, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 13, style: .continuous)
+                            .stroke(Color.black.opacity(0.05), lineWidth: 0.5)
+                    )
+
+                    // Heart indicator overlay (visual only, when liked)
+                    if isLiked {
+                        VStack {
+                            HStack {
+                                Spacer()
+                                Image(systemName: "heart.fill")
+                                    .font(.system(size: 12, weight: .semibold))
+                                    .foregroundStyle(.white)
+                                    .background(
+                                        Circle()
+                                            .fill(.red)
+                                            .frame(width: 22, height: 22)
+                                    )
+                            }
+                            .padding(.trailing, 8)
+                            .padding(.top, 8)
+                            Spacer()
                         }
-                    } else {
-                        Color(.systemGray4)
                     }
                 }
-                .frame(height: 140)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
 
-                // Recipe Title
-                Text(recipe.title ?? "Unknown Recipe")
-                    .font(.subheadline)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.primary)
-                    .lineLimit(2)
+                // Recipe Info - Fixed height container
+                VStack(alignment: .leading, spacing: 8) {
+                    // Recipe Title - Fixed height
+                    Text(recipeTitle)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                        .foregroundColor(.primary)
+                        .frame(height: 44, alignment: .top) // Fixed height for 2 lines
 
-                // Cook Time
-                if let readyInMinutes = recipe.readyInMinutes {
-                    Text("\(readyInMinutes) mins")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    // Recipe Meta Info
+                    HStack(spacing: 12) {
+                        // Ready Time
+                        if let minutes = readyInMinutes {
+                            HStack(spacing: 4) {
+                                Image(systemName: "clock")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Text("\(minutes)m")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+
+                        // Servings
+                        if let servingCount = servings {
+                            HStack(spacing: 4) {
+                                Image(systemName: "fork.knife")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Text("\(servingCount)")
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+
+                        Spacer()
+
+                        // Health badges
+                        HStack(spacing: 4) {
+                            if isVegetarian {
+                                Text("V")
+                                    .font(.caption2.bold())
+                                    .foregroundColor(.green)
+                                    .frame(width: 16, height: 16)
+                                    .background(.green.opacity(0.2))
+                                    .clipShape(Circle())
+                            }
+
+                            if isGlutenFree {
+                                Text("GF")
+                                    .font(.caption2.bold())
+                                    .foregroundColor(.blue)
+                                    .frame(width: 16, height: 16)
+                                    .background(.blue.opacity(0.2))
+                                    .clipShape(Circle())
+                            }
+
+                            if isDairyFree {
+                                Text("DF")
+                                    .font(.caption2.bold())
+                                    .foregroundColor(.purple)
+                                    .frame(width: 16, height: 16)
+                                    .background(.purple.opacity(0.2))
+                                    .clipShape(Circle())
+                            }
+                        }
+                    }
                 }
+                .padding(12)
+                .frame(height: 100) // Fixed height for the info section
             }
         }
-        .buttonStyle(.plain)
+        .buttonStyle(RecipeCardButtonStyle())
+        .frame(height: 220) // Fixed total height for all cards
+        .background(
+            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                .fill(Color(.secondarySystemBackground))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 13, style: .continuous)
+                .stroke(
+                    colorScheme == .dark ? Color.white.opacity(0.08) : Color.clear,
+                    lineWidth: 0.5
+                )
+        )
+        .shadow(color: colorScheme == .dark ? Color.black.opacity(0.5) : Color.black.opacity(0.12), radius: 10, x: 0, y: 4)
+        .shadow(color: colorScheme == .dark ? Color.white.opacity(0.08) : Color.white.opacity(0.5), radius: 2, x: 0, y: -1)
     }
-}
-
-struct NormalizedComponent: Identifiable {
-    let id: String
-    let displayText: String
-    let value: Double
-    let normalizedPoints: Double
-    let unit: String
 }
 
 // MARK: - Preview

@@ -6,6 +6,7 @@
 //
 
 import FirebaseAuth
+import FirebaseFirestore
 import Foundation
 import SwiftData
 
@@ -87,6 +88,34 @@ class AddProductViewViewModel {
             return nil
         }
         return apiKey
+    }
+    
+    /// Fetches user's saved allergies from Firestore
+    /// - Parameter userId: The user ID to fetch allergies for
+    /// - Returns: Array of allergy strings (empty array if none found or error)
+    private func fetchUserAllergies(userId: String) async -> [String] {
+        // Guard: Check if user is still authenticated
+        guard Auth.auth().currentUser != nil else {
+            print("ℹ️ [OFFA Recipe] User not authenticated - skipping allergy fetch")
+            return []
+        }
+        
+        do {
+            let db = Firestore.firestore()
+            let userDoc = try await db.collection("users").document(userId).getDocument()
+            
+            if let data = userDoc.data(),
+               let allergies = data["allergies"] as? [String] {
+                print("✅ [OFFA Recipe] User allergies fetched: \(allergies)")
+                return allergies
+            } else {
+                print("ℹ️ [OFFA Recipe] No allergies found for user")
+                return []
+            }
+        } catch {
+            print("❌ [OFFA Recipe] Error fetching user allergies: \(error.localizedDescription)")
+            return []
+        }
     }
 
     // MARK: - Handle Scanned Barcode
@@ -344,9 +373,12 @@ class AddProductViewViewModel {
             // Log response details
             if let httpResponse = response as? HTTPURLResponse {
                 print("📡 [OFFA] Response status code: \(httpResponse.statusCode)")
-
-                guard httpResponse.statusCode == 200 else {
-                    print("❌ [OFFA] Unexpected status code: \(httpResponse.statusCode)")
+                
+                // Open Food Facts API returns 200 even for "product not found"
+                // The actual status is in the JSON body (status: 0 = not found, status: 1 = found)
+                // Only treat non-200 as server error if it's a server error (5xx)
+                if httpResponse.statusCode >= 500 {
+                    print("❌ [OFFA] Server error status code: \(httpResponse.statusCode)")
                     await MainActor.run {
                         isLoading = false
                         errorMessage = "Server error. Please try again."
@@ -372,6 +404,7 @@ class AddProductViewViewModel {
             print("📦 [OFFA] Status Verbose: \(apiResponse.statusVerbose ?? "N/A")")
 
             // Check if product was found
+            // status: 0 = product not found, status: 1 = product found
             guard apiResponse.status == 1, let product = apiResponse.product else {
                 print("⚠️ [OFFA] Product not found in OFFA database")
                 await MainActor.run {
@@ -461,7 +494,7 @@ class AddProductViewViewModel {
 
         // Search for recipes using product title as ingredient
         print("🔍 [OFFA] Searching for recipes using product title: \(self.name)")
-        let recipeIds = await searchForRecipeIdsForOFFAProduct(productTitle: self.name)
+        let recipeIds = await searchForRecipeIdsForOFFAProduct(productTitle: self.name, userId: userId)
 
         // Fetch recipe details
         await self.searchRecipeByIDForOFFAProduct(recipeIds: recipeIds ?? [])
@@ -567,6 +600,7 @@ class AddProductViewViewModel {
         errorMessage = nil
 
         guard groceryProduct != nil else {
+            isSaving = false
             return
         }
 
@@ -580,6 +614,7 @@ class AddProductViewViewModel {
         guard let _ = groceryProduct?.title else {
             print("Title not found from the API Response")
             errorMessage = "Title not found from API Response"
+            isSaving = false
             return
         }
 
@@ -587,6 +622,7 @@ class AddProductViewViewModel {
         guard let _ = groceryProduct?.upc else {
             print("Barcode not found from the API Response")
             errorMessage = "Barcode not found from API Response"
+            isSaving = false
             return
         }
 
@@ -812,7 +848,7 @@ class AddProductViewViewModel {
 
         // Search for recipes using product name as ingredient
         print("🔍 [Manual OFFA] Searching for recipes using product name: \(productName)")
-        let recipeIds = await self.searchForRecipeIdsForOFFAProduct(productTitle: productName)
+        let recipeIds = await self.searchForRecipeIdsForOFFAProduct(productTitle: productName, userId: userId)
 
         // Fetch recipe details
         await self.searchRecipeByIDForOFFAProduct(recipeIds: recipeIds ?? [])
@@ -984,9 +1020,12 @@ class AddProductViewViewModel {
 
     // MARK: - OFFA Recipe Methods
     /// Searches for recipe IDs using product title as ingredient (for OFFA products)
-    /// - Parameter productTitle: The product title to use as ingredient
+    /// Uses complexSearch endpoint with includeIngredients and intolerances parameters
+    /// - Parameters:
+    ///   - productTitle: The product title to use as ingredient
+    ///   - userId: The user ID to fetch allergy preferences for
     /// - Returns: Array of recipe IDs (up to 4)
-    private func searchForRecipeIdsForOFFAProduct(productTitle: String) async -> [Int]? {
+    private func searchForRecipeIdsForOFFAProduct(productTitle: String, userId: String) async -> [Int]? {
         do {
             // Get and validate API key
             guard let apiKey = getAPIKey(), !apiKey.isEmpty else {
@@ -994,19 +1033,28 @@ class AddProductViewViewModel {
                 return nil
             }
 
-            // Build URL with query parameters
-            guard var urlComponents = URLComponents(string: "https://api.spoonacular.com/recipes/findByIngredients") else {
+            // Fetch user allergies from Firebase
+            let userAllergies = await fetchUserAllergies(userId: userId)
+            
+            // Build URL with query parameters using complexSearch endpoint
+            guard var urlComponents = URLComponents(string: "https://api.spoonacular.com/recipes/complexSearch") else {
                 print("❌ [OFFA Recipe] Error: Failed to create URL components")
                 return nil
             }
 
-            // Use product title as the ingredient
-            let queryItems: [URLQueryItem] = [
+            // Use product title as the ingredient with includeIngredients parameter
+            var queryItems: [URLQueryItem] = [
                 URLQueryItem(name: "apiKey", value: apiKey),
-                URLQueryItem(name: "ingredients", value: productTitle),
-                URLQueryItem(name: "number", value: "4"), // Limit to 4 recipes
-                URLQueryItem(name: "ignorePantry", value: "true")
+                URLQueryItem(name: "includeIngredients", value: productTitle),
+                URLQueryItem(name: "number", value: "4") // Limit to 4 recipes
             ]
+            
+            // Add intolerances parameter if user has allergies
+            if !userAllergies.isEmpty {
+                let intolerancesString = userAllergies.joined(separator: ",")
+                queryItems.append(URLQueryItem(name: "intolerances", value: intolerancesString))
+                print("🚫 [OFFA Recipe] Excluding user allergies: \(intolerancesString)")
+            }
 
             urlComponents.queryItems = queryItems
 
@@ -1061,15 +1109,15 @@ class AddProductViewViewModel {
                 return nil
             }
 
-            // Parse JSON response
+            // Parse JSON response - complexSearch returns a ComplexSearchRecipeResponse wrapper
             let decoder = JSONDecoder()
-            let recipes = try decoder.decode([FindByIngredientsRecipe].self, from: data)
+            let searchResponse = try decoder.decode(ComplexSearchRecipeResponse.self, from: data)
 
             print("✅ [OFFA Recipe] Successfully decoded recipe search response")
-            print("🍽️ [OFFA Recipe] Found \(recipes.count) recipes")
+            print("🍽️ [OFFA Recipe] Found \(searchResponse.results.count) recipes")
 
-            // Extract recipe IDs
-            let recipeIds = recipes.map { $0.id }
+            // Extract recipe IDs from results array
+            let recipeIds = searchResponse.results.map { $0.id }
             print("📋 [OFFA Recipe] Recipe IDs: \(recipeIds)")
 
             return recipeIds
