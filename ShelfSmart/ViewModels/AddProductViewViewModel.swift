@@ -940,11 +940,15 @@ class AddProductViewViewModel {
                     print("❌ Error: Failed to create URL components")
                     return
                 }
-                
+
+                // Get measurement system based on user's locale
+                let unitSystem = MeasurementSystemManager.shared.getMeasurementSystem()
+
                 let queryItems: [URLQueryItem] = [
-                    URLQueryItem(name: "apiKey", value: apiKey)
+                    URLQueryItem(name: "apiKey", value: apiKey),
+                    URLQueryItem(name: "unitSystem", value: unitSystem)
                 ]
-                
+
                 urlComponents.queryItems = queryItems
                 
                 guard let url = urlComponents.url else {
@@ -1145,8 +1149,12 @@ class AddProductViewViewModel {
                     return
                 }
 
+                // Get measurement system based on user's locale
+                let unitSystem = MeasurementSystemManager.shared.getMeasurementSystem()
+
                 let queryItems: [URLQueryItem] = [
-                    URLQueryItem(name: "apiKey", value: apiKey)
+                    URLQueryItem(name: "apiKey", value: apiKey),
+                    URLQueryItem(name: "unitSystem", value: unitSystem)
                 ]
 
                 urlComponents.queryItems = queryItems

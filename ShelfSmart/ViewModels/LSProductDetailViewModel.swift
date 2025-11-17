@@ -7,6 +7,8 @@
 
 import Foundation
 import SwiftUI
+import FirebaseAuth
+import FirebaseFirestore
 
 // MARK: - Supporting Models
 
@@ -22,10 +24,42 @@ struct NormalizedComponent: Identifiable {
 class LSProductDetailViewModel {
     // MARK: - Properties
     let product: LSProduct
+    var userIntolerances: [String] = []
 
     // MARK: - Initialization
     init(product: LSProduct) {
         self.product = product
+        Task {
+            await fetchUserIntolerances()
+        }
+    }
+
+    // MARK: - Fetch User Intolerances
+    @MainActor
+    private func fetchUserIntolerances() async {
+        // Guard: Check if user is still authenticated
+        guard Auth.auth().currentUser != nil else {
+            print("ℹ️ [Product Detail] User not authenticated - skipping allergy fetch")
+            userIntolerances = []
+            return
+        }
+
+        do {
+            let db = Firestore.firestore()
+            let userDoc = try await db.collection("users").document(product.userId).getDocument()
+
+            if let data = userDoc.data(),
+               let allergies = data["allergies"] as? [String] {
+                print("✅ [Product Detail] User allergies fetched: \(allergies)")
+                userIntolerances = allergies
+            } else {
+                print("ℹ️ [Product Detail] No allergies found for user")
+                userIntolerances = []
+            }
+        } catch {
+            print("❌ [Product Detail] Error fetching user allergies: \(error.localizedDescription)")
+            userIntolerances = []
+        }
     }
 
     // MARK: - Processing Level Enum
@@ -64,6 +98,20 @@ class LSProductDetailViewModel {
         }
     }
 
+    /// Message to display when no recipes are found
+    var noRecipesMessage: String? {
+        // If we have recipes, don't show a message
+        guard validRecipes.isEmpty else { return nil }
+
+        // If user has allergies/intolerances, show specific message
+        if !userIntolerances.isEmpty {
+            return "No recipes found for this product that match your dietary restrictions"
+        }
+
+        // If no allergies, show generic message
+        return "Recipes using this product cannot be found"
+    }
+
     /// Formatted calories string
     var caloriesString: String {
         if let energyKcal = product.nutriments?.energyKcal {
@@ -94,7 +142,9 @@ class LSProductDetailViewModel {
     var nutriscoreGradeDisplay: String {
         guard let grade = product.nutriscoreGrade,
               !grade.isEmpty,
-              grade.lowercased() != "unknown" else {
+              grade.lowercased() != "unknown",
+              grade.lowercased() != "not-applicable",
+              grade.lowercased() != "not applicable" else {
             return "N/A"
         }
         return grade.uppercased()
@@ -104,7 +154,9 @@ class LSProductDetailViewModel {
     var ecoscoreGradeDisplay: String {
         guard let grade = product.ecoScoreGrade,
               !grade.isEmpty,
-              grade.lowercased() != "unknown" else {
+              grade.lowercased() != "unknown",
+              grade.lowercased() != "not-applicable",
+              grade.lowercased() != "not applicable" else {
             return "N/A"
         }
         return grade.uppercased()

@@ -113,49 +113,50 @@ struct LSProductDetailView: View {
 
     // MARK: - Main Content View
     private var mainContentView: some View {
-        ScrollView {
-            VStack(spacing: 0) {
-                // Product Image
-                productImageView
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 0) {
+                    // Product Image
+                    productImageView
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
 
-                // Product Info
-                productInfoSection
-                    .padding(.horizontal, 16)
-                    .padding(.top, 24)
+                    // Product Info
+                    productInfoSection
+                        .padding(.horizontal, 16)
+                        .padding(.top, 24)
 
-                // Quick Stats (Calories & Serving Size)
-                quickStatsSection
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
+                    // Quick Stats (Calories & Serving Size)
+                    quickStatsSection
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
 
-                // Summary Scores
-                summaryScoresSection
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
+                    // Summary Scores
+                    summaryScoresSection
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
 
-                // Positives & Negatives
-                positivesNegativesSection
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
+                    // Positives & Negatives
+                    positivesNegativesSection
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
 
-                // Tabs
-                tabsSection
-                    .padding(.top, 16)
+                    // Tabs
+                    tabsSection
+                        .padding(.top, 16)
 
-                // Tab Content
-                tabContentView
-                    .padding(.horizontal, 16)
+                    // Tab Content
+                    tabContentView
+                        .padding(.horizontal, 16)
 
-                // Recipe Suggestions
-                if !viewModel.validRecipes.isEmpty {
+                    // Recipe Suggestions
                     recipeSuggestionsSection
                         .padding(.horizontal, 16)
                         .padding(.top, 16)
-                }
 
-                Spacer(minLength: 20)
+                    Spacer(minLength: 20)
+                }
+                .frame(width: geometry.size.width)
             }
         }
     }
@@ -167,18 +168,19 @@ struct LSProductDetailView: View {
                 RobustAsyncImage(url: imageLink) { image in
                     image
                         .resizable()
-                        .scaledToFill()
+                        .scaledToFit()
                 }
             } else {
                 Image("placeholder")
                     .resizable()
-                    .scaledToFill()
+                    .scaledToFit()
             }
         }
-        .frame(maxWidth: .infinity)
         .frame(height: 280)
+        .frame(maxWidth: .infinity)
         .background(Color(.systemGray5))
         .clipShape(RoundedRectangle(cornerRadius: 24))
+        .clipped()
     }
 
     // MARK: - Product Info Section
@@ -189,18 +191,24 @@ struct LSProductDetailView: View {
                 .fontWeight(.bold)
                 .foregroundStyle(.primary)
                 .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity)
 
             if let brand = product.brand, !brand.isEmpty {
                 Text("by \(brand)")
                     .font(.body)
                     .fontWeight(.medium)
                     .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity)
             }
 
             // Tags/Badges
             tagsView
                 .padding(.top, 4)
         }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Tags View
@@ -226,6 +234,7 @@ struct LSProductDetailView: View {
                 TagBadge(icon: "checkmark.seal.fill", text: "Gluten-Free", color: .green)
             }
         }
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Quick Stats Section
@@ -571,21 +580,50 @@ struct LSProductDetailView: View {
                 .fontWeight(.bold)
                 .foregroundStyle(.primary)
 
-            LazyVGrid(
-                columns: [
-                    GridItem(.flexible(), spacing: 12),
-                    GridItem(.flexible(), spacing: 12)
-                ],
-                spacing: 16
-            ) {
-                ForEach(viewModel.validRecipes.prefix(4), id: \.id) { recipe in
-                    RecipeCard(recipe: recipe) {
-                        recipeToShow = recipe
+            if let message = viewModel.noRecipesMessage {
+                // Show informational message when no recipes are found
+                noRecipesMessageView(message: message)
+            } else {
+                // Show recipe grid when recipes are available
+                LazyVGrid(
+                    columns: [
+                        GridItem(.flexible(), spacing: 12),
+                        GridItem(.flexible(), spacing: 12)
+                    ],
+                    spacing: 16
+                ) {
+                    ForEach(viewModel.validRecipes.prefix(4), id: \.id) { recipe in
+                        RecipeCard(recipe: recipe) {
+                            recipeToShow = recipe
+                        }
                     }
                 }
             }
         }
         .padding(.bottom, 20)
+    }
+
+    // MARK: - No Recipes Message View
+    private func noRecipesMessageView(message: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "info.circle.fill")
+                .font(.title2)
+                .foregroundStyle(.secondary)
+
+            Text(message)
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.leading)
+                .fixedSize(horizontal: false, vertical: true)
+
+            Spacer()
+        }
+        .padding(16)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.secondarySystemBackground))
+        )
+        .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 2)
     }
 
     // MARK: - Helper Functions
@@ -752,6 +790,8 @@ struct DetailRow: View {
             Text(value)
                 .font(.subheadline)
                 .foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+                .lineLimit(nil)
         }
     }
 }

@@ -542,12 +542,16 @@ class RandomRecipeViewModel {
         guard var urlComponents = URLComponents(string: "https://api.spoonacular.com/recipes/\(id)/information") else {
             return nil
         }
-        
+
+        // Get measurement system based on user's locale
+        let unitSystem = MeasurementSystemManager.shared.getMeasurementSystem()
+
         urlComponents.queryItems = [
             URLQueryItem(name: "apiKey", value: apiKey),
-            URLQueryItem(name: "includeNutrition", value: "false")
+            URLQueryItem(name: "includeNutrition", value: "false"),
+            URLQueryItem(name: "unitSystem", value: unitSystem)
         ]
-        
+
         return urlComponents.url
     }
     
