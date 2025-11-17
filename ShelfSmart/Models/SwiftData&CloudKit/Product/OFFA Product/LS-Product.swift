@@ -28,6 +28,9 @@ class LSProduct {
     var allergens : String? // Allergens as comma-separated string
     var allergensTags : [String]? // Allergens as array
 
+    // Labels (organic, vegan, vegetarian, gluten-free, etc.)
+    var labelsTags : [String]? // Labels from Open Food Facts API
+
     // Ingredients
     var ingredientsText : String? // Plain text ingredients (backup)
     @Relationship(deleteRule: .cascade, inverse: \LSIngredient.product)
@@ -125,7 +128,7 @@ class LSProduct {
         Calendar.current.date(byAdding: .day, value: -7, to: expirationDate)
     }
 
-    init(id: String = UUID().uuidString, barcode: String, title: String, brand: String, quantity: String? = nil, productDescription: String? = nil, imageLink: String? = nil, imageFrontURL: String? = nil, imageIngredientsURL: String? = nil, imageNutritionURL: String? = nil, allergens: String? = nil, allergensTags: [String]? = nil, ingredientsText: String? = nil, ingredients: [LSIngredient]? = nil, nutriments: LSNutriments? = nil, nutriscoreGrade: String? = nil, nutriscoreScore: Int? = nil, nutriscoreData: LSNutriscoreData? = nil, ecoScoreGrade: String? = nil, ecoScoreScore: Int? = nil, novaGroup: Int? = nil, servingSize: String? = nil, recipeIds: [Int]? = nil, recipes : [SDOFFARecipe]? = nil, expirationDate: Date, userId: String = "") {
+    init(id: String = UUID().uuidString, barcode: String, title: String, brand: String, quantity: String? = nil, productDescription: String? = nil, imageLink: String? = nil, imageFrontURL: String? = nil, imageIngredientsURL: String? = nil, imageNutritionURL: String? = nil, allergens: String? = nil, allergensTags: [String]? = nil, labelsTags: [String]? = nil, ingredientsText: String? = nil, ingredients: [LSIngredient]? = nil, nutriments: LSNutriments? = nil, nutriscoreGrade: String? = nil, nutriscoreScore: Int? = nil, nutriscoreData: LSNutriscoreData? = nil, ecoScoreGrade: String? = nil, ecoScoreScore: Int? = nil, novaGroup: Int? = nil, servingSize: String? = nil, recipeIds: [Int]? = nil, recipes : [SDOFFARecipe]? = nil, expirationDate: Date, userId: String = "") {
         self.id = id
         self.barcode = barcode
         self.title = title
@@ -138,6 +141,7 @@ class LSProduct {
         self.imageNutritionURL = imageNutritionURL
         self.allergens = allergens
         self.allergensTags = allergensTags
+        self.labelsTags = labelsTags
         self.ingredientsText = ingredientsText
         self.ingredients = ingredients
         self.nutriments = nutriments
@@ -186,6 +190,7 @@ class LSProduct {
             imageNutritionURL: offaProduct.imageNutritionURL,
             allergens: offaProduct.allergens,
             allergensTags: offaProduct.allergensTags,
+            labelsTags: offaProduct.labelsTags,
             ingredientsText: offaProduct.ingredientsText,
             ingredients: lsIngredients,
             nutriments: lsNutriments,

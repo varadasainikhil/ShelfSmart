@@ -25,6 +25,9 @@ struct OFFAProduct: Codable, Identifiable {
     let allergens: String?
     let allergensTags: [String]?
 
+    // Labels (organic, vegan, vegetarian, gluten-free, etc.)
+    let labelsTags: [String]?
+
     // EcoScore
     let ecoScoreGrade : String?
     let ecoScoreScore : Int?
@@ -59,6 +62,7 @@ struct OFFAProduct: Codable, Identifiable {
         case imageNutritionURL = "image_nutrition_url"
         case allergens
         case allergensTags = "allergens_tags"
+        case labelsTags = "labels_tags"
         case ecoScoreGrade = "ecoscore_grade"
         case ecoScoreScore = "ecoscore_score"
         case ingredientsText = "ingredients_text"

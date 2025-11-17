@@ -214,24 +214,9 @@ struct LSProductDetailView: View {
     // MARK: - Tags View
     private var tagsView: some View {
         HStack(spacing: 8) {
-            // Organic tag (if applicable)
-            if let nutriscoreData = product.nutriscoreData,
-               let components = nutriscoreData.components,
-               let positive = components.positive,
-               positive.contains(where: { $0.nutrientId.contains("fruit") || $0.nutrientId.contains("vegetable") }) {
-                TagBadge(icon: "leaf.fill", text: "Organic", color: .green)
-            }
-
-            // Vegetarian tag (based on ingredients)
-            if let ingredients = product.ingredients,
-               !ingredients.contains(where: { $0.text.lowercased().contains("meat") }) {
-                TagBadge(icon: "leaf.circle.fill", text: "Vegetarian", color: .green)
-            }
-
-            // Gluten-Free tag (based on allergens)
-            if let allergensTags = product.allergensTags,
-               !allergensTags.contains(where: { $0.contains("gluten") }) {
-                TagBadge(icon: "checkmark.seal.fill", text: "Gluten-Free", color: .green)
+            // Display tags directly from Open Food Facts API via ViewModel
+            ForEach(viewModel.formattedLabels, id: \.text) { labelInfo in
+                TagBadge(icon: labelInfo.icon, text: labelInfo.text, color: labelInfo.color)
             }
         }
         .frame(maxWidth: .infinity)

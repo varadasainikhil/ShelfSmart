@@ -284,6 +284,61 @@ class LSProductDetailViewModel {
         return allergensList?.sorted()
     }
 
+    /// Formatted labels for display (organic, vegan, vegetarian, etc.)
+    var formattedLabels: [(text: String, icon: String, color: Color)] {
+        guard let labels = product.labelsTags, !labels.isEmpty else {
+            print("🏷️ [Labels] No labels_tags found for product: \(product.title)")
+            return []
+        }
+
+        print("🏷️ [Labels] Processing \(labels.count) labels for product: \(product.title)")
+        print("🏷️ [Labels] Raw labels: \(labels)")
+
+        // Priority labels to display based on Open Food Facts taxonomy
+        // Format: "language:tag-name" where language is typically "en" for English
+        let priorityLabels: [String: (text: String, icon: String, color: Color)] = [
+            // Organic
+            "organic": ("Organic", "leaf.fill", .green),
+
+            // Dietary - Vegan/Vegetarian
+            "vegan": ("Vegan", "leaf.circle.fill", .green),
+            "vegetarian": ("Vegetarian", "leaf.circle", .green),
+
+            // Gluten-Free (official tag is "no-gluten")
+            "no-gluten": ("Gluten-Free", "checkmark.seal.fill", .blue),
+            "gluten-free": ("Gluten-Free", "checkmark.seal.fill", .blue), // Alternative
+
+            // Environmental
+            "palm-oil-free": ("Palm Oil Free", "hand.raised.fill", .orange),
+            "fair-trade": ("Fair Trade", "globe.americas.fill", .blue),
+
+            // Religious
+            "halal": ("Halal", "moon.stars.fill", .purple),
+            "kosher": ("Kosher", "star.fill", .blue)
+        ]
+
+        var result: [(text: String, icon: String, color: Color)] = []
+
+        for label in labels {
+            // Remove language prefix (e.g., "en:", "fr:")
+            let cleanLabel = label.components(separatedBy: ":").last ?? label
+            print("🏷️ [Labels] Checking label: '\(label)' -> cleaned: '\(cleanLabel)'")
+
+            // Check if it's a priority label
+            if let (displayText, icon, color) = priorityLabels[cleanLabel] {
+                print("🏷️ [Labels] ✅ Matched priority label: '\(cleanLabel)' -> '\(displayText)'")
+                result.append((displayText, icon, color))
+            } else {
+                print("🏷️ [Labels] ⚠️ Label '\(cleanLabel)' not in priority list")
+            }
+        }
+
+        // Limit to 3 tags to avoid crowding
+        let finalResult = Array(result.prefix(3))
+        print("🏷️ [Labels] Final result: \(finalResult.map { $0.text })")
+        return finalResult
+    }
+
     // MARK: - Static Helper Methods (Pure Functions)
 
     /// Formats allergen names by removing language prefixes and applying proper title case

@@ -421,6 +421,7 @@ class AddProductViewViewModel {
             print("📦 [OFFA] Brand: \(product.brands ?? "Unknown")")
             print("📦 [OFFA] Barcode: \(product.code)")
             print("🖼️ [OFFA] Image URL: \(product.imageFrontURL ?? "None")")
+            print("🏷️ [OFFA] Labels Tags: \(product.labelsTags ?? [])")
 
             self.offaProduct = product
 
