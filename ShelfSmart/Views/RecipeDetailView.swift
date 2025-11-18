@@ -40,11 +40,20 @@ struct RecipeDetailView: View {
                     heroImageSection
 
                     VStack(spacing: 24) {
-                        // Combined Recipe Info Card
-                        combinedRecipeInfoCard
+                        // Recipe Title
+                        recipeTitle
 
-                        // Dietary Badges
+                        // Dietary & Lifestyle Badges
                         dietaryBadges
+
+                        // Cooking Details Metrics Grid
+                        cookingDetailsMetricsGrid
+
+                        // Recipe Scores
+                        recipeScoresSection
+
+                        // Recipe Categories
+                        recipeCategoriesSection
 
                         // Description Section
                         descriptionSection
@@ -109,14 +118,24 @@ struct RecipeDetailView: View {
                         .aspectRatio(contentMode: .fill)
                 }
                 .frame(height: 200)
-                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .clipShape(RoundedRectangle(cornerRadius: 24))
             } else {
                 Rectangle()
                     .foregroundColor(.gray.opacity(0.3))
                     .frame(height: 200)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .clipShape(RoundedRectangle(cornerRadius: 24))
             }
         }
+    }
+
+    // Recipe Title
+    private var recipeTitle: some View {
+        Text(sdRecipe.title ?? "Recipe")
+            .font(.largeTitle)
+            .fontWeight(.bold)
+            .lineLimit(3)
+            .multilineTextAlignment(.leading)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // Combined Recipe Info Card
@@ -181,6 +200,95 @@ struct RecipeDetailView: View {
         }
     }
 
+    // Cooking Details Metrics Grid
+    private var cookingDetailsMetricsGrid: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if sdRecipe.readyInMinutes != nil || sdRecipe.servings != nil ||
+               sdRecipe.pricePerServing != nil {
+
+                Text("Recipe Overview")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                LazyVGrid(columns: [
+                    GridItem(.flexible()),
+                    GridItem(.flexible())
+                ], spacing: 12) {
+                    if let readyMinutes = sdRecipe.readyInMinutes {
+                        RecipeMetricCard(
+                            icon: "clock.fill",
+                            title: "Total Time",
+                            value: "\(readyMinutes) min",
+                            color: .blue
+                        )
+                    }
+
+                    if let servings = sdRecipe.servings {
+                        RecipeMetricCard(
+                            icon: "fork.knife",
+                            title: "Servings",
+                            value: "\(servings)",
+                            color: .green
+                        )
+                    }
+
+                    if let pricePerServing = sdRecipe.pricePerServing {
+                        RecipeMetricCard(
+                            icon: "dollarsign.circle.fill",
+                            title: "Cost Per Serving",
+                            value: "$\(String(format: "%.2f", pricePerServing / 100))",
+                            color: .orange
+                        )
+                    }
+
+                    if let pricePerServing = sdRecipe.pricePerServing,
+                       let servings = sdRecipe.servings {
+                        RecipeMetricCard(
+                            icon: "chart.bar.fill",
+                            title: "Total Cost",
+                            value: "$\(String(format: "%.2f", (pricePerServing * Double(servings)) / 100))",
+                            color: .purple
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // Recipe Scores Section
+    private var recipeScoresSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if sdRecipe.healthScore != nil || sdRecipe.spoonacularScore != nil {
+
+                Text("Recipe Scores")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                VStack(spacing: 12) {
+                    if let healthScore = sdRecipe.healthScore {
+                        RecipeScoreBar(
+                            title: "Health Score",
+                            score: healthScore,
+                            maxScore: 100,
+                            color: .green,
+                            icon: "heart.fill"
+                        )
+                    }
+
+                    if let spoonacularScore = sdRecipe.spoonacularScore {
+                        RecipeScoreBar(
+                            title: "Spoonacular Score",
+                            score: spoonacularScore,
+                            maxScore: 100,
+                            color: .blue,
+                            icon: "star.fill"
+                        )
+                    }
+                }
+            }
+        }
+    }
+
     // Dietary Badges
     private var dietaryBadges: some View {
         let badges = getDietaryBadges()
@@ -192,10 +300,44 @@ struct RecipeDetailView: View {
                         .font(.headline)
                         .fontWeight(.semibold)
 
-                    FlowLayout(spacing: 8) {
-                        ForEach(badges, id: \.text) { badge in
-                            DietaryBadge(text: badge.text, color: badge.color)
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(badges, id: \.text) { badge in
+                                DietaryBadge(text: badge.text, color: badge.color)
+                            }
                         }
+                    }
+                }
+            }
+        }
+    }
+
+    // Recipe Categories Section
+    private var recipeCategoriesSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if !sdRecipe.cuisines.isEmpty || !sdRecipe.diets.isEmpty {
+
+                Text("Categories")
+                    .font(.title2)
+                    .fontWeight(.bold)
+
+                VStack(spacing: 16) {
+                    if !sdRecipe.cuisines.isEmpty {
+                        RecipeClassificationRow(
+                            icon: "globe",
+                            title: "Cuisines",
+                            items: sdRecipe.cuisines,
+                            color: .blue
+                        )
+                    }
+
+                    if !sdRecipe.diets.isEmpty {
+                        RecipeClassificationRow(
+                            icon: "leaf.fill",
+                            title: "Diets",
+                            items: sdRecipe.diets,
+                            color: .green
+                        )
                     }
                 }
             }
@@ -308,39 +450,76 @@ struct RecipeDetailView: View {
     // Credits Section
     private var creditsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
-            if sdRecipe.creditsText != nil || sdRecipe.sourceName != nil {
-                Text("Recipe Information")
+            if sdRecipe.creditsText != nil || sdRecipe.sourceName != nil ||
+               sdRecipe.license != nil || sdRecipe.gaps != nil ||
+               sdRecipe.sourceUrl != nil || sdRecipe.spoonacularSourceUrl != nil {
+                Text("Source & Credits")
                     .font(.title2)
                     .fontWeight(.bold)
 
-                ModernCardContainer {
-                    VStack(alignment: .leading, spacing: 12) {
-                        if let creditsText = sdRecipe.creditsText {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Credits")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(.primary)
-                                Text(creditsText)
-                                    .font(.body)
-                                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading, spacing: 12) {
+                    if let creditsText = sdRecipe.creditsText {
+                        RecipeInfoRow(icon: "person.fill", title: "Credits", value: creditsText)
+                    }
+
+                    if let sourceName = sdRecipe.sourceName {
+                        RecipeInfoRow(icon: "book.closed.fill", title: "Source", value: sourceName)
+                    }
+
+                    if let license = sdRecipe.license {
+                        RecipeInfoRow(icon: "doc.text.fill", title: "License", value: license)
+                    }
+
+                    if let gaps = sdRecipe.gaps {
+                        RecipeInfoRow(icon: "info.circle.fill", title: "GAPS", value: gaps)
+                    }
+
+                    // Links
+                    VStack(spacing: 8) {
+                        if let sourceUrl = sdRecipe.sourceUrl,
+                           let url = URL(string: sourceUrl) {
+                            Link(destination: url) {
+                                HStack {
+                                    Image(systemName: "link.circle.fill")
+                                    Text("View Original Recipe")
+                                    Spacer()
+                                    Image(systemName: "arrow.up.right")
+                                }
+                                .font(.subheadline)
+                                .foregroundStyle(.blue)
+                                .padding()
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color.blue.opacity(0.1))
+                                )
                             }
                         }
 
-                        if let sourceName = sdRecipe.sourceName {
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Source")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                    .foregroundStyle(.primary)
-                                Text(sourceName)
-                                    .font(.body)
-                                    .foregroundStyle(.secondary)
+                        if let spoonacularUrl = sdRecipe.spoonacularSourceUrl,
+                           let url = URL(string: spoonacularUrl) {
+                            Link(destination: url) {
+                                HStack {
+                                    Image(systemName: "network")
+                                    Text("View on Spoonacular")
+                                    Spacer()
+                                    Image(systemName: "arrow.up.right")
+                                }
+                                .font(.subheadline)
+                                .foregroundStyle(.orange)
+                                .padding()
+                                .background(
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color.orange.opacity(0.1))
+                                )
                             }
                         }
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color(.tertiarySystemBackground))
+                )
             }
 
             // API Attribution
@@ -400,12 +579,170 @@ struct RecipeDetailView: View {
         if sdRecipe.veryHealthy == true {
             badges.append(("Very Healthy", .orange))
         }
+        if sdRecipe.cheap == true {
+            badges.append(("Budget Friendly", .orange))
+        }
+        if sdRecipe.veryPopular == true {
+            badges.append(("Very Popular", .yellow))
+        }
+        if sdRecipe.sustainable == true {
+            badges.append(("Sustainable", .teal))
+        }
+        if sdRecipe.lowFodmap == true {
+            badges.append(("Low FODMAP", .indigo))
+        }
 
         return badges
     }
 }
 
 // MARK: - Supporting Components
+
+struct RecipeMetricCard: View {
+    let icon: String
+    let title: String
+    let value: String
+    let color: Color
+
+    var body: some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.title3)
+                .foregroundStyle(color)
+                .frame(width: 36, height: 36)
+                .background(
+                    Circle()
+                        .fill(color.opacity(0.15))
+                )
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(value)
+                    .font(.headline)
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Text(title)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.9)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, minHeight: 60)
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.tertiarySystemBackground))
+        )
+    }
+}
+
+struct RecipeScoreBar: View {
+    let title: String
+    let score: Double
+    let maxScore: Double
+    let color: Color
+    let icon: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: icon)
+                    .foregroundStyle(color)
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                Spacer()
+                Text("\(Int(score))/\(Int(maxScore))")
+                    .font(.headline)
+                    .foregroundStyle(color)
+            }
+
+            GeometryReader { geometry in
+                ZStack(alignment: .leading) {
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(color.opacity(0.2))
+                        .frame(height: 8)
+
+                    RoundedRectangle(cornerRadius: 4)
+                        .fill(color)
+                        .frame(width: geometry.size.width * (score / maxScore), height: 8)
+                }
+            }
+            .frame(height: 8)
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.tertiarySystemBackground))
+        )
+    }
+}
+
+struct RecipeClassificationRow: View {
+    let icon: String
+    let title: String
+    let items: [String]
+    let color: Color
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .foregroundStyle(color)
+                Text(title)
+                    .font(.subheadline)
+                    .fontWeight(.semibold)
+            }
+
+            FlowLayout(spacing: 6) {
+                ForEach(items, id: \.self) { item in
+                    Text(item.capitalized)
+                        .font(.caption)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(
+                            Capsule()
+                                .fill(color.opacity(0.15))
+                        )
+                        .foregroundStyle(color)
+                }
+            }
+        }
+        .padding()
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.tertiarySystemBackground))
+        )
+    }
+}
+
+struct RecipeInfoRow: View {
+    let icon: String
+    let title: String
+    let value: String
+
+    var body: some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .foregroundStyle(.blue)
+                .frame(width: 24)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(value)
+                    .font(.subheadline)
+                    .foregroundStyle(.primary)
+            }
+
+            Spacer()
+        }
+    }
+}
 
 struct RecipeMetric: View {
     let icon: String
@@ -593,20 +930,47 @@ struct InstructionStepView: View {
 #Preview {
     let sampleSDRecipe = SDRecipe(
         id: 12345,
-        title: "Delicious Pasta with Fresh Tomatoes",
+        title: "Delicious Pasta Primavera with Fresh Vegetables",
         sourceUrl: "https://example.com/recipe",
         spoonacularSourceUrl: "https://spoonacular.com/recipe/12345"
     )
+
+    // Basic info
     sampleSDRecipe.image = "https://spoonacular.com/recipeImages/12345-312x231.jpg"
-    sampleSDRecipe.readyInMinutes = 30
+    sampleSDRecipe.summary = "A delicious and healthy pasta primavera recipe packed with fresh spring vegetables, herbs, and a light olive oil dressing. Perfect for a quick weeknight dinner or special occasion."
+
+    // Timing
+    sampleSDRecipe.readyInMinutes = 45
     sampleSDRecipe.servings = 4
+
+    // Scores
+    sampleSDRecipe.healthScore = 87
+    sampleSDRecipe.spoonacularScore = 92
+
+    // Dietary flags
     sampleSDRecipe.vegetarian = true
     sampleSDRecipe.glutenFree = false
     sampleSDRecipe.dairyFree = true
-    sampleSDRecipe.creditsText = "Recipe by Chef John"
-    sampleSDRecipe.sourceName = "Food Network"
-    sampleSDRecipe.summary = "A delicious pasta recipe with fresh tomatoes and herbs."
-    sampleSDRecipe.instructions = "Cook pasta according to package directions..."
+    sampleSDRecipe.veryHealthy = true
+    sampleSDRecipe.cheap = true
+    sampleSDRecipe.veryPopular = true
+    sampleSDRecipe.sustainable = true
 
-    return RecipeDetailView(userId: "preview_user_id", sdRecipe: sampleSDRecipe)
+    // Categories
+    sampleSDRecipe.cuisines = ["Italian", "Mediterranean"]
+    sampleSDRecipe.diets = ["vegetarian", "dairy free", "vegan"]
+
+    // Pricing
+    sampleSDRecipe.pricePerServing = 325
+
+    // Credits
+    sampleSDRecipe.creditsText = "Recipe by Chef John Doe"
+    sampleSDRecipe.sourceName = "Food Network"
+    sampleSDRecipe.license = "CC BY-SA 3.0"
+
+    sampleSDRecipe.instructions = "1. Bring a large pot of salted water to a boil. 2. Cook pasta according to package directions. 3. In a large skillet, heat olive oil over medium heat. 4. Add vegetables and sauté until tender-crisp. 5. Toss pasta with vegetables and serve."
+
+    return NavigationStack {
+        RecipeDetailView(userId: "preview_user_id", sdRecipe: sampleSDRecipe)
+    }
 }
