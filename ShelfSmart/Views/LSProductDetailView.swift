@@ -667,6 +667,16 @@ struct LSProductDetailView: View {
                 // Cancel notifications for this product
                 notificationManager.deleteScheduledNotifications(for: product)
 
+                // Clean up GroupedOFFAProducts: Remove from group and delete if empty
+                if let group = product.groupedProducts {
+                    if let index = group.offaProducts?.firstIndex(where: { $0.id == product.id }) {
+                        group.offaProducts?.remove(at: index)
+                    }
+                    if group.offaProducts?.isEmpty ?? true {
+                        modelContext.delete(group)
+                    }
+                }
+
                 // Delete the product
                 modelContext.delete(product)
                 try modelContext.save()
