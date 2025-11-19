@@ -8,12 +8,19 @@
 import SwiftData
 import SwiftUI
 import FirebaseCore
+import FirebaseFirestore
 import UserNotifications
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
   func application(_ application: UIApplication,
                    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
     FirebaseApp.configure()
+
+    // Add these lines for offline support
+    let settings = Firestore.firestore().settings
+        settings.isPersistenceEnabled = true
+        settings.cacheSizeBytes = FirestoreCacheSizeUnlimited
+        Firestore.firestore().settings = settings
     return true
   }
 
@@ -186,7 +193,6 @@ struct ShelfSmartApp: App {
         }
         .modelContainer(modelContainer)
     }
-
     private func requestNotificationAuthorization() {
         UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .badge, .sound]) { granted, error in
             if granted {
