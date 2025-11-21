@@ -9,6 +9,7 @@ import FirebaseCore
 import SwiftData
 import SwiftUI
 import UserNotifications
+import PostHog
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
 
@@ -17,11 +18,36 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
                    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
       FirebaseApp.configure()
       
+      // Initialize PostHog
+      initializePostHog()
 
 
     return true
   }
 
+    // MARK: - PostHog Initialization
+    private func initializePostHog() {
+        // Get API key from Info.plist
+        guard let apiKey = Bundle.main.object(forInfoDictionaryKey: "POSTHOG_API_KEY") as? String,
+              !apiKey.isEmpty,
+              apiKey != "$(POSTHOG_API_KEY)" else {
+            print("⚠️ PostHog API key not configured in Info.plist")
+            return
+        }
+        
+        let config = PostHogConfig(apiKey: apiKey, host: "https://us.i.posthog.com")
+        
+        // Optional: Enable debug mode for testing
+#if DEBUG
+        config.debug = true
+#endif
+        
+        PostHogSDK.shared.setup(config)
+        print("✅ PostHog initialized successfully")
+    }
+    
+
+    
   // Handle notifications when app is in foreground
   func userNotificationCenter(_ center: UNUserNotificationCenter,
                               willPresent notification: UNNotification,
