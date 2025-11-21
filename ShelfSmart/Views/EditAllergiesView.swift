@@ -112,6 +112,7 @@ struct EditAllergiesView: View {
                                 Task {
                                     do {
                                         try await viewModel.saveAllergies(userId: userId)
+                                        
                                         // Dismiss sheet on success
                                         dismiss()
                                     } catch {

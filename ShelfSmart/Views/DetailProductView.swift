@@ -254,6 +254,11 @@ struct DetailProductView: View {
                     let startIndex = rowIndex * 2
                     if startIndex < sortedRecipes.count {
                         RecipeCardView(sdRecipe: sortedRecipes[startIndex]) {
+                            PostHogAnalyticsManager.shared.track(.recipeViewed, properties: [
+                                "recipe_id": sortedRecipes[startIndex].id ?? 0,
+                                "recipe_title": sortedRecipes[startIndex].title ?? "",
+                                "product_name": product.title
+                            ])
                             recipeToShow = sortedRecipes[startIndex]
                         }
                         .id("recipe-\(sortedRecipes[startIndex].id ?? 0)")
@@ -412,6 +417,8 @@ struct DetailProductView: View {
                 Text("Are you sure you want to delete '\(product.title)'? This action cannot be undone.")
             }
         }
+        .onAppear {
+        }
     }
 
     // MARK: - Handle Mark As Used Function
@@ -435,6 +442,8 @@ struct DetailProductView: View {
             Task.detached {
                 await MainActor.run {
                     ProductHelpers.markProductAsUsed(product: product, modelContext: modelContext, notificationManager: notificationManager)
+                    
+
                 }
             }
         }
@@ -453,6 +462,9 @@ struct DetailProductView: View {
         Task {
             do {
                 try ProductHelpers.deleteProduct(product, modelContext: modelContext, notificationManager: notificationManager)
+                
+
+                
                 // Dismiss after successful deletion
                 dismiss()
             } catch {

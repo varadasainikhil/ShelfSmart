@@ -17,6 +17,8 @@ struct RandomRecipeResponse: Codable {
 
 @Observable
 class RandomRecipeViewModel {
+    private let analyticsManager = PostHogAnalyticsManager.shared
+    
     // MARK: - User ID (Single source of truth)
     let userId: String
 
@@ -295,8 +297,12 @@ class RandomRecipeViewModel {
                 isLoading = false
                 searchSuccess = true
                 errorMessage = nil
+                errorMessage = nil
                 print("🎉 Recipe fetch completed successfully!")
             }
+            
+            // Tracking the search of completely random recipes
+            analyticsManager.track(.completelyRandomRecipeGenerated)
 
         } catch {
             await handleError(error)
@@ -399,6 +405,9 @@ class RandomRecipeViewModel {
             modelContext.insert(sdRecipe)
             try modelContext.save()
             print("✅ Recipe saved to SwiftData successfully")
+            
+            // Track the saving of recipes
+            analyticsManager.track(.randomRecipeSaved)
             return true
         } catch {
             print("❌ Failed to save recipe: \(error)")
@@ -451,14 +460,19 @@ class RandomRecipeViewModel {
             }
             
             print("✅ Found recipe: \(searchResult.title) (ID: \(searchResult.id))")
-
+            
             // Fetch complete recipe details
             await fetchCompleteRecipeById(id: searchResult.id)
 
+            
+            // Tracking the search of custom random recipes
+            analyticsManager.track(.customRecipeGenerated)
+            
             // Clear all selections after successfully generating custom recipe
             clearAllSelections()
 
             // Re-populate user allergies so they remain selected for next search
+            selectedIntolerances = userAllergies
             selectedIntolerances = userAllergies
             print("♻️ Re-populated user allergies: \(userAllergies)")
 

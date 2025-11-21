@@ -8,10 +8,13 @@
 import FirebaseAuth
 import FirebaseFirestore
 import Foundation
+import PostHog
 import SwiftData
+import SwiftUI
 
 @Observable
 class AddProductViewViewModel {
+    private let analyticsManager = PostHogAnalyticsManager.shared
     var barcode : String = ""
     var name : String = ""
     var productDescription : String = ""
@@ -135,8 +138,10 @@ class AddProductViewViewModel {
         do {
             try await searchProductOFFA(modelContext: modelContext)
             print("✅ [OFFA] Product search completed for scanned barcode")
+            analyticsManager.track(.scanSuccess)
         } catch {
             print("❌ [OFFA] Error searching for scanned barcode: \(error.localizedDescription)")
+            analyticsManager.track(.scanFailed, properties: ["error" : "\(error.localizedDescription)"])
             await MainActor.run {
                 self.errorMessage = "Failed to search for product. Please try again."
             }
@@ -280,6 +285,9 @@ class AddProductViewViewModel {
                 }
 
                 print("✅ API product data loaded successfully - ready for user to save")
+                
+                // Tracking the creation of Spoonacular Product
+                analyticsManager.track(.productInfoLoaded, properties: ["api_type" : "spoonacular"])
                 
             } else {
                 print("⚠️ No valid product data found in response")
@@ -438,6 +446,9 @@ class AddProductViewViewModel {
 
             print("✅ [OFFA] Product data loaded successfully - ready for user to save")
 
+            // Tracking the searching of Product using barcode
+            analyticsManager.track(.productInfoLoaded, properties: ["api_type" : "offa"])
+
         } catch let decodingError as DecodingError {
             print("❌ [OFFA] JSON Decoding Error: \(decodingError)")
             print("❌ [OFFA] Decoding Error Details: \(decodingError.localizedDescription)")
@@ -578,6 +589,9 @@ class AddProductViewViewModel {
             // Save to database
             try modelContext.save()
             print("✅ [OFFA] Successfully saved LSProduct to database: \(lsProduct.title)")
+            
+            // Track the saving of OFFA products
+            analyticsManager.track(.productAdded, properties: ["api_type" : "offa"])
 
             // Schedule notifications for the product
             await notificationManager.scheduleNotifications(for: lsProduct)
@@ -631,6 +645,10 @@ class AddProductViewViewModel {
         product = Product(from: groceryProduct!, expirationDate: self.expirationDate, userId: userId)
         product?.title = name
         product?.productDescription = productDescription
+        
+        
+        // Tracking the creation of Spoonacular Product
+        analyticsManager.track(.productAdded, properties: ["api_type" : "spoonacular"])
 
         // Calling the function searchAndSaveRecipesForProduct
         await searchAndSaveRecipesForProduct(product : self.product!, userId: userId, modelContext: modelContext, userExpirationDate: userSelectedExpirationDate, notificationManager: notificationManager)
@@ -872,7 +890,10 @@ class AddProductViewViewModel {
 
         print("✅ [Manual OFFA] Created LSProduct: \(lsProduct.title)")
         print("🍽️ [Manual OFFA] Recipe IDs: \(recipeIds ?? [])")
-
+        
+        // Tracking addition of manual products
+        analyticsManager.track(.productAdded, properties: ["api_type" : "manual"])
+        
         do {
             // Use normalized date for comparison
             let normalizedDate = Calendar.current.startOfDay(for: productExpirationDate)

@@ -153,6 +153,8 @@ struct BarcodeScannerView: View {
     // MARK: - Handle Scanned Barcode
     private func handleScannedBarcode(_ barcodeValue: String) {
         print(" Processing scanned barcode: \(barcodeValue)")
+        
+
 
         // Show loading indicator
         dataScannerManager.isSearching = true

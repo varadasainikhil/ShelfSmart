@@ -139,6 +139,8 @@ struct AddProductView: View {
                                     await MainActor.run {
                                         if viewModel.errorMessage == nil {
                                             withAnimation(.spring(response: 0.6, dampingFraction: 0.8)) {
+                                                // Track scanned product addition
+                                                
                                                 viewModel.resetAllFields()
                                                 dismiss()
                                             }

@@ -108,6 +108,17 @@ class PasswordAuthViewModel {
             try await Auth.auth().signIn(withEmail: email, password: password)
             print("✅ User signed in successfully")
 
+            // Identify user in PostHog analytics
+            if let user = Auth.auth().currentUser {
+                PostHogAnalyticsManager.shared.identify(
+                    userId: user.uid,
+                    properties: [
+                        "email": email,
+                        "login_method": "email_password"
+                    ]
+                )
+            }
+
             await MainActor.run {
                 isLoading = false
             }
@@ -185,6 +196,9 @@ class PasswordAuthViewModel {
                 isLoading = false
                 password = ""
                 confirmPassword = ""
+                successMessage = "Account created! Please check your email to verify your account."
+                showingSuccess = true
+                
                 successMessage = "Account created! Please check your email to verify your account."
                 showingSuccess = true
             }

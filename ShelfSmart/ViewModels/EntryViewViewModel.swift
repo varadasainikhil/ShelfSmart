@@ -28,6 +28,14 @@ class EntryViewViewModel{
             // Check email verification status
             if let user = user {
                 self.isEmailVerified = user.isEmailVerified
+
+                // Identify user in PostHog for already-signed-in users
+                PostHogAnalyticsManager.shared.identify(
+                    userId: user.uid,
+                    properties: [
+                        "email": user.email ?? ""
+                    ]
+                )
             } else {
                 // User signed out - reset all state
                 self.isEmailVerified = false

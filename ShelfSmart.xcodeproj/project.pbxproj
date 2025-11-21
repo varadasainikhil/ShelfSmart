@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		861A6CA72ECFD49800C48CBC /* PostHog in Frameworks */ = {isa = PBXBuildFile; productRef = 861A6CA62ECFD49800C48CBC /* PostHog */; };
 		86A2458A2E6A6EAF00116234 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = 86A245892E6A6EAF00116234 /* FirebaseAnalytics */; };
 		86A2458C2E6A6EAF00116234 /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = 86A2458B2E6A6EAF00116234 /* FirebaseAuth */; };
 		86A2458E2E6A6EAF00116234 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = 86A2458D2E6A6EAF00116234 /* FirebaseFirestore */; };
@@ -45,6 +46,7 @@
 				86A2458A2E6A6EAF00116234 /* FirebaseAnalytics in Frameworks */,
 				86A2458C2E6A6EAF00116234 /* FirebaseAuth in Frameworks */,
 				86A2458E2E6A6EAF00116234 /* FirebaseFirestore in Frameworks */,
+				861A6CA72ECFD49800C48CBC /* PostHog in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -90,6 +92,7 @@
 				86A245892E6A6EAF00116234 /* FirebaseAnalytics */,
 				86A2458B2E6A6EAF00116234 /* FirebaseAuth */,
 				86A2458D2E6A6EAF00116234 /* FirebaseFirestore */,
+				861A6CA62ECFD49800C48CBC /* PostHog */,
 			);
 			productName = ShelfSmart;
 			productReference = 86A245642E6A6D7900116234 /* ShelfSmart.app */;
@@ -121,6 +124,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				86A245882E6A6EAF00116234 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				861A6CA52ECFD49800C48CBC /* XCRemoteSwiftPackageReference "posthog-ios" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 86A245652E6A6D7900116234 /* Products */;
@@ -300,7 +304,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0.5;
+				MARKETING_VERSION = 2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.varadasainikhil.ShelfSmart;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -335,7 +339,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 2.0.5;
+				MARKETING_VERSION = 2.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.varadasainikhil.ShelfSmart;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
@@ -372,6 +376,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		861A6CA52ECFD49800C48CBC /* XCRemoteSwiftPackageReference "posthog-ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/PostHog/posthog-ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.35.0;
+			};
+		};
 		86A245882E6A6EAF00116234 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
@@ -383,6 +395,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		861A6CA62ECFD49800C48CBC /* PostHog */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 861A6CA52ECFD49800C48CBC /* XCRemoteSwiftPackageReference "posthog-ios" */;
+			productName = PostHog;
+		};
 		86A245892E6A6EAF00116234 /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 86A245882E6A6EAF00116234 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;

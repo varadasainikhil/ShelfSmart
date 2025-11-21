@@ -10,6 +10,7 @@ import FirebaseAuth
 import FirebaseFirestore
 import AuthenticationServices
 import CryptoKit
+import Swift
 
 // Removed SignupMethod enum - simplified to just check if user exists
 
@@ -279,7 +280,17 @@ class WelcomeAuthViewModel {
                 let userDoc = try await userDocRef.getDocument()
 
                 if userDoc.exists {
+                    // Existing user signed in with apple
                     print("✅ Existing user signed in with Apple: \(userId)")
+
+                    // Identify user in PostHog analytics
+                    PostHogAnalyticsManager.shared.identify(
+                        userId: userId,
+                        properties: [
+                            "email": userEmail,
+                            "login_method": "apple_signin"
+                        ]
+                    )
                 } else {
                     print("🆕 New Apple Sign-In user detected - creating Firestore document")
 
@@ -295,6 +306,17 @@ class WelcomeAuthViewModel {
 
                     try userDocRef.setData(from: user)
                     print("✅ New user created in Firestore")
+
+                    // Identify user in PostHog analytics
+                    PostHogAnalyticsManager.shared.identify(
+                        userId: userId,
+                        properties: [
+                            "email": userEmail,
+                            "name": userName,
+                            "signup_method": "apple_signin",
+                            "is_email_verified": true
+                        ]
+                    )
                 }
 
             } catch {

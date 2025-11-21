@@ -5,15 +5,20 @@
 //  Created by Sai Nikhil Varada on 9/4/25.
 //
 
+import FirebaseCore
 import SwiftData
 import SwiftUI
-import FirebaseCore
 import UserNotifications
 
 class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
+
+
   func application(_ application: UIApplication,
                    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey : Any]? = nil) -> Bool {
-    FirebaseApp.configure()
+      FirebaseApp.configure()
+      
+
+
     return true
   }
 
@@ -37,7 +42,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 
 @main
 struct ShelfSmartApp: App {
-
+    
     init() {
         // Request notification permission on app launch
         requestNotificationAuthorization()
@@ -51,7 +56,7 @@ struct ShelfSmartApp: App {
     @State private var showSplash = true
     @State private var isDataReady = false
     @State private var entryViewViewModel : EntryViewViewModel? = nil
-
+    
     // Configure ModelContainer with explicit CloudKit settings
     private var modelContainer: ModelContainer = {
         let schema = Schema([

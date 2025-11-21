@@ -97,6 +97,9 @@ struct LSProductDetailView: View {
                 OFFARecipeDetailView(userId: product.userId, sdRecipe: sdRecipe)
             }
         }
+        .onAppear {
+            
+        }
     }
 
     // MARK: - Deleting State View
@@ -579,6 +582,7 @@ struct LSProductDetailView: View {
                 ) {
                     ForEach(viewModel.validRecipes.prefix(4), id: \.id) { recipe in
                         RecipeCard(recipe: recipe) {
+                            
                             recipeToShow = recipe
                         }
                     }
@@ -639,6 +643,9 @@ struct LSProductDetailView: View {
                     // Mark product as used
                     product.isUsed = true
 
+                    
+                    // Cancel notifications for this product
+
                     // Cancel notifications for this product
                     notificationManager.deleteScheduledNotifications(for: product)
 
@@ -680,6 +687,9 @@ struct LSProductDetailView: View {
                 // Delete the product
                 modelContext.delete(product)
                 try modelContext.save()
+
+                
+                // Dismiss after successful deletion
 
                 // Dismiss after successful deletion
                 dismiss()

@@ -150,6 +150,17 @@ final class EmailVerificationViewModel {
 
             try db.collection("users").document(userId).setData(from: user)
             print("✅ Verified user with ID: \(userId) added to Firestore")
+
+            // Identify user in PostHog analytics
+            PostHogAnalyticsManager.shared.identify(
+                userId: userId,
+                properties: [
+                    "email": userEmail,
+                    "name": userName,
+                    "signup_method": "email_password",
+                    "is_email_verified": true
+                ]
+            )
         } catch {
             print("❌ Error adding verified user to Firestore: \(error.localizedDescription)")
         }

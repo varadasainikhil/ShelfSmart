@@ -81,6 +81,7 @@ class ProfileViewViewModel{
         // 5. Save changes
         do {
             try modelContext.save()
+            try modelContext.save()
             print("✅ Successfully deleted \(deletedCount) items and cancelled all notifications")
         } catch {
             print("❌ Problem saving the modelContext: \(error.localizedDescription)")
@@ -113,6 +114,8 @@ class ProfileViewViewModel{
         do{
             try Auth.auth().signOut()
             print("User signed out successfully.")
+
+            PostHogAnalyticsManager.shared.reset()
         }
         catch{
             print(error.localizedDescription)
