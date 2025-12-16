@@ -10,6 +10,7 @@ import SwiftUI
 struct QuickScanView: View {
     @State var viewModel = QuickScanViewModel()
     @State private var showScanner = false
+    @FocusState private var isTextFieldFocused: Bool
 
     var body: some View {
         NavigationStack {
@@ -78,9 +79,17 @@ struct QuickScanView: View {
                         TextField("Enter barcode", text: $viewModel.barcode)
                             .textFieldStyle(.roundedBorder)
                             .keyboardType(.numberPad)
+                            .focused($isTextFieldFocused)
+                            .submitLabel(.search)
+                            .onSubmit {
+                                if !viewModel.barcode.isEmpty {
+                                    viewModel.fetchProduct()
+                                }
+                            }
 
                         Button {
                             viewModel.fetchProduct()
+                            viewModel.barcode = ""
                         } label: {
                             Image(systemName: "magnifyingglass")
                                 .font(.system(size: 16, weight: .semibold))
@@ -112,11 +121,35 @@ struct QuickScanView: View {
                 Spacer()
                     .frame(height: 40)
             }
+            .contentShape(Rectangle())
+            .onTapGesture {
+                isTextFieldFocused = false
+            }
             .navigationTitle("Quick Scan")
             .navigationBarTitleDisplayMode(.inline)
-            .fullScreenCover(isPresented: $showScanner) {
-                if #available(iOS 16, *) {
+            .toolbar {
+                ToolbarItemGroup(placement: .keyboard) {
+                    Spacer()
+                    Button("Done") {
+                        isTextFieldFocused = false
+                    }
+                }
+            }
+            .onAppear {
+                // Show scanner immediately when Quick Scan tab is selected
+                showScanner = true
+            }
+            .sheet(isPresented: $showScanner) {
+                if #available(iOS 16.4, *) {
                     QuickScannerView(viewModel: viewModel)
+                        .presentationDetents([.fraction(0.75)])
+                        .presentationDragIndicator(.visible)
+                        .presentationBackgroundInteraction(.enabled(upThrough: .fraction(0.75)))
+                        .interactiveDismissDisabled(false)
+                } else if #available(iOS 16, *) {
+                    QuickScannerView(viewModel: viewModel)
+                        .presentationDetents([.fraction(0.75)])
+                        .presentationDragIndicator(.visible)
                 } else {
                     // Fallback for older iOS versions
                     VStack(spacing: 20) {
@@ -139,6 +172,8 @@ struct QuickScanView: View {
                         .buttonStyle(.borderedProminent)
                     }
                     .padding()
+                    .presentationDetents([.fraction(0.75)])
+                    .presentationDragIndicator(.visible)
                 }
             }
             .sheet(isPresented: $viewModel.showProductSheet) {

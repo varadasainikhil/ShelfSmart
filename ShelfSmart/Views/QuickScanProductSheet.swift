@@ -53,56 +53,62 @@ struct QuickScanProductSheet: View {
                                     .foregroundStyle(.secondary)
                             }
 
-                            // Source Badge
-                            if let source = viewModel.source {
-                                HStack(spacing: 4) {
-                                    Image(systemName: source == "cache" ?
-                                          "bolt.fill" : "cloud.fill")
-                                        .font(.caption2)
-                                    Text(source == "cache" ? "Cached" : "Fresh")
-                                        .font(.caption2)
-                                }
-                                .foregroundStyle(source == "cache" ? .orange : .green)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(
-                                    Capsule()
-                                        .fill(source == "cache" ?
-                                              Color.orange.opacity(0.1) :
-                                              Color.green.opacity(0.1))
-                                )
-                            }
                         }
 
                         Spacer()
                     }
                     .padding(.horizontal)
 
+                    // Allergen Tags
+                    if let allergens = viewModel.allergensTags, !allergens.isEmpty {
+                        FlowLayout(spacing: 6) {
+                            ForEach(allergens, id: \.self) { allergen in
+                                Text(formatAllergenName(allergen))
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(.orange)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 5)
+                                    .background(
+                                        Capsule()
+                                            .fill(Color.orange.opacity(0.15))
+                                    )
+                                    .overlay(
+                                        Capsule()
+                                            .stroke(Color.orange.opacity(0.3), lineWidth: 1)
+                                    )
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+
                     // Scores Section
                     HStack(spacing: 12) {
-                        // Nutri-Score
+                        // Nutri-Score - only show if valid grade A-E
                         if let grade = viewModel.nutriscoreGrade?.uppercased(),
-                           !grade.isEmpty {
-                            let displayGrade = ["A", "B", "C", "D", "E"].contains(grade) ? grade : "N/A"
+                           !grade.isEmpty,
+                           ["A", "B", "C", "D", "E"].contains(grade) {
                             ScoreBadge(
-                                grade: displayGrade,
+                                grade: grade,
                                 title: "Nutri-Score",
                                 color: nutriscoreColor(for: grade)
                             )
                         }
 
-                        // NOVA Group
-                        if let nova = viewModel.novaGroup {
+                        // Processing Level (NOVA Group) - only show if valid 1-4
+                        if let nova = viewModel.novaGroup,
+                           nova >= 1 && nova <= 4 {
                             ScoreBadge(
                                 grade: "\(nova)",
-                                title: "NOVA",
+                                title: "Processing Level",
                                 color: novaColor(for: nova)
                             )
                         }
 
-                        // Eco-Score
+                        // Eco-Score - only show if valid grade A-E
                         if let eco = viewModel.ecoScoreGrade?.uppercased(),
-                           !eco.isEmpty, eco != "UNKNOWN" {
+                           !eco.isEmpty,
+                           ["A", "B", "C", "D", "E"].contains(eco) {
                             ScoreBadge(
                                 grade: eco,
                                 title: "Eco-Score",
@@ -111,6 +117,131 @@ struct QuickScanProductSheet: View {
                         }
                     }
                     .padding(.horizontal)
+
+                    // Calories Section
+                    if let energy = viewModel.energyKcal {
+                        VStack(spacing: 4) {
+                            Text("Calories")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.secondary)
+
+                            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                                Text("\(Int(energy))")
+                                    .font(.title)
+                                    .fontWeight(.bold)
+                                    .foregroundStyle(.primary)
+
+                                Text("kcal per 100g")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color(.secondarySystemBackground))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(
+                                    colorScheme == .dark ? Color.white.opacity(0.05) : Color.clear,
+                                    lineWidth: 0.5
+                                )
+                        )
+                        .shadow(color: colorScheme == .dark ? Color.black.opacity(0.5) : Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
+                        .padding(.horizontal)
+                    }
+
+                    // Pros Section (Positive Components)
+                    if let positives = viewModel.positiveComponents, !positives.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Image(systemName: "hand.thumbsup.fill")
+                                    .foregroundStyle(.green)
+                                Text("Pros")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                            }
+                            .foregroundStyle(.secondary)
+
+                            ForEach(positives, id: \.nutrientId) { component in
+                                HStack(spacing: 8) {
+                                    Circle()
+                                        .fill(Color.green)
+                                        .frame(width: 6, height: 6)
+                                    Text(formatNutrientName(component.nutrientId))
+                                        .font(.subheadline)
+                                    Spacer()
+                                    if let value = component.value {
+                                        Text(String(format: "%.1f%@", value, component.unit ?? ""))
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                        }
+                        .padding(16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color(.secondarySystemBackground))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(
+                                    colorScheme == .dark ? Color.white.opacity(0.05) : Color.clear,
+                                    lineWidth: 0.5
+                                )
+                        )
+                        .shadow(color: colorScheme == .dark ? Color.black.opacity(0.5) : Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
+                        .padding(.horizontal)
+                    }
+
+                    // Cons Section (Negative Components)
+                    if let negatives = viewModel.negativeComponents, !negatives.isEmpty {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                Image(systemName: "hand.thumbsdown.fill")
+                                    .foregroundStyle(.red)
+                                Text("Cons")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                            }
+                            .foregroundStyle(.secondary)
+
+                            ForEach(negatives, id: \.nutrientId) { component in
+                                HStack(spacing: 8) {
+                                    Circle()
+                                        .fill(Color.red)
+                                        .frame(width: 6, height: 6)
+                                    Text(formatNutrientName(component.nutrientId))
+                                        .font(.subheadline)
+                                    Spacer()
+                                    if let value = component.value {
+                                        Text(String(format: "%.1f%@", value, component.unit ?? ""))
+                                            .font(.subheadline)
+                                            .foregroundStyle(.secondary)
+                                    }
+                                }
+                            }
+                        }
+                        .padding(16)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color(.secondarySystemBackground))
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 16)
+                                .stroke(
+                                    colorScheme == .dark ? Color.white.opacity(0.05) : Color.clear,
+                                    lineWidth: 0.5
+                                )
+                        )
+                        .shadow(color: colorScheme == .dark ? Color.black.opacity(0.5) : Color.black.opacity(0.08), radius: 8, x: 0, y: 4)
+                        .padding(.horizontal)
+                    }
 
                     // Nutrition Quick Info
                     if hasNutritionData {
@@ -124,34 +255,32 @@ struct QuickScanProductSheet: View {
                                 GridItem(.flexible()),
                                 GridItem(.flexible())
                             ], spacing: 12) {
-                                if let energy = viewModel.energyKcal {
-                                    NutritionItem(
-                                        label: "Energy",
-                                        value: "\(Int(energy)) kcal"
-                                    )
-                                }
                                 if let fat = viewModel.fat {
                                     NutritionItem(
                                         label: "Fat",
-                                        value: String(format: "%.1fg", fat)
+                                        value: String(format: "%.1fg", fat),
+                                        labelColor: nutrientColor(for: "fat")
                                     )
                                 }
                                 if let carbs = viewModel.carbohydrates {
                                     NutritionItem(
                                         label: "Carbs",
-                                        value: String(format: "%.1fg", carbs)
+                                        value: String(format: "%.1fg", carbs),
+                                        labelColor: nutrientColor(for: "carbohydrates")
                                     )
                                 }
                                 if let protein = viewModel.proteins {
                                     NutritionItem(
                                         label: "Protein",
-                                        value: String(format: "%.1fg", protein)
+                                        value: String(format: "%.1fg", protein),
+                                        labelColor: nutrientColor(for: "proteins")
                                     )
                                 }
                                 if let sugars = viewModel.sugars {
                                     NutritionItem(
                                         label: "Sugars",
-                                        value: String(format: "%.1fg", sugars)
+                                        value: String(format: "%.1fg", sugars),
+                                        labelColor: nutrientColor(for: "sugars")
                                     )
                                 }
                             }
@@ -172,46 +301,8 @@ struct QuickScanProductSheet: View {
                         .padding(.horizontal)
                     }
 
-                    // Action Buttons
-                    VStack(spacing: 12) {
-                        Button {
-                            viewModel.reset()
-                            dismiss()
-                        } label: {
-                            HStack {
-                                Image(systemName: "barcode.viewfinder")
-                                Text("Scan Another")
-                            }
-                            .font(.headline)
-                            .foregroundStyle(.white)
-                            .frame(maxWidth: .infinity)
-                            .padding()
-                            .background(
-                                LinearGradient(
-                                    colors: [.green, .green.opacity(0.9)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .cornerRadius(12)
-                            .shadow(color: .green.opacity(0.4), radius: 8, x: 0, y: 4)
-                            .shadow(color: .green.opacity(0.2), radius: 2, x: 0, y: 1)
-                        }
-
-                        Button {
-                            dismiss()
-                        } label: {
-                            Text("Close")
-                                .font(.headline)
-                                .foregroundStyle(.green)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.green.opacity(0.1))
-                                .cornerRadius(12)
-                        }
-                    }
-                    .padding(.horizontal)
-                    .padding(.bottom, 20)
+                    Spacer()
+                        .frame(height: 40)
                 }
             }
         }
@@ -260,19 +351,73 @@ struct QuickScanProductSheet: View {
         default: return .gray
         }
     }
+
+    // MARK: - Nutrient Name Formatter
+    private func formatNutrientName(_ nutrientId: String) -> String {
+        // Special case for energy -> Calories
+        if nutrientId.lowercased() == "energy" {
+            return "Calories"
+        }
+
+        // Convert snake_case to Title Case
+        let components = nutrientId.split(separator: "_")
+        return components.map { $0.prefix(1).uppercased() + $0.dropFirst() }.joined(separator: " ")
+    }
+
+    // MARK: - Nutrient Color Helper
+    /// Returns green if nutrient is in positives, red if in negatives, secondary otherwise
+    private func nutrientColor(for nutrientId: String) -> Color {
+        // Check if in positive components (pros)
+        if let positives = viewModel.positiveComponents,
+           positives.contains(where: { $0.nutrientId.lowercased() == nutrientId.lowercased() }) {
+            return .green
+        }
+        
+        // Check if in negative components (cons)
+        if let negatives = viewModel.negativeComponents,
+           negatives.contains(where: { $0.nutrientId.lowercased() == nutrientId.lowercased() }) {
+            return .red
+        }
+        
+        // Default to secondary
+        return .secondary
+    }
+
+    // MARK: - Allergen Name Formatter
+    private func formatAllergenName(_ allergen: String) -> String {
+        // Remove language prefix (e.g., "en:", "fr:", etc.)
+        var cleaned = allergen
+        if let colonIndex = allergen.firstIndex(of: ":") {
+            cleaned = String(allergen[allergen.index(after: colonIndex)...])
+        }
+
+        // Replace hyphens and underscores with spaces
+        cleaned = cleaned.replacingOccurrences(of: "-", with: " ")
+                        .replacingOccurrences(of: "_", with: " ")
+
+        // Capitalize each word (Title Case)
+        let words = cleaned.split(separator: " ")
+        let titleCased = words.map { word -> String in
+            let lowercased = word.lowercased()
+            return lowercased.prefix(1).uppercased() + lowercased.dropFirst()
+        }.joined(separator: " ")
+
+        return titleCased
+    }
 }
 
 // MARK: - Nutrition Item Component
 struct NutritionItem: View {
     let label: String
     let value: String
+    var labelColor: Color = .secondary
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
         HStack {
             Text(label)
                 .font(.subheadline)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(labelColor)
             Spacer()
             Text(value)
                 .font(.subheadline)

@@ -133,6 +133,7 @@ struct QuickScannerView: View {
         }
         .onChange(of: viewModel.showProductSheet) { _, showSheet in
             if showSheet {
+                // Dismiss scanner sheet so product sheet can be shown from main view
                 dismiss()
             }
         }
