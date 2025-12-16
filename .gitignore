@@ -1,5 +1,8 @@
 GoogleService-Info.plist
 Config.xcconfig
+*.xcuserstate
+project.xcworkspace/
+xcuserdata/
 
 # Xcode user data
 *.xcworkspace/xcuserdata/

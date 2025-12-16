@@ -44,6 +44,9 @@ struct AuthenticatedView: View {
             Tab("Home", systemImage: "house.fill") {
                 HomeView(userId: userId)
             }
+            Tab("Quick Scan", systemImage: "barcode.viewfinder") {
+                QuickScanView()
+            }
             Tab("Random Recipe", systemImage: "shuffle") {
                 DietsView(userId: userId)
             }
